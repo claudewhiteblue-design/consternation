@@ -1,7 +1,11 @@
 # Israeli Retail Sales Panel, 2024–2026
 
 `retail_sales_2024_2026.parquet` — **805,756 rows**, 31 consecutive months
-(**2024/01 → 2026/07**), 15 measures and dimensions, 27 MB.
+(**2024/01 → 2026/07**), 18 measures and dimensions, 39 MB.
+
+It carries a **standard price and quantity** on a single measurement basis per
+category, so a category's series is comparable across the whole panel. See
+[Standard price and quantity](#standard-price-and-quantity).
 
 **A volume threshold is applied:** a row is kept only if at least one of its
 three quantity columns exceeds 0.5. See [Volume threshold](#volume-threshold)
@@ -40,6 +44,9 @@ Every column spans the full 31 months. Percentages are of the filtered row count
 | `מחיר ממוצע ליחידת צריכה` | DOUBLE | 0.8% | avg price per consumption unit — very sparse |
 | `מחיר ממוצע לק“ג` | DOUBLE | 64.7% | avg price/kg |
 | `מחיר ממוצע לליטר` | DOUBLE | 22.0% | avg price/litre |
+| `בסיס מדידה` | VARCHAR | 100% | **added** — the category's measurement basis: `ק"ג` / `ליטר` / `יח' באריזה` |
+| `מחיר סטנדרטי` | DOUBLE | 99.9% | **added** — price on that basis |
+| `כמות סטנדרטית` | DOUBLE | 99.9% | **added** — quantity on that basis |
 | `source_file` | VARCHAR | 100% | **added** — originating workbook |
 
 Original Hebrew column names are preserved exactly. Rows are sorted by
@@ -116,6 +123,44 @@ dropped — a negligible edge case, but it is the reason those rows are gone.
 To rebuild the full unfiltered panel, drop the `WHERE {KEEP}` clause from
 `scripts/02_normalize.py`.
 
+## Standard price and quantity
+
+`מחיר סטנדרטי` and `כמות סטנדרטית` put every row on one comparable measure. The
+basis is chosen **once per category, from the whole panel** — never per row — so
+a category never switches units mid-series:
+
+| Basis (`בסיס מדידה`) | Price source | Quantity source | Categories | Revenue |
+|---|---|---|---|---|
+| `ק"ג` | `מחיר ממוצע לק“ג` | `מכר כמותי (טון)` | 195 | 89,815 M (62.3%) |
+| `ליטר` | `מחיר ממוצע לליטר` | `מכר כמותי (אלפי ליטרים)` | 77 | 39,795 M (27.6%) |
+| `יח' באריזה` | `מחיר ממוצע ליחידה באריזה` | `מכר כמותי (אלפי יח' באריזה)` | 28 | 14,564 M (10.1%) |
+
+Selection rule, applied to revenue-weighted availability across all 31 months:
+weight or volume wins first (whichever of kg/litre covers more), then packaged
+unit, then revenue as a last resort. A measure must clear 95% of category
+revenue to win outright, with a 50% pass before dropping a tier.
+
+**No category needed the revenue fallback** — all 300 resolved to a real price
+basis, and the winning measure averages 99.9% coverage of category revenue. The
+weakest single category-month is `סלרי ראש` at 80.5%; everything else stays
+above 90%.
+
+The full assignment is in **`category_measure_map.csv`** (300 rows: category,
+department, basis, rows, revenue, coverage).
+
+**Units differ by basis, so never sum `כמות סטנדרטית` across categories** unless
+they share a `בסיס מדידה` — it is tonnes for one category, thousands of litres
+for another, thousands of packaged units for a third. Prices are all NIS, but per
+kg / per litre / per unit respectively, so the same applies to unweighted price
+averages. Grouping by `בסיס מדידה` alongside the category keeps this honest.
+
+1,012 rows (0.13%, 36.7 M NIS) have no standard price: their category's basis is
+missing on that particular row. `כמות סטנדרטית` is null in exactly the same rows.
+
+16 of the 300 categories do not appear in all 31 months (200.4 M NIS, 0.14% of
+revenue) — sunscreen and other seasonal lines. That is a gap in the source data,
+not a basis inconsistency.
+
 ## Read this before analysing
 
 **1. The six dimension columns do not uniquely identify a row.** The panel is
@@ -166,6 +211,10 @@ whether to include them.
   differing group, row count, or sum.
 - Kept and dropped revenue sum exactly to the unfiltered total; every retained
   row satisfies the threshold.
+- Every category resolves to exactly one `בסיס מדידה` across all 31 months, and
+  no category-month mixes bases.
+- `מחיר סטנדרטי` and `כמות סטנדרטית` match their basis's source column in every
+  row, with no exceptions.
 - Before filtering, total row count and every monthly revenue figure matched
   earlier versions of this dataset exactly.
 - Column sums confirmed identical before and after normalisation.
@@ -179,7 +228,8 @@ mis-assign values.
 
 `scripts/` reproduces the dataset from `v2_sources/`: `01_xlsx_to_parquet.py`
 (streaming SAX parse; handles both export layouts and both string encodings),
-`02_normalize.py` (normalise, add `period`, apply the volume threshold, sort),
+`02_normalize.py` (normalise, add `period`, apply the volume threshold, assign
+the per-category basis, derive the standard columns, sort),
 `03_verify.py` (independent fidelity check). Requires `pyarrow` and `duckdb`.
 
 `03_verify.py` checks the parser against the raw XML and so runs against the
@@ -198,12 +248,12 @@ GROUP BY 1 ORDER BY revenue DESC;
 SELECT period, round(sum("מכר כספי (מיליוני ₪)"), 1) AS revenue
 FROM 'retail_sales_2024_2026.parquet' GROUP BY 1 ORDER BY 1;
 
--- weighted price per packaged unit, by category over time
-SELECT period, "קטגוריה",
-       sum("מכר כספי (מיליוני ₪)") * 1000 / sum("מכר כמותי (אלפי יח' באריזה)") AS nis_per_unit
+-- weighted standard price by category over time (safe: one basis per category)
+SELECT "קטגוריה", any_value("בסיס מדידה") AS basis, period,
+       sum("מכר כספי (מיליוני ₪)") * 1000 / sum("כמות סטנדרטית") AS price
 FROM 'retail_sales_2024_2026.parquet'
-WHERE "מכר כמותי (אלפי יח' באריזה)" > 0
-GROUP BY 1, 2 ORDER BY 1, 2;
+WHERE "כמות סטנדרטית" > 0
+GROUP BY 1, 3 ORDER BY 1, 3;
 
 -- year-over-year by department, like-for-like months (Jan–Jul)
 SELECT "מחלקה",
