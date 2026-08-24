@@ -1,11 +1,15 @@
 # Israeli Retail Sales Panel, 2024–2026
 
-`retail_sales_2024_2026.parquet` — **1,559,014 rows**, 31 consecutive months
-(**2024/01 → 2026/07**), 15 measures and dimensions, 48 MB.
+`retail_sales_2024_2026.parquet` — **805,756 rows**, 31 consecutive months
+(**2024/01 → 2026/07**), 15 measures and dimensions, 27 MB.
 
-The panel exceeds Excel's 1,048,576-row sheet limit by ~510k rows, so it is
-published as Parquet. It loads in one call from pandas, polars, DuckDB, R, or
-Power BI.
+**A volume threshold is applied:** a row is kept only if at least one of its
+three quantity columns exceeds 0.5. See [Volume threshold](#volume-threshold)
+for what that removes.
+
+The panel is published as Parquet — the unfiltered build exceeds Excel's
+1,048,576-row sheet limit. It loads in one call from pandas, polars, DuckDB, R,
+or Power BI.
 
 ```python
 import pandas as pd
@@ -17,7 +21,7 @@ duckdb -c "SELECT * FROM 'retail_sales_2024_2026.parquet' LIMIT 10"
 
 ## Schema
 
-Every column is populated across the full 31 months.
+Every column spans the full 31 months. Percentages are of the filtered row count.
 
 | Column | Type | Non-null | Notes |
 |---|---|---|---|
@@ -25,17 +29,17 @@ Every column is populated across the full 31 months.
 | `חודש` | VARCHAR | 100% | `YYYY/MM`, as in source |
 | `period` | DATE | 100% | **added** — first of month, for time series |
 | `מחלקה` | VARCHAR | 100% | department, 54 distinct |
-| `קטגוריה` | VARCHAR | 100% | category, 311 distinct |
+| `קטגוריה` | VARCHAR | 100% | category, 300 distinct |
 | `ספק` | VARCHAR | 100% | supplier |
 | `יצרן` | VARCHAR | 100% | manufacturer |
 | `מכר כספי (מיליוני ₪)` | DOUBLE | 100% | revenue, millions NIS |
-| `מכר כמותי (אלפי יח' באריזה)` | DOUBLE | 82.1% | packaged units, thousands |
-| `מכר כמותי (טון)` | DOUBLE | 64.3% | tonnage |
-| `מכר כמותי (אלפי ליטרים)` | DOUBLE | 24.8% | thousands of litres |
-| `מחיר ממוצע ליחידה באריזה` | DOUBLE | 82.1% | avg price per packaged unit |
-| `מחיר ממוצע ליחידת צריכה` | DOUBLE | 0.6% | avg price per consumption unit — very sparse |
-| `מחיר ממוצע לק“ג` | DOUBLE | 64.3% | avg price/kg |
-| `מחיר ממוצע לליטר` | DOUBLE | 24.8% | avg price/litre |
+| `מכר כמותי (אלפי יח' באריזה)` | DOUBLE | 88.5% | packaged units, thousands |
+| `מכר כמותי (טון)` | DOUBLE | 64.7% | tonnage |
+| `מכר כמותי (אלפי ליטרים)` | DOUBLE | 22.0% | thousands of litres |
+| `מחיר ממוצע ליחידה באריזה` | DOUBLE | 88.5% | avg price per packaged unit |
+| `מחיר ממוצע ליחידת צריכה` | DOUBLE | 0.8% | avg price per consumption unit — very sparse |
+| `מחיר ממוצע לק“ג` | DOUBLE | 64.7% | avg price/kg |
+| `מחיר ממוצע לליטר` | DOUBLE | 22.0% | avg price/litre |
 | `source_file` | VARCHAR | 100% | **added** — originating workbook |
 
 Original Hebrew column names are preserved exactly. Rows are sorted by
@@ -58,7 +62,8 @@ Built entirely from the eight 14-column workbooks in `v2_sources/`:
 | `2026_57.xlsx` | 2026/05–07 | 147,572 |
 | **Total** | **31 months** | **1,559,014** |
 
-Coverage is contiguous, with no gaps and no overlapping months.
+Those are source row counts, before the volume threshold. Coverage is
+contiguous, with no gaps and no overlapping months.
 
 The five 11-column workbooks in the repo root (`2024_16`, `2024_712`, `2025_16`,
 `2025_712`, `2026_17`) are an earlier export of the same data without the three
@@ -75,6 +80,41 @@ published from an earlier version of this dataset changes.
 
 The `בחירות משתמש` sheet in each workbook is a filter catalogue of the names
 requested at export time — metadata, not observations — and is not carried in.
+
+## Volume threshold
+
+A row survives only if **at least one** of `מכר כמותי (אלפי יח' באריזה)`,
+`מכר כמותי (טון)` or `מכר כמותי (אלפי ליטרים)` is greater than 0.5. This trims
+the long tail of negligible-volume rows:
+
+| | Rows | Revenue |
+|---|---|---|
+| Source panel | 1,559,014 | 147,456.2 M NIS |
+| **Kept** | **805,756** (51.7%) | **144,174.0 M** (97.77%) |
+| Dropped | 753,258 (48.3%) | 3,282.2 M (2.23%) |
+
+Nearly half the rows carry ~2% of revenue. The retained share is stable year to
+year (97.71% / 97.78% / 97.86% for 2024 / 2025 / 2026), so trends are unaffected.
+
+**What this costs you.** All 54 departments survive, but thinner dimensions do
+not:
+
+- **11 categories disappear entirely** (86.9 M NIS). Almost all of it is
+  `לוף/פרסה` at 74.7 M; the rest are minor herb and speciality lines
+  (`בק צואי`, `תבלינים טריים אחרים`, `מרווה`, `חמציץ`, and six near-zero others).
+- **703 of 2,104 suppliers disappear** (64.8 M NIS), and **491 of 1,740
+  manufacturers** (51.2 M NIS).
+
+So department- and category-level analysis is essentially unaffected, but
+**long-tail supplier or manufacturer counts are not comparable to the source**.
+Rerun without the threshold if you need them.
+
+A row is judged on the signed value, as specified. Twenty-one rows whose
+quantity magnitude exceeds 0.5 but is negative (large returns) are therefore
+dropped — a negligible edge case, but it is the reason those rows are gone.
+
+To rebuild the full unfiltered panel, drop the `WHERE {KEEP}` clause from
+`scripts/02_normalize.py`.
 
 ## Read this before analysing
 
@@ -96,7 +136,9 @@ otherwise have broken any `AVG` or null-rate comparison across the boundary.
 
 **3. Products are tracked by unit count, weight, or volume — rarely all three.**
 Filter on the relevant quantity column before aggregating rather than assuming
-presence. `מחיר ממוצע ליחידת צריכה` is populated in only 9,554 rows (0.6%).
+presence. `מחיר ממוצע ליחידת צריכה` is populated in only 6,829 rows (0.8%).
+Note a quantity below 0.5 can still appear, when the row was kept on a
+*different* quantity column.
 
 **4. Do not average the price columns.** They are source-provided per-row
 averages; averaging them again gives an unweighted mean. Recompute weighted:
@@ -122,8 +164,10 @@ whether to include them.
   (max relative difference 3×10⁻¹⁴ across 32 file/measure checks).
 - Both export generations compared group-by-group across all 31 months: no
   differing group, row count, or sum.
-- Total row count and every monthly revenue figure are unchanged from earlier
-  versions of this dataset.
+- Kept and dropped revenue sum exactly to the unfiltered total; every retained
+  row satisfies the threshold.
+- Before filtering, total row count and every monthly revenue figure matched
+  earlier versions of this dataset exactly.
 - Column sums confirmed identical before and after normalisation.
 - Month coverage confirmed contiguous, with no duplicate months across files.
 
@@ -135,8 +179,11 @@ mis-assign values.
 
 `scripts/` reproduces the dataset from `v2_sources/`: `01_xlsx_to_parquet.py`
 (streaming SAX parse; handles both export layouts and both string encodings),
-`02_normalize.py` (normalise, add `period`, sort), `03_verify.py` (independent
-fidelity check). Requires `pyarrow` and `duckdb`.
+`02_normalize.py` (normalise, add `period`, apply the volume threshold, sort),
+`03_verify.py` (independent fidelity check). Requires `pyarrow` and `duckdb`.
+
+`03_verify.py` checks the parser against the raw XML and so runs against the
+unfiltered build.
 
 ## Starting points
 
@@ -167,6 +214,6 @@ WHERE month(period) <= 7
 GROUP BY 1 ORDER BY y2026 DESC;
 ```
 
-Revenue totals for orientation: **55,001 M NIS** (2024), **57,507 M** (2025),
-**34,948 M** (2026, seven months). Largest department across the panel is
-`מוצרי חלב ותחליפיו` at 26,737 M NIS.
+Revenue totals for orientation, after the threshold: **53,743 M NIS** (2024),
+**56,231 M** (2025), **34,200 M** (2026, seven months). Largest department across
+the panel is `מוצרי חלב ותחליפיו`.
