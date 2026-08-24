@@ -130,6 +130,12 @@ code{font-family:"IBM Plex Mono",monospace;font-size:.9em;
 .eq{font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.75;
   background:var(--surface);border:1px solid var(--rule);border-radius:3px;
   padding:14px 16px;overflow-x:auto;white-space:pre;color:var(--ink-2)}
+.revision{background:var(--surface);border:1px solid var(--rule);
+  border-left:3px solid var(--s2);border-radius:3px;padding:16px 19px;max-width:var(--maxw)}
+.revision .rt{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--s2);margin:0 0 7px}
+.revision p{margin:0;font-size:14px;line-height:1.58;color:var(--ink-2)}
+.revision b{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -144,6 +150,19 @@ code{font-family:"IBM Plex Mono",monospace;font-size:.9em;
     <strong>1.6% more expensive</strong> than it began, relative to a less concentrated
     peer. The gap is flat through 2024 and opens only as the currency moves.</p>
   </header>
+
+  <div class="revision">
+    <p class="rt">Superseded on the identification question</p>
+    <p>Everything below interacts CR3 with <b>log(USD/ILS)</b>, which forces the price gap
+    to move in proportion to the currency. Re-estimated with a free coefficient per month
+    — no exchange rate in the model — the CR3 term is <b>no longer jointly significant</b>
+    once the five large suppliers are included (F = 1.30, p = 0.14 on 30 restrictions;
+    p = 0.043 with CR3 alone). What is jointly significant there is <b>giant presence</b>
+    (p = 0.0003), on a path that opens in 2024 and closes in 2026 — a shape the
+    exchange-rate interaction cannot represent. Treat the γ below as "the part of the gap
+    that happens to track the currency", not as the concentration effect. The companion
+    chart, <i>Do the Giants Move Prices?</i>, carries the current reading.</p>
+  </div>
 
   <div class="stats">
     <div class="stat">

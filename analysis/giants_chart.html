@@ -8,7 +8,8 @@
   --ground:#f5f7f8; --surface:#fcfcfb; --surface-2:#eef1f3;
   --ink:#12151a; --ink-2:#55606e; --ink-3:#8a94a1;
   --rule:#dfe4e8; --rule-strong:#c3ccd4;
-  --s1:#2a78d6; --s2:#eb6834; --s1-fill:rgba(42,120,214,.13);
+  --s1:#2a78d6; --s1-fill:rgba(42,120,214,.15);
+  --s2:#eb6834; --s2-fill:rgba(235,104,52,.14);
   --maxw:74ch;
 }
 @media (prefers-color-scheme: dark){
@@ -17,7 +18,8 @@
     --ground:#121415; --surface:#1a1a19; --surface-2:#232426;
     --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#8b8b84;
     --rule:#32332f; --rule-strong:#45463f;
-    --s1:#3987e5; --s2:#d95926; --s1-fill:rgba(57,135,229,.18);
+    --s1:#3987e5; --s1-fill:rgba(57,135,229,.20);
+    --s2:#d95926; --s2-fill:rgba(217,89,38,.20);
   }
 }
 :root[data-theme="dark"]{
@@ -25,7 +27,8 @@
   --ground:#121415; --surface:#1a1a19; --surface-2:#232426;
   --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#8b8b84;
   --rule:#32332f; --rule-strong:#45463f;
-  --s1:#3987e5; --s2:#d95926; --s1-fill:rgba(57,135,229,.18);
+  --s1:#3987e5; --s1-fill:rgba(57,135,229,.20);
+  --s2:#d95926; --s2-fill:rgba(217,89,38,.20);
 }
 *{box-sizing:border-box}
 body{background:var(--ground);color:var(--ink);
@@ -47,7 +50,13 @@ p{margin:0 0 14px}
 section{display:flex;flex-direction:column;gap:18px}
 .sechead{display:flex;flex-direction:column;gap:2px;max-width:var(--maxw)}
 .sechead .sub{color:var(--ink-2);font-size:14.5px;line-height:1.5}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:1px;
+.revision{background:var(--surface);border:1px solid var(--rule);
+  border-left:3px solid var(--s2);border-radius:3px;padding:16px 19px;max-width:var(--maxw)}
+.revision .t{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--s2);margin:0 0 7px}
+.revision p{margin:0;font-size:14px;line-height:1.58;color:var(--ink-2)}
+.revision b{color:var(--ink)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;
   background:var(--rule);border:1px solid var(--rule);border-radius:3px;overflow:hidden}
 .stat{background:var(--surface);padding:17px 19px;display:flex;flex-direction:column;gap:5px}
 .stat .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
@@ -59,19 +68,18 @@ section{display:flex;flex-direction:column;gap:18px}
 .panel-title{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
   flex-wrap:wrap;margin-bottom:2px}
 .panel-title .unit{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);letter-spacing:.04em}
-.legend{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0 2px}
-.lg{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
 .chartbox{position:relative}
 svg{display:block;width:100%;height:auto;overflow:visible}
 .tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;
   background:var(--surface);border:1px solid var(--rule-strong);border-radius:3px;
-  padding:9px 11px;font-size:12.5px;line-height:1.5;min-width:214px;
+  padding:9px 11px;font-size:12.5px;line-height:1.5;min-width:190px;
   box-shadow:0 6px 22px rgba(0,0,0,.13);z-index:5}
 .tip .tm{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
   letter-spacing:.06em;margin-bottom:5px}
 .tip .row{display:flex;justify-content:space-between;gap:14px}
 .tip .row span:last-child{font-family:"IBM Plex Mono",monospace;
   font-variant-numeric:tabular-nums;font-weight:500}
+.tip .ci{color:var(--ink-3);font-size:11.5px;font-family:"IBM Plex Mono",monospace}
 table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
 th,td{text-align:right;padding:7px 11px;border-bottom:1px solid var(--rule)}
 th:first-child,td:first-child{text-align:left}
@@ -84,151 +92,174 @@ td.mono{font-family:"IBM Plex Mono",monospace}
 .dim{color:var(--ink-3)}
 .notes{font-size:13.5px;color:var(--ink-2);line-height:1.62;max-width:var(--maxw)}
 .notes p{margin:0 0 11px}
-.notes b{color:var(--ink);font-weight:600}
+.notes b{color:var(--ink)}
 .divider{height:1px;background:var(--rule);border:0;margin:0}
 .caveat{border-left:2px solid var(--s2);padding:2px 0 2px 15px;font-size:13.5px;
   color:var(--ink-2);line-height:1.6;max-width:var(--maxw)}
 .caveat b{color:var(--ink)}
 code{font-family:"IBM Plex Mono",monospace;font-size:.9em;background:var(--surface-2);
   padding:1px 5px;border-radius:2px}
+.eq{font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.75;
+  background:var(--surface);border:1px solid var(--rule);border-radius:3px;
+  padding:14px 16px;overflow-x:auto;white-space:pre;color:var(--ink-2)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <div class="wrap">
   <header class="prose">
     <p class="eyebrow">Israeli retail · <bdi>תנובה</bdi> · <bdi>שטראוס</bdi> · <bdi>אסם</bdi> · <bdi>משקאות קלים</bdi> · <bdi>דיפלומט</bdi></p>
-    <h1>Concentration moves prices. The five giants, on this evidence, do not.</h1>
-    <p class="lede">Concentrated categories held prices <strong>~4 points higher</strong>
-    than unconcentrated ones as the shekel appreciated. Whether one of the five giants
-    sits inside the category makes <strong>no detectable difference</strong> — and among
-    concentrated categories, the ones <em>without</em> a giant drifted up slightly more,
-    not less.</p>
+    <h1>With time free to take any shape, the giants show up and concentration fades</h1>
+    <p class="lede">Letting each month have its own coefficient — instead of forcing the
+    path to track the exchange rate — reverses the earlier reading. Categories holding one
+    of the five giants ran <strong>2 to 4% more expensive</strong> through 2024–2025
+    (joint p = 0.0003), then converged to zero during 2026. The CR3 term, once giants are
+    in the model, <strong>no longer clears significance</strong> (p = 0.14).</p>
   </header>
 
+  <div class="revision">
+    <p class="t">Revises the exchange-rate specification</p>
+    <p>The earlier version interacted both terms with <b>log(USD/ILS)</b>. That imposes a
+    single shape: the differential must move in proportion to the currency, which trends
+    almost monotonically. CR3's gap does trend that way, so it loaded onto the exchange
+    rate and looked significant. The giant gap is a <b>hump</b> — it opens in 2024, holds
+    through 2025, closes in 2026 — which is close to orthogonal to a monotone trend, so
+    that specification could not see it. Freeing the time path is what surfaces it.</p>
+  </div>
+
   <div class="stats">
-    <div class="stat"><span class="k">Concentrated + giant</span>
-      <span class="v">+9.7%</span><span class="n">Price vs Jan 2024 · 77 categories</span></div>
-    <div class="stat"><span class="k">Concentrated, no giant</span>
-      <span class="v">+11.5%</span><span class="n">Price vs Jan 2024 · 59 categories</span></div>
-    <div class="stat"><span class="k">Less conc. + giant</span>
-      <span class="v">+6.8%</span><span class="n">Price vs Jan 2024 · 55 categories</span></div>
-    <div class="stat"><span class="k">Less conc., no giant</span>
-      <span class="v">+5.9%</span><span class="n">Price vs Jan 2024 · 93 categories</span></div>
+    <div class="stat"><span class="k">Giant × month, joint</span>
+      <span class="v" style="color:var(--s1)">p = 0.0003</span>
+      <span class="n">F = 2.28 on 30 restrictions</span></div>
+    <div class="stat"><span class="k">CR3 × month, joint</span>
+      <span class="v">p = 0.14</span>
+      <span class="n">F = 1.30 · was p = 0.043 before giants entered</span></div>
+    <div class="stat"><span class="k">Peak giant gap</span>
+      <span class="v">+4.1%</span>
+      <span class="n">February 2025</span></div>
+    <div class="stat"><span class="k">By July 2026</span>
+      <span class="v">−0.2%</span>
+      <span class="n">Gap fully closed</span></div>
   </div>
 
   <section>
     <div class="sechead">
-      <h2>The lines split by concentration, not by who is in the category</h2>
-      <p class="sub">Average within-category price, indexed to January 2024. Colour marks
-      concentration; a dashed line marks the absence of a giant. The two blue lines sit
-      together above the two orange ones — the dashing barely matters.</p>
+      <h2>Two differentials, two different shapes</h2>
+      <p class="sub">Each panel is one term from the same regression, on a shared scale.
+      Both are net of the other, of category fixed effects and of month fixed effects.
+      Filled markers mark months significant on their own.</p>
     </div>
+
     <div class="card">
-      <div class="panel-title">
-        <h3>Price level by group</h3>
-        <span class="unit">% vs Jan 2024</span>
+      <div class="panel-title"><h3>Giant present (≥5% share) — price gap</h3>
+        <span class="unit">% vs Jan 2024 · shaded = 95% CI</span></div>
+      <div class="chartbox" id="boxG">
+        <svg id="cG" viewBox="0 0 900 268" role="img"
+          aria-label="Monthly price gap for categories containing one of the five giants, with 95 percent confidence band."></svg>
+        <div class="tip" id="tipG"></div>
       </div>
-      <div class="chartbox" id="box1">
-        <svg id="c1" viewBox="0 0 900 330" role="img"
-          aria-label="Price index by group: concentrated with and without a giant, less concentrated with and without a giant."></svg>
-        <div class="tip" id="tip1"></div>
+    </div>
+
+    <div class="card">
+      <div class="panel-title"><h3>CR3, per +1 SD — price gap</h3>
+        <span class="unit">% vs Jan 2024 · shaded = 95% CI</span></div>
+      <div class="chartbox" id="boxC">
+        <svg id="cC" viewBox="0 0 900 268" role="img"
+          aria-label="Monthly price gap per one standard deviation of CR3, with 95 percent confidence band."></svg>
+        <div class="tip" id="tipC"></div>
       </div>
-      <div class="legend">
-        <span class="lg"><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--s1)" stroke-width="2.4"/></svg>Concentrated · giant</span>
-        <span class="lg"><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--s1)" stroke-width="2.4" stroke-dasharray="5 3.5"/></svg>Concentrated · no giant</span>
-        <span class="lg"><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--s2)" stroke-width="2.4"/></svg>Less concentrated · giant</span>
-        <span class="lg"><svg width="26" height="10"><line x1="1" y1="5" x2="25" y2="5" stroke="var(--s2)" stroke-width="2.4" stroke-dasharray="5 3.5"/></svg>Less concentrated · no giant</span>
+    </div>
+
+    <div class="card">
+      <div class="panel-title"><h3>Shekel, for timing</h3>
+        <span class="unit">USD/ILS, % vs Jan 2024</span></div>
+      <div class="chartbox" id="boxF">
+        <svg id="cF" viewBox="0 0 900 168" role="img"
+          aria-label="US dollar to shekel exchange rate, percent change since January 2024."></svg>
+        <div class="tip" id="tipF"></div>
       </div>
     </div>
   </section>
 
   <section>
     <div class="sechead">
-      <h2>Every way of asking gives the same answer</h2>
-      <p class="sub">Each row is the giant term from its own regression, with CR3 held in.
-      A bar crossing zero means no detectable effect on pass-through. CR3 itself, at the
-      bottom, is the one term that clears zero.</p>
-    </div>
-    <div class="card">
-      <div class="panel-title">
-        <h3>Giant × log(USD/ILS) coefficient</h3>
-        <span class="unit">point estimate · 95% CI · negative = held prices up</span>
-      </div>
-      <div class="chartbox" id="box2">
-        <svg id="c2" viewBox="0 0 900 360" role="img"
-          aria-label="Forest plot of giant interaction coefficients under different definitions and for each firm."></svg>
-        <div class="tip" id="tip2"></div>
-      </div>
+      <h2>The two effects live in different years</h2>
+      <p class="sub">Joint tests on subsets of the month interactions. The giant gap is a
+      2025 phenomenon; what little CR3 does appears only in 2026.</p>
     </div>
     <div class="tablewrap">
       <table>
-        <thead><tr><th scope="col">Specification</th><th scope="col">Categories</th>
-          <th scope="col">γ</th><th scope="col">SE</th><th scope="col">p</th>
-          <th scope="col">Bonferroni p</th></tr></thead>
-        <tbody id="ftbody"></tbody>
+        <thead><tr><th scope="col">Window</th><th scope="col">Months</th>
+          <th scope="col">Giant F</th><th scope="col">Giant p</th>
+          <th scope="col">CR3 F</th><th scope="col">CR3 p</th></tr></thead>
+        <tbody id="jtbody"></tbody>
       </table>
     </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>The lagged exchange rate, for completeness</h2>
+      <p class="sub">If the interaction is put back on the currency at various lags, the
+      picture does not change: CR3 keeps a modest negative term, the giant term stays
+      indistinguishable from zero. A three-month lag is no different from none.</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Lag</th><th scope="col">CR3 γ</th><th scope="col">SE</th>
+          <th scope="col">p</th><th scope="col">Giant γ</th><th scope="col">SE</th>
+          <th scope="col">p</th></tr></thead>
+        <tbody id="ltbody"></tbody>
+      </table>
+    </div>
+    <p class="caveat"><b>This is why the time specification is the better one here.</b> The
+    lag table asks the same badly-posed question five ways and gets the same answer each
+    time: it can only detect differentials shaped like the currency path. Nothing in the
+    theory says a pass-through gap must be monotone — it can open and close, which is
+    exactly what the giant gap does.</p>
   </section>
 
   <hr class="divider">
 
   <section>
-    <div class="sechead"><h2>What this does and does not establish</h2></div>
+    <div class="sechead"><h2>Specification</h2></div>
+    <div class="eq">log P<sub>ct</sub>  =  α<sub>c</sub>  +  δ<sub>t</sub>  +  Σ<sub>t</sub> β<sub>t</sub>·( CR3<sub>z,c</sub> × 1[month=t] )  +  Σ<sub>t</sub> φ<sub>t</sub>·( Giant<sub>c</sub> × 1[month=t] )  +  ε<sub>ct</sub></div>
     <div class="notes">
-      <p><b>The comparison is clean.</b> Within each concentration tier, categories with and
-      without a giant have almost identical CR3 — 93.9 vs 93.2 among the concentrated, 68.3
-      vs 67.7 among the rest. So the giant flag is not quietly re-measuring concentration;
-      the four cells are separable, with 55–93 categories each.</p>
-      <p><b>Concentration survives; the giants do not add to it.</b> Entering both terms
-      together, CR3 keeps its coefficient (−0.090, p = 0.038) while the giant term is
-      indistinguishable from zero. A triple interaction — asking whether giants matter
-      <em>specifically</em> inside concentrated categories, the question posed — comes back
-      at +0.054 with p = 0.52. Concentration appears to work through market structure
-      rather than through the identity of these five firms.</p>
-      <p><b>Tnuva is the one firm with a raw p below 0.05</b> (+0.109, p = 0.042) — and its
-      sign says Tnuva categories passed <em>more</em> of the appreciation through, not less.
-      With five firms tested, the Bonferroni threshold is 0.01 and this does not survive
-      (corrected p = 0.21). Treat it as a lead to check, not a finding.</p>
-    </div>
-    <p class="caveat"><b>This is an imprecise null, not a tight zero.</b> The 95% interval on
-    the giant term spans roughly ±3 percentage points of price over the window — wider than
-    the entire CR3 effect it is being compared against (+1.66% per SD). The data rule out a
-    <em>large</em> giant effect; they cannot rule out a moderate one. With 284 categories
-    and one appreciation episode, that is the limit of what this design can say.</p>
-    <div class="notes">
-      <p>Specification, sample and caveats otherwise follow the pass-through analysis:
-      log price on category and month fixed effects, standard errors clustered by category,
-      284 categories over 31 months. Group membership is fixed from 2024 shares, so no
-      category switches group mid-panel. A giant counts as present at a combined quantity
-      share of 5% or more; <code>present at all</code> and <code>is the #1 supplier</code>
-      are shown as alternatives and agree. Price is a unit value, so category mix drift
-      remains a confounder here as before.</p>
+      <p>No exchange rate enters the model at all. 284 categories × 31 months = 8,804
+      observations, 132 categories with a giant at ≥5% quantity share and 152 without,
+      January 2024 as reference, standard errors clustered by category. The joint tests
+      are F-tests on all 30 month interactions of a term at once, which is the right test
+      for "does this matter over the panel" — reading 30 individual coefficients invites
+      finding one by chance.</p>
+      <p><b>The reversal is not an artefact of the giant definition.</b> Joint p for the
+      giant terms is 0.0003 at a ≥5% share, 0.0008 for present-at-all, and 0.0001 when a
+      giant must be the top supplier. CR3's joint p is 0.14, 0.037 and 0.09 across the
+      same three — never robustly significant once giants are included.</p>
+      <p><b>What it does not settle.</b> The two terms are correlated: giant categories are
+      more concentrated on average, so separating them leans on the within-tier variation
+      documented earlier (CR3 is near-identical across giant and non-giant categories
+      inside each tier, which is what makes the split legitimate). A gap that opens and
+      closes is also the signature you would expect from a mix shift — promotions, pack
+      sizes — not only from pricing conduct, and a unit-value price cannot tell those
+      apart. Timing is suggestive, not identification: nothing here pins the 2025 gap to
+      a specific cause.</p>
     </div>
   </section>
 </div>
 
 <script>
-const D = {"paths":{"conc_giant":[{"m":"2024-01","b":0.0,"se":0.0},{"m":"2024-02","b":0.962,"se":0.314},{"m":"2024-03","b":2.137,"se":0.364},{"m":"2024-04","b":3.176,"se":0.775},{"m":"2024-05","b":2.273,"se":0.648},{"m":"2024-06","b":3.964,"se":0.787},{"m":"2024-07","b":4.818,"se":0.764},{"m":"2024-08","b":5.661,"se":0.762},{"m":"2024-09","b":4.463,"se":0.649},{"m":"2024-10","b":5.374,"se":0.705},{"m":"2024-11","b":6.829,"se":0.922},{"m":"2024-12","b":6.87,"se":0.93},{"m":"2025-01","b":8.39,"se":1.024},{"m":"2025-02","b":8.793,"se":1.051},{"m":"2025-03","b":9.761,"se":1.164},{"m":"2025-04","b":9.049,"se":1.201},{"m":"2025-05","b":8.046,"se":1.25},{"m":"2025-06","b":10.405,"se":0.948},{"m":"2025-07","b":10.566,"se":1.14},{"m":"2025-08","b":10.349,"se":1.286},{"m":"2025-09","b":8.648,"se":1.216},{"m":"2025-10","b":10.608,"se":1.186},{"m":"2025-11","b":10.378,"se":1.187},{"m":"2025-12","b":10.334,"se":1.043},{"m":"2026-01","b":9.387,"se":1.143},{"m":"2026-02","b":9.638,"se":1.172},{"m":"2026-03","b":10.283,"se":1.287},{"m":"2026-04","b":10.196,"se":1.388},{"m":"2026-05","b":9.769,"se":1.178},{"m":"2026-06","b":10.559,"se":1.103},{"m":"2026-07","b":9.718,"se":1.163}],"conc_nogiant":[{"m":"2024-01","b":0.0,"se":0.0},{"m":"2024-02","b":2.477,"se":0.831},{"m":"2024-03","b":0.977,"se":1.725},{"m":"2024-04","b":1.733,"se":1.984},{"m":"2024-05","b":2.649,"se":1.796},{"m":"2024-06","b":2.42,"se":1.592},{"m":"2024-07","b":3.292,"se":1.528},{"m":"2024-08","b":4.491,"se":1.691},{"m":"2024-09","b":1.636,"se":1.754},{"m":"2024-10","b":6.429,"se":3.936},{"m":"2024-11","b":2.38,"se":1.931},{"m":"2024-12","b":2.877,"se":2.144},{"m":"2025-01","b":4.286,"se":1.372},{"m":"2025-02","b":4.424,"se":1.61},{"m":"2025-03","b":7.373,"se":2.995},{"m":"2025-04","b":5.54,"se":2.088},{"m":"2025-05","b":7.95,"se":3.69},{"m":"2025-06","b":7.113,"se":2.02},{"m":"2025-07","b":9.111,"se":2.244},{"m":"2025-08","b":8.699,"se":1.96},{"m":"2025-09","b":7.443,"se":2.192},{"m":"2025-10","b":6.553,"se":1.985},{"m":"2025-11","b":9.469,"se":2.841},{"m":"2025-12","b":8.959,"se":3.505},{"m":"2026-01","b":10.923,"se":3.125},{"m":"2026-02","b":10.969,"se":3.022},{"m":"2026-03","b":9.166,"se":3.191},{"m":"2026-04","b":12.719,"se":2.914},{"m":"2026-05","b":12.651,"se":3.205},{"m":"2026-06","b":16.67,"se":4.957},{"m":"2026-07","b":11.458,"se":2.913}],"less_giant":[{"m":"2024-01","b":0.0,"se":0.0},{"m":"2024-02","b":1.802,"se":0.467},{"m":"2024-03","b":2.385,"se":0.623},{"m":"2024-04","b":5.468,"se":1.448},{"m":"2024-05","b":3.479,"se":0.81},{"m":"2024-06","b":3.821,"se":0.91},{"m":"2024-07","b":4.309,"se":0.97},{"m":"2024-08","b":5.057,"se":0.812},{"m":"2024-09","b":2.674,"se":1.272},{"m":"2024-10","b":5.194,"se":1.125},{"m":"2024-11","b":4.584,"se":1.029},{"m":"2024-12","b":3.71,"se":1.205},{"m":"2025-01","b":4.679,"se":1.108},{"m":"2025-02","b":5.968,"se":1.073},{"m":"2025-03","b":6.202,"se":1.319},{"m":"2025-04","b":6.766,"se":1.789},{"m":"2025-05","b":4.135,"se":1.558},{"m":"2025-06","b":6.933,"se":1.403},{"m":"2025-07","b":5.597,"se":1.851},{"m":"2025-08","b":6.277,"se":1.536},{"m":"2025-09","b":2.966,"se":1.793},{"m":"2025-10","b":6.172,"se":1.428},{"m":"2025-11","b":4.69,"se":1.355},{"m":"2025-12","b":5.438,"se":1.445},{"m":"2026-01","b":5.939,"se":1.566},{"m":"2026-02","b":6.317,"se":1.531},{"m":"2026-03","b":7.838,"se":1.868},{"m":"2026-04","b":8.501,"se":1.593},{"m":"2026-05","b":7.67,"se":1.678},{"m":"2026-06","b":8.004,"se":1.634},{"m":"2026-07","b":6.784,"se":1.676}],"less_nogiant":[{"m":"2024-01","b":0.0,"se":0.0},{"m":"2024-02","b":0.772,"se":0.423},{"m":"2024-03","b":1.009,"se":0.816},{"m":"2024-04","b":2.095,"se":1.137},{"m":"2024-05","b":1.724,"se":0.566},{"m":"2024-06","b":1.298,"se":0.687},{"m":"2024-07","b":0.758,"se":0.846},{"m":"2024-08","b":1.588,"se":0.79},{"m":"2024-09","b":-0.084,"se":0.883},{"m":"2024-10","b":1.292,"se":0.931},{"m":"2024-11","b":1.986,"se":0.793},{"m":"2024-12","b":2.578,"se":0.896},{"m":"2025-01","b":3.121,"se":0.783},{"m":"2025-02","b":2.353,"se":0.998},{"m":"2025-03","b":2.842,"se":1.091},{"m":"2025-04","b":3.95,"se":1.173},{"m":"2025-05","b":3.282,"se":1.063},{"m":"2025-06","b":4.789,"se":1.009},{"m":"2025-07","b":4.469,"se":1.079},{"m":"2025-08","b":4.708,"se":1.096},{"m":"2025-09","b":2.796,"se":1.161},{"m":"2025-10","b":3.644,"se":1.136},{"m":"2025-11","b":4.142,"se":1.081},{"m":"2025-12","b":3.101,"se":1.295},{"m":"2026-01","b":4.022,"se":1.143},{"m":"2026-02","b":4.056,"se":1.238},{"m":"2026-03","b":4.817,"se":1.39},{"m":"2026-04","b":5.37,"se":1.348},{"m":"2026-05","b":5.997,"se":1.248},{"m":"2026-06","b":5.674,"se":1.221},{"m":"2026-07","b":5.916,"se":1.312}]},"forest":[{"label":"Any of the five present","b":0.0133,"se":0.0823,"p":0.872,"kind":"def","ncat":179},{"label":"Combined share ≥ 5%","b":0.0924,"se":0.0759,"p":0.2239,"kind":"def","ncat":132},{"label":"A giant is the #1 supplier","b":0.0344,"se":0.0717,"p":0.6308,"kind":"def","ncat":85},{"label":"תנובה","b":0.1091,"se":0.0536,"p":0.0419,"kind":"firm","ncat":38},{"label":"שטראוס","b":-0.0613,"se":0.081,"p":0.4494,"kind":"firm","ncat":52},{"label":"אסם","b":0.1048,"se":0.059,"p":0.0757,"kind":"firm","ncat":36},{"label":"החברה המרכזית למשקאות קלים","b":0.0503,"se":0.0703,"p":0.474,"kind":"firm","ncat":27},{"label":"דיפלומט","b":0.099,"se":0.0946,"p":0.295,"kind":"firm","ncat":34},{"label":"CR3 (for comparison)","b":-0.0816,"se":0.0389,"p":0.0359,"kind":"ref","ncat":284}],"fx":[{"m":"2024-01","usd":3.7133,"usd_pct":0.0},{"m":"2024-02","usd":3.6458,"usd_pct":-1.817},{"m":"2024-03","usd":3.6278,"usd_pct":-2.302},{"m":"2024-04","usd":3.7433,"usd_pct":0.808},{"m":"2024-05","usd":3.7075,"usd_pct":-0.157},{"m":"2024-06","usd":3.7247,"usd_pct":0.308},{"m":"2024-07","usd":3.6814,"usd_pct":-0.859},{"m":"2024-08","usd":3.7318,"usd_pct":0.497},{"m":"2024-09","usd":3.7328,"usd_pct":0.525},{"m":"2024-10","usd":3.7516,"usd_pct":1.031},{"m":"2024-11","usd":3.7188,"usd_pct":0.148},{"m":"2024-12","usd":3.6177,"usd_pct":-2.576},{"m":"2025-01","usd":3.6153,"usd_pct":-2.64},{"m":"2025-02","usd":3.5678,"usd_pct":-3.919},{"m":"2025-03","usd":3.6551,"usd_pct":-1.568},{"m":"2025-04","usd":3.6975,"usd_pct":-0.427},{"m":"2025-05","usd":3.5627,"usd_pct":-4.056},{"m":"2025-06","usd":3.4826,"usd_pct":-6.213},{"m":"2025-07","usd":3.3522,"usd_pct":-9.726},{"m":"2025-08","usd":3.3958,"usd_pct":-8.552},{"m":"2025-09","usd":3.3432,"usd_pct":-9.967},{"m":"2025-10","usd":3.2806,"usd_pct":-11.654},{"m":"2025-11","usd":3.2548,"usd_pct":-12.348},{"m":"2025-12","usd":3.2151,"usd_pct":-13.416},{"m":"2026-01","usd":3.1456,"usd_pct":-15.289},{"m":"2026-02","usd":3.1027,"usd_pct":-16.445},{"m":"2026-03","usd":3.1156,"usd_pct":-16.097},{"m":"2026-04","usd":3.0152,"usd_pct":-18.799},{"m":"2026-05","usd":2.9008,"usd_pct":-21.881},{"m":"2026-06","usd":2.936,"usd_pct":-20.934},{"m":"2026-07","usd":3.0314,"usd_pct":-18.365}],"counts":{"conc_giant":77,"conc_nogiant":59,"less_giant":55,"less_nogiant":93},"meta":{"dlfx":-0.2029,"cr3_med":82.8}};
+const D={"cr3":[{"m":"2024-01","b":0.0,"se":0.0,"lo":0.0,"hi":0.0},{"m":"2024-02","b":0.237,"se":0.245,"lo":-0.244,"hi":0.718},{"m":"2024-03","b":-0.091,"se":0.39,"lo":-0.856,"hi":0.674},{"m":"2024-04","b":-0.759,"se":0.83,"lo":-2.386,"hi":0.868},{"m":"2024-05","b":0.106,"se":0.435,"lo":-0.747,"hi":0.958},{"m":"2024-06","b":0.166,"se":0.465,"lo":-0.745,"hi":1.077},{"m":"2024-07","b":0.422,"se":0.477,"lo":-0.514,"hi":1.357},{"m":"2024-08","b":0.894,"se":0.497,"lo":-0.08,"hi":1.869},{"m":"2024-09","b":0.455,"se":0.533,"lo":-0.589,"hi":1.5},{"m":"2024-10","b":0.746,"se":0.855,"lo":-0.929,"hi":2.421},{"m":"2024-11","b":0.448,"se":0.552,"lo":-0.634,"hi":1.531},{"m":"2024-12","b":0.591,"se":0.66,"lo":-0.703,"hi":1.884},{"m":"2025-01","b":0.746,"se":0.509,"lo":-0.251,"hi":1.744},{"m":"2025-02","b":0.909,"se":0.541,"lo":-0.153,"hi":1.97},{"m":"2025-03","b":1.612,"se":0.798,"lo":0.049,"hi":3.176},{"m":"2025-04","b":0.682,"se":0.834,"lo":-0.952,"hi":2.316},{"m":"2025-05","b":1.716,"se":0.89,"lo":-0.027,"hi":3.46},{"m":"2025-06","b":1.031,"se":0.621,"lo":-0.186,"hi":2.247},{"m":"2025-07","b":2.053,"se":0.789,"lo":0.507,"hi":3.599},{"m":"2025-08","b":1.739,"se":0.709,"lo":0.351,"hi":3.128},{"m":"2025-09","b":1.914,"se":0.779,"lo":0.387,"hi":3.44},{"m":"2025-10","b":1.546,"se":0.703,"lo":0.169,"hi":2.924},{"m":"2025-11","b":2.456,"se":0.945,"lo":0.604,"hi":4.307},{"m":"2025-12","b":2.285,"se":1.118,"lo":0.095,"hi":4.476},{"m":"2026-01","b":2.209,"se":1.0,"lo":0.249,"hi":4.169},{"m":"2026-02","b":2.394,"se":0.926,"lo":0.579,"hi":4.21},{"m":"2026-03","b":1.488,"se":1.071,"lo":-0.611,"hi":3.586},{"m":"2026-04","b":2.22,"se":1.008,"lo":0.245,"hi":4.195},{"m":"2026-05","b":2.024,"se":1.066,"lo":-0.064,"hi":4.113},{"m":"2026-06","b":2.703,"se":1.251,"lo":0.25,"hi":5.155},{"m":"2026-07","b":1.653,"se":0.992,"lo":-0.291,"hi":3.597}],"gnt":[{"m":"2024-01","b":0.0,"se":0.0,"lo":0.0,"hi":0.0},{"m":"2024-02","b":-0.209,"se":0.535,"lo":-1.259,"hi":0.84},{"m":"2024-03","b":1.278,"se":0.977,"lo":-0.636,"hi":3.192},{"m":"2024-04","b":2.456,"se":1.331,"lo":-0.153,"hi":5.066},{"m":"2024-05","b":0.653,"se":1.014,"lo":-1.335,"hi":2.641},{"m":"2024-06","b":2.109,"se":1.029,"lo":0.092,"hi":4.127},{"m":"2024-07","b":2.709,"se":1.06,"lo":0.631,"hi":4.787},{"m":"2024-08","b":2.365,"se":1.056,"lo":0.296,"hi":4.435},{"m":"2024-09","b":2.966,"se":1.164,"lo":0.685,"hi":5.247},{"m":"2024-10","b":1.738,"se":1.998,"lo":-2.178,"hi":5.654},{"m":"2024-11","b":3.589,"se":1.198,"lo":1.24,"hi":5.938},{"m":"2024-12","b":2.642,"se":1.321,"lo":0.054,"hi":5.231},{"m":"2025-01","b":2.995,"se":1.072,"lo":0.894,"hi":5.096},{"m":"2025-02","b":4.125,"se":1.194,"lo":1.785,"hi":6.464},{"m":"2025-03","b":3.083,"se":1.754,"lo":-0.354,"hi":6.521},{"m":"2025-04","b":3.279,"se":1.57,"lo":0.203,"hi":6.356},{"m":"2025-05","b":0.691,"se":2.05,"lo":-3.326,"hi":4.708},{"m":"2025-06","b":2.887,"se":1.372,"lo":0.198,"hi":5.577},{"m":"2025-07","b":1.469,"se":1.619,"lo":-1.704,"hi":4.642},{"m":"2025-08","b":1.754,"se":1.493,"lo":-1.172,"hi":4.681},{"m":"2025-09","b":0.976,"se":1.615,"lo":-2.19,"hi":4.142},{"m":"2025-10","b":3.417,"se":1.459,"lo":0.557,"hi":6.277},{"m":"2025-11","b":0.894,"se":1.753,"lo":-2.543,"hi":4.33},{"m":"2025-12","b":2.077,"se":2.021,"lo":-1.884,"hi":6.038},{"m":"2026-01","b":0.436,"se":1.904,"lo":-3.296,"hi":4.169},{"m":"2026-02","b":0.633,"se":1.864,"lo":-3.021,"hi":4.286},{"m":"2026-03","b":2.211,"se":2.033,"lo":-1.773,"hi":6.196},{"m":"2026-04","b":0.45,"se":1.945,"lo":-3.361,"hi":4.261},{"m":"2026-05","b":-0.431,"se":2.004,"lo":-4.359,"hi":3.498},{"m":"2026-06","b":-1.443,"se":2.64,"lo":-6.618,"hi":3.732},{"m":"2026-07","b":-0.181,"se":1.906,"lo":-3.917,"hi":3.555}],"tests":[{"label":"All 30 months","nm":30,"gF":2.28,"gP":0.0003,"cF":1.3,"cP":0.1408},{"label":"2024","nm":11,"gF":1.67,"gP":0.079,"cF":0.91,"cP":0.5281},{"label":"2025","nm":12,"gF":2.59,"gP":0.0028,"cF":1.14,"cP":0.3276},{"label":"2026","nm":7,"gF":0.71,"gP":0.6675,"cF":2.13,"cP":0.041}],"alone":{"cr3_alone":[1.53,0.0429],"gnt_alone":[2.28,0.0003]},"lags":[{"lag":0,"cr3_b":-0.0901,"cr3_se":0.0434,"cr3_p":0.0378,"g_b":0.0924,"g_se":0.0759,"g_p":0.2239},{"lag":1,"cr3_b":-0.0877,"cr3_se":0.044,"cr3_p":0.0463,"g_b":0.094,"g_se":0.0773,"g_p":0.2238},{"lag":2,"cr3_b":-0.0893,"cr3_se":0.046,"cr3_p":0.0523,"g_b":0.0986,"g_se":0.0812,"g_p":0.2248},{"lag":3,"cr3_b":-0.0948,"cr3_se":0.0477,"cr3_p":0.0468,"g_b":0.0947,"g_se":0.0842,"g_p":0.2612},{"lag":6,"cr3_b":-0.1085,"cr3_se":0.0591,"cr3_p":0.0664,"g_b":0.1645,"g_se":0.1021,"g_p":0.1071}],"fx":[{"m":"2024-01","usd":3.7133,"usd_pct":0.0},{"m":"2024-02","usd":3.6458,"usd_pct":-1.817},{"m":"2024-03","usd":3.6278,"usd_pct":-2.302},{"m":"2024-04","usd":3.7433,"usd_pct":0.808},{"m":"2024-05","usd":3.7075,"usd_pct":-0.157},{"m":"2024-06","usd":3.7247,"usd_pct":0.308},{"m":"2024-07","usd":3.6814,"usd_pct":-0.859},{"m":"2024-08","usd":3.7318,"usd_pct":0.497},{"m":"2024-09","usd":3.7328,"usd_pct":0.525},{"m":"2024-10","usd":3.7516,"usd_pct":1.031},{"m":"2024-11","usd":3.7188,"usd_pct":0.148},{"m":"2024-12","usd":3.6177,"usd_pct":-2.576},{"m":"2025-01","usd":3.6153,"usd_pct":-2.64},{"m":"2025-02","usd":3.5678,"usd_pct":-3.919},{"m":"2025-03","usd":3.6551,"usd_pct":-1.568},{"m":"2025-04","usd":3.6975,"usd_pct":-0.427},{"m":"2025-05","usd":3.5627,"usd_pct":-4.056},{"m":"2025-06","usd":3.4826,"usd_pct":-6.213},{"m":"2025-07","usd":3.3522,"usd_pct":-9.726},{"m":"2025-08","usd":3.3958,"usd_pct":-8.552},{"m":"2025-09","usd":3.3432,"usd_pct":-9.967},{"m":"2025-10","usd":3.2806,"usd_pct":-11.654},{"m":"2025-11","usd":3.2548,"usd_pct":-12.348},{"m":"2025-12","usd":3.2151,"usd_pct":-13.416},{"m":"2026-01","usd":3.1456,"usd_pct":-15.289},{"m":"2026-02","usd":3.1027,"usd_pct":-16.445},{"m":"2026-03","usd":3.1156,"usd_pct":-16.097},{"m":"2026-04","usd":3.0152,"usd_pct":-18.799},{"m":"2026-05","usd":2.9008,"usd_pct":-21.881},{"m":"2026-06","usd":2.936,"usd_pct":-20.934},{"m":"2026-07","usd":3.0314,"usd_pct":-18.365}],"meta":{"ncat":284,"nobs":8804,"r2":0.9952,"n_giant":132,"n_nogiant":152}};
 const NS="http://www.w3.org/2000/svg";
 const el=(t,a={})=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const GR=[["conc_giant","--s1",null,"Concentrated · giant"],
-          ["conc_nogiant","--s1","5 3.5","Concentrated · no giant"],
-          ["less_giant","--s2",null,"Less concentrated · giant"],
-          ["less_nogiant","--s2","5 3.5","Less concentrated · no giant"]];
-const months=D.paths.conc_giant.map(d=>d.m);
-const M={l:52,r:74,t:16,b:30};
-const mlab=m=>{const[y,mo]=m.split("-");return ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+mo-1]+" "+y;};
+const months=D.gnt.map(d=>d.m);
+const M={l:52,r:64,t:16,b:30};
+const mlab=m=>{const[y,mo]=m.split("-");return["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+mo-1]+" "+y;};
 const line=p=>p.map((q,i)=>(i?"L":"M")+q[0].toFixed(2)+" "+q[1].toFixed(2)).join(" ");
+const X=(i,w)=>M.l+(i/(months.length-1))*(w-M.l-M.r);
 
-function drawPaths(){
-  const svg=document.getElementById("c1"); svg.textContent="";
-  const w=900,h=330,iw=w-M.l-M.r,ih=h-M.t-M.b;
-  const vals=GR.flatMap(([g])=>D.paths[g].map(d=>d.b));
-  const yMin=Math.min(0,Math.floor(Math.min(...vals)/2)*2), yMax=Math.ceil(Math.max(...vals)/2)*2+1;
-  const y=v=>M.t+ih-((v-yMin)/(yMax-yMin))*ih;
-  const X=i=>M.l+(i/(months.length-1))*iw;
-  for(let v=Math.ceil(yMin/2)*2; v<=yMax; v+=2){
+function grid(svg,w,h,yMin,yMax,step){
+  const ih=h-M.t-M.b, y=v=>M.t+ih-((v-yMin)/(yMax-yMin))*ih;
+  for(let v=Math.ceil(yMin/step)*step; v<=yMax; v+=step){
     svg.appendChild(el("line",{x1:M.l,x2:w-M.r,y1:y(v),y2:y(v),stroke:css("--rule"),"stroke-width":1}));
     const t=el("text",{x:M.l-10,y:y(v)+4,"text-anchor":"end",fill:css("--ink-3"),
       "font-size":11,"font-family":"IBM Plex Mono, monospace"});
@@ -236,102 +267,88 @@ function drawPaths(){
   }
   months.forEach((m,i)=>{
     if(!m.endsWith("-01")&&!m.endsWith("-07"))return;
-    const t=el("text",{x:X(i),y:h-10,"text-anchor":"middle",fill:css("--ink-3"),
+    const t=el("text",{x:X(i,w),y:h-10,"text-anchor":"middle",fill:css("--ink-3"),
       "font-size":10.5,"font-family":"IBM Plex Mono, monospace"});
     t.textContent=(m.endsWith("-01")?"Jan ":"Jul ")+m.slice(0,4); svg.appendChild(t);
   });
   svg.appendChild(el("line",{x1:M.l,x2:w-M.r,y1:y(0),y2:y(0),
     stroke:css("--rule-strong"),"stroke-width":1.25}));
-  const ends=[];
-  GR.forEach(([g,c,dash])=>{
-    const pts=D.paths[g].map((d,i)=>[X(i),y(d.b)]);
-    const a={d:line(pts),fill:"none",stroke:css(c),"stroke-width":2.2,
-      "stroke-linejoin":"round","stroke-linecap":"round"};
-    if(dash)a["stroke-dasharray"]=dash;
-    svg.appendChild(el("path",a));
-    ends.push({g,c,v:D.paths[g][months.length-1].b,y:y(D.paths[g][months.length-1].b)});
-  });
-  ends.sort((a,b)=>a.y-b.y);
-  for(let i=1;i<ends.length;i++) if(ends[i].y-ends[i-1].y<13) ends[i].y=ends[i-1].y+13;
-  ends.forEach(e=>{
-    const t=el("text",{x:X(months.length-1)+9,y:e.y+4,fill:css(e.c),"font-size":12,
-      "font-weight":600,"font-family":"IBM Plex Mono, monospace"});
-    t.textContent=(e.v>0?"+":"")+e.v.toFixed(1)+"%"; svg.appendChild(t);
-  });
+  return y;
+}
+function hover(svg,boxId,tipId,w,h,render){
+  const tip=document.getElementById(tipId);
   const cross=el("line",{y1:M.t,y2:h-M.b,stroke:css("--rule-strong"),"stroke-width":1,opacity:0});
   svg.appendChild(cross);
-  const hit=el("rect",{x:M.l,y:M.t,width:iw,height:ih,fill:"transparent",style:"cursor:crosshair"});
+  const hit=el("rect",{x:M.l,y:M.t,width:w-M.l-M.r,height:h-M.t-M.b,fill:"transparent",style:"cursor:crosshair"});
   svg.appendChild(hit);
-  const box=document.getElementById("box1"), tip=document.getElementById("tip1");
   hit.addEventListener("mousemove",ev=>{
     const r=svg.getBoundingClientRect(), sx=(ev.clientX-r.left)*(w/r.width);
     let i=0,best=1e9;
-    for(let k=0;k<months.length;k++){const dd=Math.abs(X(k)-sx);if(dd<best){best=dd;i=k;}}
-    cross.setAttribute("x1",X(i));cross.setAttribute("x2",X(i));cross.setAttribute("opacity",1);
-    tip.innerHTML=`<div class="tm">${mlab(months[i])}</div>`+
-      GR.map(([g,c,dash,lab])=>`<div class="row"><span>${lab}</span><span style="color:${css(c)}">${(D.paths[g][i].b>0?"+":"")+D.paths[g][i].b.toFixed(2)}%</span></div>`).join("")+
-      `<div class="row" style="margin-top:4px;border-top:1px solid ${css("--rule")};padding-top:4px"><span>USD/ILS</span><span>${D.fx[i].usd.toFixed(3)}</span></div>`;
-    tip.style.opacity=1;
-    const px=(X(i)/w)*r.width, tw=tip.offsetWidth;
+    for(let k=0;k<months.length;k++){const dd=Math.abs(X(k,w)-sx);if(dd<best){best=dd;i=k;}}
+    cross.setAttribute("x1",X(i,w));cross.setAttribute("x2",X(i,w));cross.setAttribute("opacity",1);
+    tip.innerHTML=render(i); tip.style.opacity=1;
+    const px=(X(i,w)/w)*r.width, tw=tip.offsetWidth;
     tip.style.left=Math.max(4,Math.min(r.width-tw-4,px-tw/2))+"px"; tip.style.top="4px";
   });
   hit.addEventListener("mouseleave",()=>{cross.setAttribute("opacity",0);tip.style.opacity=0;});
 }
-
-function drawForest(){
-  const svg=document.getElementById("c2"); svg.textContent="";
-  const w=900,rowH=34, L=272, R=52;
-  const rows=D.forest, h=M.t+rows.length*rowH+34;
-  svg.setAttribute("viewBox",`0 0 ${w} ${h}`);
-  const iw=w-L-R;
-  const lo=Math.min(...rows.map(r=>r.b-1.96*r.se)), hi=Math.max(...rows.map(r=>r.b+1.96*r.se));
-  const pad=(hi-lo)*.08, xMin=lo-pad, xMax=hi+pad;
-  const X=v=>L+((v-xMin)/(xMax-xMin))*iw;
-  for(let v=-0.3; v<=0.4; v+=0.1){
-    if(v<xMin||v>xMax) continue;
-    const isZero=Math.abs(v)<1e-9;
-    svg.appendChild(el("line",{x1:X(v),x2:X(v),y1:M.t-4,y2:M.t+rows.length*rowH,
-      stroke:isZero?css("--rule-strong"):css("--rule"),"stroke-width":isZero?1.4:1}));
-    const t=el("text",{x:X(v),y:M.t+rows.length*rowH+18,"text-anchor":"middle",
-      fill:css("--ink-3"),"font-size":10.5,"font-family":"IBM Plex Mono, monospace"});
-    t.textContent=v.toFixed(1).replace("-","−"); svg.appendChild(t);
-  }
-  rows.forEach((r,i)=>{
-    const cy=M.t+i*rowH+rowH/2;
-    const isRef=r.kind==="ref", col=isRef?css("--s1"):css("--ink-2");
-    const lab=el("text",{x:L-16,y:cy+4,"text-anchor":"end",
-      fill:isRef?css("--s1"):css("--ink"),"font-size":12.5,
-      "font-weight":isRef?600:400,direction:/[֐-׿]/.test(r.label)?"rtl":"ltr"});
-    lab.textContent=r.label; svg.appendChild(lab);
-    const n=el("text",{x:L-16,y:cy+17,"text-anchor":"end",fill:css("--ink-3"),
-      "font-size":10.5,"font-family":"IBM Plex Mono, monospace"});
-    n.textContent=r.ncat+" cat."; svg.appendChild(n);
-    svg.appendChild(el("line",{x1:X(r.b-1.96*r.se),x2:X(r.b+1.96*r.se),y1:cy,y2:cy,
-      stroke:col,"stroke-width":2,"stroke-linecap":"round",opacity:isRef?1:.75}));
-    [-1,1].forEach(s=>svg.appendChild(el("line",{x1:X(r.b+s*1.96*r.se),x2:X(r.b+s*1.96*r.se),
-      y1:cy-4.5,y2:cy+4.5,stroke:col,"stroke-width":2,opacity:isRef?1:.75})));
-    svg.appendChild(el("circle",{cx:X(r.b),cy,r:5,fill:r.p<0.05?col:css("--surface"),
-      stroke:col,"stroke-width":2}));
-    const v=el("text",{x:w-R+10,y:cy+4,fill:css("--ink-2"),"font-size":11.5,
-      "font-family":"IBM Plex Mono, monospace"});
-    v.textContent=(r.b>=0?"+":"−")+Math.abs(r.b).toFixed(3); svg.appendChild(v);
+const YMIN=-4, YMAX=8;
+function drawES(key,svgId,boxId,tipId,colVar,fillVar,label){
+  const svg=document.getElementById(svgId); svg.textContent="";
+  const w=900,h=268, S=D[key];
+  const y=grid(svg,w,h,YMIN,YMAX,2);
+  const up=S.map((d,i)=>[X(i,w),y(d.hi)]), dn=S.map((d,i)=>[X(i,w),y(d.lo)]).reverse();
+  svg.appendChild(el("path",{d:line(up)+" "+line(dn).replace("M","L")+" Z",fill:css(fillVar),stroke:"none"}));
+  svg.appendChild(el("path",{d:line(S.map((d,i)=>[X(i,w),y(d.b)])),fill:"none",
+    stroke:css(colVar),"stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"}));
+  S.forEach((d,i)=>{
+    const sig=i>0&&(d.lo>0||d.hi<0);
+    svg.appendChild(el("circle",{cx:X(i,w),cy:y(d.b),r:sig?3.6:2.6,
+      fill:sig?css(colVar):css("--surface"),stroke:css(colVar),"stroke-width":1.6}));
   });
-  const cap=el("text",{x:L+iw/2,y:h-2,"text-anchor":"middle",fill:css("--ink-3"),
-    "font-size":10.5,"font-family":"IBM Plex Mono, monospace"});
-  cap.textContent="filled marker = p < 0.05"; svg.appendChild(cap);
+  const last=S[S.length-1];
+  const t=el("text",{x:X(months.length-1,w)+9,y:y(last.b)+4,fill:css(colVar),"font-size":12.5,
+    "font-weight":600,"font-family":"IBM Plex Mono, monospace"});
+  t.textContent=(last.b>=0?"+":"−")+Math.abs(last.b).toFixed(2)+"%"; svg.appendChild(t);
+  hover(svg,boxId,tipId,w,h,i=>{
+    const d=S[i];
+    return `<div class="tm">${mlab(d.m)}</div>
+      <div class="row"><span>${label}</span><span style="color:${css(colVar)}">${(d.b>=0?"+":"−")+Math.abs(d.b).toFixed(2)}%</span></div>
+      <div class="row"><span class="ci">95% CI</span><span class="ci">${d.lo.toFixed(2)} … ${d.hi.toFixed(2)}</span></div>`;
+  });
 }
-
-document.getElementById("ftbody").innerHTML=D.forest.map(r=>{
-  const bp=r.kind==="firm"?Math.min(1,r.p*5):null;
-  return `<tr><td${/[֐-׿]/.test(r.label)?' dir="rtl"':''}>${r.label}</td>
-    <td class="mono">${r.ncat}</td>
-    <td class="mono${r.p<0.05?" sig":""}">${(r.b>=0?"+":"−")+Math.abs(r.b).toFixed(4)}</td>
-    <td class="mono">${r.se.toFixed(4)}</td>
-    <td class="mono${r.p<0.05?" sig":""}">${r.p.toFixed(3)}</td>
-    <td class="mono ${bp!==null&&bp>=0.05?"dim":""}">${bp===null?"—":bp.toFixed(3)}</td></tr>`;
-}).join("");
-
-function drawAll(){drawPaths();drawForest();}
+function drawFX(){
+  const svg=document.getElementById("cF"); svg.textContent="";
+  const w=900,h=168;
+  const vals=D.fx.map(d=>d.usd_pct);
+  const y=grid(svg,w,h,Math.floor(Math.min(...vals)/5)*5-1,Math.max(2,Math.ceil(Math.max(...vals)/5)*5),5);
+  svg.appendChild(el("path",{d:line(D.fx.map((d,i)=>[X(i,w),y(d.usd_pct)])),fill:"none",
+    stroke:css("--ink-3"),"stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"}));
+  const last=D.fx[D.fx.length-1];
+  const t=el("text",{x:X(months.length-1,w)+9,y:y(last.usd_pct)+4,fill:css("--ink-2"),
+    "font-size":12,"font-weight":600,"font-family":"IBM Plex Mono, monospace"});
+  t.textContent=last.usd_pct.toFixed(1)+"%"; svg.appendChild(t);
+  hover(svg,"boxF","tipF",w,h,i=>`<div class="tm">${mlab(D.fx[i].m)}</div>
+    <div class="row"><span>USD/ILS</span><span>${D.fx[i].usd.toFixed(3)}</span></div>
+    <div class="row"><span>vs Jan 2024</span><span>${D.fx[i].usd_pct.toFixed(1)}%</span></div>`);
+}
+document.getElementById("jtbody").innerHTML=D.tests.map(t=>
+  `<tr><td>${t.label}</td><td class="mono">${t.nm}</td>
+   <td class="mono">${t.gF.toFixed(2)}</td>
+   <td class="mono${t.gP<0.05?" sig":""}">${t.gP.toFixed(4)}</td>
+   <td class="mono">${t.cF.toFixed(2)}</td>
+   <td class="mono${t.cP<0.05?" sig":""}">${t.cP.toFixed(4)}</td></tr>`).join("");
+document.getElementById("ltbody").innerHTML=D.lags.map(l=>
+  `<tr><td>${l.lag===0?"none (contemporaneous)":l.lag+" month"+(l.lag>1?"s":"")}${l.lag===3?" ←":""}</td>
+   <td class="mono${l.cr3_p<0.05?" sig":""}">${l.cr3_b.toFixed(4)}</td><td class="mono">${l.cr3_se.toFixed(4)}</td>
+   <td class="mono${l.cr3_p<0.05?" sig":""}">${l.cr3_p.toFixed(3)}</td>
+   <td class="mono">+${l.g_b.toFixed(4)}</td><td class="mono">${l.g_se.toFixed(4)}</td>
+   <td class="mono dim">${l.g_p.toFixed(3)}</td></tr>`).join("");
+function drawAll(){
+  drawES("gnt","cG","boxG","tipG","--s1","--s1-fill","Giant gap");
+  drawES("cr3","cC","boxC","tipC","--s2","--s2-fill","CR3 gap / SD");
+  drawFX();
+}
 drawAll();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change",drawAll);
 new MutationObserver(drawAll).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
