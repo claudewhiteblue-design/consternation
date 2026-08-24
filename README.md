@@ -200,6 +200,79 @@ Two smaller notes: 18 categories have fewer than three suppliers, so their CR3 i
 Every category has a strictly positive total quantity and no supplier has a
 negative annual net, so all shares are well defined.
 
+## Import (FX) exposure
+
+Two category-level measures of how much of a category's input cost is
+denominated in foreign currency — the quantity that matters for exchange-rate
+pass-through, which is not the same as where the goods are made. Rice packed
+locally by Sugat is almost fully exposed because the grain is imported; cola
+bottled locally is barely exposed because water, sugar, labour and distribution
+dominate the cost.
+
+| Column | What it is |
+|---|---|
+| `חשיפת מט״ח - רמה` | `גבוה` / `בינוני` / `נמוך` — the simple three-band read |
+| `חשיפת מט״ח - ציון בסיס` | 15 / 30 / 55 / 90, from the category's dominant input |
+| `חשיפת מט״ח - ציון משוקלל` | continuous, built from (manufacturer × category) pairs |
+
+**The simple measure** scores each of the 300 categories from its dominant input
+commodity and that input's share of the retail price. Wheat is fully imported but
+flour is only a fifth of the price of bread, so bread scores 30 while rice scores
+90. By revenue: 44.5% low, 30.0% medium, 25.5% high.
+
+**The weighted measure** adds the manufacturer dimension, because a category is
+not uniformly exposed: Osem manufactures snacks locally while its trading arm
+brings in infant formula, and Diplomat distributes imported tuna alongside local
+lines. Each of the 5,396 (manufacturer, category) pairs starts from its category
+base; a pair whose manufacturer is an importer or foreign brand is lifted toward
+full exposure, and the category score is the revenue-weighted mean over its
+pairs. The lift coefficient (0.60) was tuned against the Comtrade benchmark
+below, where the response is flat between 0.15 and 0.8.
+
+The two correlate at 0.97; the weighted measure moves 50 categories by 10 points
+or more, all upward, and those are the categories where importers carry a large
+share of revenue.
+
+### Validation and limits
+
+Both were checked against an independent measure built from **UN Comtrade** —
+Israel's HS-4 import weights, which are the CBS's own figures republished — over
+the 115 categories where an HS mapping exists. Category-level Spearman is ~0.5
+for both. That is reassuring but not decisive: Comtrade measures *commodity*
+imports while the weighted measure captures *finished-goods* importing, so the
+two are related rather than the same thing, and the benchmark covers only 20 of
+54 departments.
+
+Three limits worth carrying:
+
+- **The input cost shares are judgment, not measurement.** CBS input-output
+  tables give exactly this concept but the latest are from 2014 and sit at an
+  industry level far coarser than 300 categories, so the measure is constructed.
+- **15.3% of revenue names no manufacturer** (`ספק כללי`, `יצרן פרטי`), so the
+  weighted measure falls back to the category base there. In a few departments
+  those buckets dominate and the weighting adds nothing.
+- **Distribution is not import.** A pair is lifted because an importer sells it,
+  which is a proxy for the finished good crossing a border, not a fact about it.
+
+`analysis/category_import_exposure.csv` lists all 300 categories with both
+scores, the importer revenue share and the bucket share, plus a blank column for
+corrections.
+
+### As a control
+
+Both measures are jointly significant on their own — simple F = 1.76, p = 0.010;
+weighted F = 1.86, p = 0.005 — and neither disturbs the main results:
+
+| | CR3 | Giant | Exposure |
+|---|---|---|---|
+| Baseline | p = 0.141 | **p = 0.0003** | — |
+| + simple | p = 0.169 | **p = 0.0003** | **p = 0.010** |
+| + weighted | p = 0.162 | **p = 0.0005** | **p = 0.005** |
+
+An earlier three-band draft of this measure was not significant (p = 0.27) and
+was wrongly read as evidence that import exposure does not matter. It was too
+crude to detect its own hypothesis; these measures are.
+
 ## Read this before analysing
 
 **1. The six dimension columns do not uniquely identify a row.** The panel is
