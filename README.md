@@ -161,6 +161,45 @@ missing on that particular row. `כמות סטנדרטית` is null in exactly t
 revenue) — sunscreen and other seasonal lines. That is a gap in the source data,
 not a basis inconsistency.
 
+## Supplier concentration, 2024
+
+`category_concentration_2024.csv` — HHI and CR3 for each of the **298 categories**
+present in 2024, computed on each supplier's (`ספק`) share of the category's
+`כמות סטנדרטית` summed over the full year. Because the basis is fixed per
+category, summing quantity across the twelve months is meaningful.
+
+- **HHI** = Σ(share)² × 10,000, the standard 0–10,000 scale.
+- **CR3** = combined share of the three largest suppliers, in percent.
+
+| | Categories | Avg CR3 |
+|---|---|---|
+| Highly concentrated (HHI ≥ 2500) | 194 | 89.7% |
+| Moderately concentrated (1500–2500) | 75 | 69.3% |
+| Unconcentrated (< 1500) | 29 | 50.6% |
+
+Median HHI **3,075**, median CR3 **82.8%**.
+
+### Four supplier names are aggregation buckets, not firms
+
+`ספק כללי`, `ספק מותג פרטי`, `ספק קצביה כללי` and `ספק כללי בשר טרי` each stand
+for many unnamed suppliers. Counting a bucket as one firm **overstates**
+concentration where it is large, and **understates** it where a bucket dilutes a
+real leader's share.
+
+The CSV therefore carries both readings: `HHI` / `CR3` treat the buckets as
+firms, while `HHI ללא מאגדים` / `CR3 ללא מאגדים` drop them and rescale shares
+across the named suppliers only. Excluding them moves the median HHI from 3,075
+to 3,459.
+
+Scope of the caveat: a bucket is the largest supplier in **49** categories, sits
+in the top three in **138**, and shifts HHI by more than 500 points in **106**.
+For those, neither column is authoritative — treat the pair as a range.
+
+Two smaller notes: 18 categories have fewer than three suppliers, so their CR3 is
+100% by construction; and 387 rows are excluded for lacking a standard quantity.
+Every category has a strictly positive total quantity and no supplier has a
+negative annual net, so all shares are well defined.
+
 ## Read this before analysing
 
 **1. The six dimension columns do not uniquely identify a row.** The panel is
