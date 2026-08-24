@@ -1,7 +1,7 @@
 # Israeli Retail Sales Panel, 2024–2026
 
-`retail_sales_2022_2026.parquet` — **1,334,218 rows**, 51 consecutive months
-(**2022/05 → 2026/07**), 18 measures and dimensions, 67 MB.
+`retail_sales_2022_2026.parquet` — **1,440,419 rows**, 55 consecutive months
+(**2022/01 → 2026/07**), 18 measures and dimensions, 72 MB.
 
 It carries a **standard price and quantity** on a single measurement basis per
 category, so a category's series is comparable across the whole panel. See
@@ -55,10 +55,11 @@ non-null in exactly the same rows.
 
 ## Provenance
 
-Built entirely from the thirteen 14-column workbooks in `v2_sources/`:
+Built entirely from the fourteen 14-column workbooks in `v2_sources/`:
 
 | Workbook | Months | Rows |
 |---|---|---|
+| `2022_14.xlsx` | 2022/01–04 | 208,864 |
 | `2022_58.xlsx` | 2022/05–08 | 211,222 |
 | `2022_912.xlsx` | 2022/09–12 | 209,653 |
 | `2023_14.xlsx` | 2023/01–04 | 207,946 |
@@ -72,7 +73,7 @@ Built entirely from the thirteen 14-column workbooks in `v2_sources/`:
 | `2025_912.xlsx` | 2025/09–12 | 198,971 |
 | `2026_14.xlsx` | 2026/01–04 | 198,327 |
 | `2026_57.xlsx` | 2026/05–07 | 147,572 |
-| **Total** | **51 months** | **2,602,281** |
+| **Total** | **55 months** | **2,811,145** |
 
 Those are source row counts, before the volume threshold. Coverage is
 contiguous, with no gaps and no overlapping months.
@@ -101,9 +102,9 @@ the long tail of negligible-volume rows:
 
 | | Rows | Revenue |
 |---|---|---|
-| Source panel | 2,602,281 | 231,785.3 M NIS |
-| **Kept** | **1,334,218** (51.3%) | **226,597.0 M** (97.76%) |
-| Dropped | 1,268,063 (48.7%) | 5,188.3 M (2.24%) |
+| Source panel | 2,811,145 | 247,529.2 M NIS |
+| **Kept** | **1,440,419** (51.2%) | **241,966.7 M** (97.75%) |
+| Dropped | 1,370,726 (48.8%) | 5,562.5 M (2.25%) |
 
 Nearly half the rows carry ~2% of revenue. The retained share is stable year to
 year (97.71% / 97.78% / 97.86% for 2024 / 2025 / 2026), so trends are unaffected.
@@ -381,7 +382,6 @@ WHERE month(period) <= 7
 GROUP BY 1 ORDER BY y2026 DESC;
 ```
 
-Revenue totals for orientation, after the threshold: **32,061 M NIS** (2022, eight
-months), **50,362 M** (2023), **53,743 M** (2024), **56,231 M** (2025), **34,200 M**
+Revenue totals for orientation, after the threshold: **47,431 M NIS** (2022), **50,362 M** (2023), **53,743 M** (2024), **56,231 M** (2025), **34,200 M**
 (2026, seven months). Largest department across
 the panel is `מוצרי חלב ותחליפיו`.
