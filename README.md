@@ -1,7 +1,7 @@
 # Israeli Retail Sales Panel, 2024–2026
 
-`retail_sales_2024_2026.parquet` — **805,756 rows**, 31 consecutive months
-(**2024/01 → 2026/07**), 18 measures and dimensions, 39 MB.
+`retail_sales_2022_2026.parquet` — **1,334,218 rows**, 51 consecutive months
+(**2022/05 → 2026/07**), 18 measures and dimensions, 67 MB.
 
 It carries a **standard price and quantity** on a single measurement basis per
 category, so a category's series is comparable across the whole panel. See
@@ -17,10 +17,10 @@ or Power BI.
 
 ```python
 import pandas as pd
-df = pd.read_parquet("retail_sales_2024_2026.parquet")
+df = pd.read_parquet("retail_sales_2022_2026.parquet")
 ```
 ```sql
-duckdb -c "SELECT * FROM 'retail_sales_2024_2026.parquet' LIMIT 10"
+duckdb -c "SELECT * FROM 'retail_sales_2022_2026.parquet' LIMIT 10"
 ```
 
 ## Schema
@@ -33,17 +33,17 @@ Every column spans the full 31 months. Percentages are of the filtered row count
 | `חודש` | VARCHAR | 100% | `YYYY/MM`, as in source |
 | `period` | DATE | 100% | **added** — first of month, for time series |
 | `מחלקה` | VARCHAR | 100% | department, 54 distinct |
-| `קטגוריה` | VARCHAR | 100% | category, 300 distinct |
+| `קטגוריה` | VARCHAR | 100% | category, 301 distinct |
 | `ספק` | VARCHAR | 100% | supplier |
 | `יצרן` | VARCHAR | 100% | manufacturer |
 | `מכר כספי (מיליוני ₪)` | DOUBLE | 100% | revenue, millions NIS |
-| `מכר כמותי (אלפי יח' באריזה)` | DOUBLE | 88.5% | packaged units, thousands |
-| `מכר כמותי (טון)` | DOUBLE | 64.7% | tonnage |
-| `מכר כמותי (אלפי ליטרים)` | DOUBLE | 22.0% | thousands of litres |
-| `מחיר ממוצע ליחידה באריזה` | DOUBLE | 88.5% | avg price per packaged unit |
+| `מכר כמותי (אלפי יח' באריזה)` | DOUBLE | 88.7% | packaged units, thousands |
+| `מכר כמותי (טון)` | DOUBLE | 65.0% | tonnage |
+| `מכר כמותי (אלפי ליטרים)` | DOUBLE | 21.9% | thousands of litres |
+| `מחיר ממוצע ליחידה באריזה` | DOUBLE | 88.7% | avg price per packaged unit |
 | `מחיר ממוצע ליחידת צריכה` | DOUBLE | 0.8% | avg price per consumption unit — very sparse |
-| `מחיר ממוצע לק“ג` | DOUBLE | 64.7% | avg price/kg |
-| `מחיר ממוצע לליטר` | DOUBLE | 22.0% | avg price/litre |
+| `מחיר ממוצע לק“ג` | DOUBLE | 65.0% | avg price/kg |
+| `מחיר ממוצע לליטר` | DOUBLE | 21.9% | avg price/litre |
 | `בסיס מדידה` | VARCHAR | 100% | **added** — the category's measurement basis: `ק"ג` / `ליטר` / `יח' באריזה` |
 | `מחיר סטנדרטי` | DOUBLE | 99.9% | **added** — price on that basis |
 | `כמות סטנדרטית` | DOUBLE | 99.9% | **added** — quantity on that basis |
@@ -55,10 +55,15 @@ non-null in exactly the same rows.
 
 ## Provenance
 
-Built entirely from the eight 14-column workbooks in `v2_sources/`:
+Built entirely from the thirteen 14-column workbooks in `v2_sources/`:
 
 | Workbook | Months | Rows |
 |---|---|---|
+| `2022_58.xlsx` | 2022/05–08 | 211,222 |
+| `2022_912.xlsx` | 2022/09–12 | 209,653 |
+| `2023_14.xlsx` | 2023/01–04 | 207,946 |
+| `2023_58.xlsx` | 2023/05–08 | 208,867 |
+| `2023_912.xlsx` | 2023/09–12 | 205,579 |
 | `2024_14.xlsx` | 2024/01–04 | 206,995 |
 | `2024_58.xlsx` | 2024/05–08 | 204,241 |
 | `2024_912.xlsx` | 2024/09–12 | 200,729 |
@@ -67,7 +72,7 @@ Built entirely from the eight 14-column workbooks in `v2_sources/`:
 | `2025_912.xlsx` | 2025/09–12 | 198,971 |
 | `2026_14.xlsx` | 2026/01–04 | 198,327 |
 | `2026_57.xlsx` | 2026/05–07 | 147,572 |
-| **Total** | **31 months** | **1,559,014** |
+| **Total** | **51 months** | **2,602,281** |
 
 Those are source row counts, before the volume threshold. Coverage is
 contiguous, with no gaps and no overlapping months.
@@ -96,9 +101,9 @@ the long tail of negligible-volume rows:
 
 | | Rows | Revenue |
 |---|---|---|
-| Source panel | 1,559,014 | 147,456.2 M NIS |
-| **Kept** | **805,756** (51.7%) | **144,174.0 M** (97.77%) |
-| Dropped | 753,258 (48.3%) | 3,282.2 M (2.23%) |
+| Source panel | 2,602,281 | 231,785.3 M NIS |
+| **Kept** | **1,334,218** (51.3%) | **226,597.0 M** (97.76%) |
+| Dropped | 1,268,063 (48.7%) | 5,188.3 M (2.24%) |
 
 Nearly half the rows carry ~2% of revenue. The retained share is stable year to
 year (97.71% / 97.78% / 97.86% for 2024 / 2025 / 2026), so trends are unaffected.
@@ -352,18 +357,18 @@ unfiltered build.
 ```sql
 -- revenue by department, most recent 12 months
 SELECT "מחלקה", round(sum("מכר כספי (מיליוני ₪)"), 1) AS revenue
-FROM 'retail_sales_2024_2026.parquet'
+FROM 'retail_sales_2022_2026.parquet'
 WHERE period >= DATE '2025/08/01'
 GROUP BY 1 ORDER BY revenue DESC;
 
 -- monthly revenue trend
 SELECT period, round(sum("מכר כספי (מיליוני ₪)"), 1) AS revenue
-FROM 'retail_sales_2024_2026.parquet' GROUP BY 1 ORDER BY 1;
+FROM 'retail_sales_2022_2026.parquet' GROUP BY 1 ORDER BY 1;
 
 -- weighted standard price by category over time (safe: one basis per category)
 SELECT "קטגוריה", any_value("בסיס מדידה") AS basis, period,
        sum("מכר כספי (מיליוני ₪)") * 1000 / sum("כמות סטנדרטית") AS price
-FROM 'retail_sales_2024_2026.parquet'
+FROM 'retail_sales_2022_2026.parquet'
 WHERE "כמות סטנדרטית" > 0
 GROUP BY 1, 3 ORDER BY 1, 3;
 
@@ -371,11 +376,12 @@ GROUP BY 1, 3 ORDER BY 1, 3;
 SELECT "מחלקה",
        sum("מכר כספי (מיליוני ₪)") FILTER (WHERE "שנה" = 2025) AS y2025,
        sum("מכר כספי (מיליוני ₪)") FILTER (WHERE "שנה" = 2026) AS y2026
-FROM 'retail_sales_2024_2026.parquet'
+FROM 'retail_sales_2022_2026.parquet'
 WHERE month(period) <= 7
 GROUP BY 1 ORDER BY y2026 DESC;
 ```
 
-Revenue totals for orientation, after the threshold: **53,743 M NIS** (2024),
-**56,231 M** (2025), **34,200 M** (2026, seven months). Largest department across
+Revenue totals for orientation, after the threshold: **32,061 M NIS** (2022, eight
+months), **50,362 M** (2023), **53,743 M** (2024), **56,231 M** (2025), **34,200 M**
+(2026, seven months). Largest department across
 the panel is `מוצרי חלב ותחליפיו`.
