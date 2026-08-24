@@ -1,10 +1,10 @@
 # Israeli Retail Sales Panel, 2024–2026
 
 `retail_sales_2024_2026.parquet` — **1,559,014 rows**, 31 consecutive months
-(**2024/01 → 2026/07**), 42 MB.
+(**2024/01 → 2026/07**), 15 measures and dimensions, 48 MB.
 
-The combined data exceeds Excel's 1,048,576-row sheet limit by ~510k rows, so it
-is published as Parquet. It loads in one call from pandas, polars, DuckDB, R, or
+The panel exceeds Excel's 1,048,576-row sheet limit by ~510k rows, so it is
+published as Parquet. It loads in one call from pandas, polars, DuckDB, R, or
 Power BI.
 
 ```python
@@ -17,34 +17,34 @@ duckdb -c "SELECT * FROM 'retail_sales_2024_2026.parquet' LIMIT 10"
 
 ## Schema
 
-| Column | Type | Availability | Notes |
+Every column is populated across the full 31 months.
+
+| Column | Type | Non-null | Notes |
 |---|---|---|---|
-| `שנה` | SMALLINT | all | 2024 / 2025 / 2026 |
-| `חודש` | VARCHAR | all | `YYYY/MM`, as in source |
-| `period` | DATE | all | **added** — first of month, for time series |
-| `מחלקה` | VARCHAR | all | department, 54 distinct |
-| `קטגוריה` | VARCHAR | all | category, 311 distinct |
-| `ספק` | VARCHAR | all | supplier |
-| `יצרן` | VARCHAR | all | manufacturer |
-| `מכר כספי (מיליוני ₪)` | DOUBLE | all | revenue, millions NIS — never null |
-| `מכר כמותי (אלפי יח' באריזה)` | DOUBLE | **≤ 2025/08** | packaged units, thousands |
-| `מכר כמותי (טון)` | DOUBLE | all | tonnage |
-| `מכר כמותי (אלפי ליטרים)` | DOUBLE | all | thousands of litres |
-| `מחיר ממוצע ליחידה באריזה` | DOUBLE | **≤ 2025/08** | avg price per packaged unit |
-| `מחיר ממוצע ליחידת צריכה` | DOUBLE | **≤ 2025/08** | avg price per consumption unit — very sparse |
-| `מחיר ממוצע לק“ג` | DOUBLE | all | avg price/kg |
-| `מחיר ממוצע לליטר` | DOUBLE | all | avg price/litre |
-| `source_file` | VARCHAR | all | **added** — originating workbook |
+| `שנה` | SMALLINT | 100% | 2024 / 2025 / 2026 |
+| `חודש` | VARCHAR | 100% | `YYYY/MM`, as in source |
+| `period` | DATE | 100% | **added** — first of month, for time series |
+| `מחלקה` | VARCHAR | 100% | department, 54 distinct |
+| `קטגוריה` | VARCHAR | 100% | category, 311 distinct |
+| `ספק` | VARCHAR | 100% | supplier |
+| `יצרן` | VARCHAR | 100% | manufacturer |
+| `מכר כספי (מיליוני ₪)` | DOUBLE | 100% | revenue, millions NIS |
+| `מכר כמותי (אלפי יח' באריזה)` | DOUBLE | 82.1% | packaged units, thousands |
+| `מכר כמותי (טון)` | DOUBLE | 64.3% | tonnage |
+| `מכר כמותי (אלפי ליטרים)` | DOUBLE | 24.8% | thousands of litres |
+| `מחיר ממוצע ליחידה באריזה` | DOUBLE | 82.1% | avg price per packaged unit |
+| `מחיר ממוצע ליחידת צריכה` | DOUBLE | 0.6% | avg price per consumption unit — very sparse |
+| `מחיר ממוצע לק“ג` | DOUBLE | 64.3% | avg price/kg |
+| `מחיר ממוצע לליטר` | DOUBLE | 24.8% | avg price/litre |
+| `source_file` | VARCHAR | 100% | **added** — originating workbook |
 
 Original Hebrew column names are preserved exactly. Rows are sorted by
-`period, מחלקה, קטגוריה, ספק, יצרן`.
+`period, מחלקה, קטגוריה, ספק, יצרן`. A quantity column and its price column are
+non-null in exactly the same rows.
 
 ## Provenance
 
-Two export generations feed this dataset. The newer one adds three columns and
-splits into 4-month files.
-
-**14-column export, in `v2_sources/`** — covers 2024/01–2025/08:
+Built entirely from the eight 14-column workbooks in `v2_sources/`:
 
 | Workbook | Months | Rows |
 |---|---|---|
@@ -53,32 +53,28 @@ splits into 4-month files.
 | `2024_912.xlsx` | 2024/09–12 | 200,729 |
 | `2025_14.xlsx` | 2025/01–04 | 201,212 |
 | `2025_58.xlsx` | 2025/05–08 | 200,967 |
-| | | **1,014,144** |
+| `2025_912.xlsx` | 2025/09–12 | 198,971 |
+| `2026_14.xlsx` | 2026/01–04 | 198,327 |
+| `2026_57.xlsx` | 2026/05–07 | 147,572 |
+| **Total** | **31 months** | **1,559,014** |
 
-**11-column export, in the repo root** — still the only source for 2025/09–2026/07:
+Coverage is contiguous, with no gaps and no overlapping months.
 
-| Workbook | Months used | Rows used |
-|---|---|---|
-| `2025_712.xlsx` | 2025/09–12 | 198,971 |
-| `2026_17.xlsx` | 2026/01–07 | 345,899 |
-| | | **544,870** |
+The five 11-column workbooks in the repo root (`2024_16`, `2024_712`, `2025_16`,
+`2025_712`, `2026_17`) are an earlier export of the same data without the three
+packaged-unit measures. They are **fully superseded** and no longer feed the
+dataset; they are kept only for reference and can be deleted.
 
-`2024_16.xlsx`, `2024_712.xlsx`, `2025_16.xlsx` and the 2025/07–08 part of
-`2025_712.xlsx` are fully superseded by the 14-column export and no longer
-contribute rows. They are kept for reference.
+### The two export generations agree exactly
 
-**The three new columns are null for 2025/09 onward.** Three further 4-month
-workbooks (expected: 2025/09–12, 2026/01–04, 2026/05–08) will complete the
-14-column coverage and extend the panel to 2026/08. Rerun `scripts/` when they
-land.
+Every month was cross-checked between generations before the older one was
+retired. Across all 31 months the two agree with **zero differences**: the same
+dimension groups, the same row count within every group, and identical revenue,
+tonnage and litre sums. The newer export is a faithful superset, so no figure
+published from an earlier version of this dataset changes.
 
-### The two generations agree exactly
-
-Over the 20 overlapping months the new export reproduces the old one with **zero
-differences**: same 208,293 (month × department × category × supplier ×
-manufacturer) groups, same row count within every group, and identical revenue,
-tonnage and litre sums. It is a faithful superset, not a restatement — so no
-figure already published from the previous dataset changes.
+The `בחירות משתמש` sheet in each workbook is a filter catalogue of the names
+requested at export time — metadata, not observations — and is not carried in.
 
 ## Read this before analysing
 
@@ -88,21 +84,19 @@ one `(month, department, category, supplier, manufacturer)` key can carry
 hundreds of rows — the worst case here is 687. **Always aggregate; never assume
 one row per key, and never join on these columns without grouping first.**
 
-**2. A `0` quantity in the source meant "not measured in this unit", and is now
-`NULL`.** Verified before normalising: across all rows, the paired price column
-is null in exactly the rows where its quantity is `0` or missing — no
-exceptions, in either export generation. So `0` never denoted a real measurement
-of zero. Sums are unaffected; `coalesce(col, 0)` reverses it exactly.
+**2. A `0` quantity in the source meant "not tracked in this unit", and is now
+`NULL`.** Verified before normalising: the paired price column is null in
+exactly the rows where its quantity is `0` or missing — no exceptions, in either
+export generation. So `0` never denoted a measured zero. Sums are unaffected and
+`coalesce(col, 0)` reverses it exactly.
 
-This also reconciles a genuine encoding difference: the 2024/2025 exports wrote
-`0` for a non-applicable quantity while the 2026 one omitted the cell, which
-would otherwise have broken any `AVG` or null-rate comparison across the
-2025/2026 boundary.
+This also reconciles a real encoding difference between exporters: some wrote `0`
+for a non-applicable quantity while others omitted the cell entirely, which would
+otherwise have broken any `AVG` or null-rate comparison across the boundary.
 
-**3. Products are tracked by weight, volume, or unit count — rarely all.** Filter
-on the relevant quantity column before aggregating rather than assuming presence.
-`מחיר ממוצע ליחידת צריכה` in particular is populated in only 6,244 rows (0.6% of
-the months where it exists at all).
+**3. Products are tracked by unit count, weight, or volume — rarely all three.**
+Filter on the relevant quantity column before aggregating rather than assuming
+presence. `מחיר ממוצע ליחידת צריכה` is populated in only 9,554 rows (0.6%).
 
 **4. Do not average the price columns.** They are source-provided per-row
 averages; averaging them again gives an unweighted mean. Recompute weighted:
@@ -116,20 +110,20 @@ The source price also does not always equal `revenue / quantity` — it differs 
 source, not the conversion). Median difference ~0.5%, with a small very large
 tail driven by near-zero quantities. Recomputing weighted avoids this entirely.
 
-**5. Negative values are real** — returns and credit adjustments. 1,285 rows have
-negative packaged units, and revenue, tonnage and litres carry negatives too.
-Preserved as-is; decide deliberately whether to include them.
+**5. Negative values are real** — returns and credit adjustments, present in
+revenue and in all three quantity columns. Preserved as-is; decide deliberately
+whether to include them.
 
 ## Validation performed
 
-- Row counts match the raw XML `<row>` counts in every workbook.
+- Row counts match the raw XML `<row>` counts in all eight workbooks.
 - Revenue, packaged-unit, tonnage and litre sums re-extracted from the source XML
   by an independent regex pass agree with the Parquet to floating-point precision
-  (max relative difference 3×10⁻¹⁴ for the new export).
-- Old and new generations compared group-by-group across the 20-month overlap:
-  no differing group, row count, or sum.
-- Total row count and every monthly revenue figure are unchanged from the
-  previous 11-column dataset.
+  (max relative difference 3×10⁻¹⁴ across 32 file/measure checks).
+- Both export generations compared group-by-group across all 31 months: no
+  differing group, row count, or sum.
+- Total row count and every monthly revenue figure are unchanged from earlier
+  versions of this dataset.
 - Column sums confirmed identical before and after normalisation.
 - Month coverage confirmed contiguous, with no duplicate months across files.
 
@@ -139,10 +133,10 @@ mis-assign values.
 
 ## Rebuilding
 
-`scripts/` reproduces the dataset: `01_xlsx_to_parquet.py` (streaming SAX parse;
-handles both export layouts and both string encodings),
-`02_merge_and_normalize.py` (merge, normalise, add `period`), `03_verify.py`
-(independent fidelity check). Requires `pyarrow` and `duckdb`.
+`scripts/` reproduces the dataset from `v2_sources/`: `01_xlsx_to_parquet.py`
+(streaming SAX parse; handles both export layouts and both string encodings),
+`02_normalize.py` (normalise, add `period`, sort), `03_verify.py` (independent
+fidelity check). Requires `pyarrow` and `duckdb`.
 
 ## Starting points
 
@@ -157,7 +151,7 @@ GROUP BY 1 ORDER BY revenue DESC;
 SELECT period, round(sum("מכר כספי (מיליוני ₪)"), 1) AS revenue
 FROM 'retail_sales_2024_2026.parquet' GROUP BY 1 ORDER BY 1;
 
--- weighted price per packaged unit, by category (only where the column exists)
+-- weighted price per packaged unit, by category over time
 SELECT period, "קטגוריה",
        sum("מכר כספי (מיליוני ₪)") * 1000 / sum("מכר כמותי (אלפי יח' באריזה)") AS nis_per_unit
 FROM 'retail_sales_2024_2026.parquet'
