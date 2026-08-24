@@ -1,0 +1,327 @@
+<title>Concentration and Price Dynamics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme: light;
+  --ground:#f5f7f8; --surface:#fcfcfb; --surface-2:#eef1f3;
+  --ink:#12151a; --ink-2:#55606e; --ink-3:#8a94a1;
+  --rule:#dfe4e8; --rule-strong:#c3ccd4;
+  --s1:#2a78d6; --s1-fill:rgba(42,120,214,.15);
+  --s2:#eb6834; --s2-fill:rgba(235,104,52,.14);
+  --s3:#1baf7a; --s3-fill:rgba(27,175,122,.14);
+  --maxw:74ch;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme: dark;
+  --ground:#121415; --surface:#1a1a19; --surface-2:#232426;
+  --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#8b8b84;
+  --rule:#32332f; --rule-strong:#45463f;
+  --s1:#3987e5; --s1-fill:rgba(57,135,229,.20);
+  --s2:#d95926; --s2-fill:rgba(217,89,38,.20);
+  --s3:#199e70; --s3-fill:rgba(25,158,112,.20);
+}}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#121415; --surface:#1a1a19; --surface-2:#232426;
+  --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#8b8b84;
+  --rule:#32332f; --rule-strong:#45463f;
+  --s1:#3987e5; --s1-fill:rgba(57,135,229,.20);
+  --s2:#d95926; --s2-fill:rgba(217,89,38,.20);
+  --s3:#199e70; --s3-fill:rgba(25,158,112,.20);
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px;line-height:1.6;margin:0;
+  padding:clamp(28px,5vw,72px) clamp(18px,4vw,40px) 96px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+.prose{max-width:var(--maxw)}
+.eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:Spectral,Georgia,serif;font-weight:600;font-size:clamp(30px,4.6vw,46px);
+  line-height:1.14;letter-spacing:-.015em;margin:0 0 18px;text-wrap:balance}
+h2{font-family:Spectral,Georgia,serif;font-weight:600;font-size:23px;line-height:1.25;
+  margin:0 0 6px;text-wrap:balance}
+h3{font-size:14.5px;font-weight:600;margin:0}
+p{margin:0 0 14px}
+.lede{font-size:18.5px;line-height:1.55;color:var(--ink-2);margin:0}
+.lede strong{color:var(--ink);font-weight:600}
+section{display:flex;flex-direction:column;gap:18px}
+.sechead{display:flex;flex-direction:column;gap:2px;max-width:var(--maxw)}
+.sechead .sub{color:var(--ink-2);font-size:14.5px;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(186px,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.stat{background:var(--surface);padding:17px 19px;display:flex;flex-direction:column;gap:5px}
+.stat .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3)}
+.stat .v{font-family:"IBM Plex Mono",monospace;font-size:25px;font-weight:500;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .n{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:3px;padding:20px 20px 10px}
+.panel-title{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+  flex-wrap:wrap;margin-bottom:2px}
+.panel-title .unit{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);letter-spacing:.04em}
+.chartbox{position:relative}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;
+  background:var(--surface);border:1px solid var(--rule-strong);border-radius:3px;
+  padding:9px 11px;font-size:12.5px;line-height:1.5;min-width:200px;
+  box-shadow:0 6px 22px rgba(0,0,0,.13);z-index:5}
+.tip .tm{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);
+  letter-spacing:.06em;margin-bottom:5px}
+.tip .row{display:flex;justify-content:space-between;gap:14px}
+.tip .row span:last-child{font-family:"IBM Plex Mono",monospace;
+  font-variant-numeric:tabular-nums;font-weight:500}
+.tip .ci{color:var(--ink-3);font-size:11.5px;font-family:"IBM Plex Mono",monospace}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:7px 11px;border-bottom:1px solid var(--rule)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:600;border-bottom:1px solid var(--rule-strong)}
+td.mono{font-family:"IBM Plex Mono",monospace}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--rule);
+  border-radius:3px;padding:4px 6px}
+.notes{font-size:13.5px;color:var(--ink-2);line-height:1.62;max-width:var(--maxw)}
+.notes p{margin:0 0 11px}
+.notes b{color:var(--ink)}
+.divider{height:1px;background:var(--rule);border:0;margin:0}
+.caveat{border-left:2px solid var(--s2);padding:2px 0 2px 15px;font-size:13.5px;
+  color:var(--ink-2);line-height:1.6;max-width:var(--maxw)}
+.caveat b{color:var(--ink)}
+.eq{font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.75;
+  background:var(--surface);border:1px solid var(--rule);border-radius:3px;
+  padding:14px 16px;overflow-x:auto;white-space:pre;color:var(--ink-2)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="prose">
+    <p class="eyebrow">Israeli retail · 280 categories · 2022/01 – 2026/07</p>
+    <h1>Yes — but as a persistent level, not a response to anything</h1>
+    <p class="lede">Across 55 months, a category one standard deviation more concentrated
+    raised its prices about <strong>1% less</strong> than its peers. The gap opens within
+    three months and never closes: it sits below zero in <strong>46 of 54 months</strong>.
+    What it does not do is track the shekel, in either direction.</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><span class="k">CR3 × month, joint</span>
+      <span class="v" style="color:var(--s1)">p &lt; 0.0001</span><span class="n">F = 2.90 on 54 restrictions</span></div>
+    <div class="stat"><span class="k">Average gap</span>
+      <span class="v">−1.01%</span><span class="n">Per +1 SD of CR3, across the panel</span></div>
+    <div class="stat"><span class="k">Months below zero</span>
+      <span class="v">46<span style="font-size:15px;color:var(--ink-3)"> / 54</span></span>
+      <span class="n">10 significant individually</span></div>
+    <div class="stat"><span class="k">With import control</span>
+      <span class="v">F = 2.94</span><span class="n">Against 2.90 without it</span></div>
+  </div>
+
+  <section>
+    <div class="sechead">
+      <h2>Concentration</h2>
+      <p class="sub">Price difference per +1 SD of CR3, relative to January 2022, from a
+      regression with category and month fixed effects and the giant and import-exposure
+      terms held alongside. Filled markers are months significant on their own.</p>
+    </div>
+    <div class="card">
+      <div class="panel-title"><h3>CR3 — 2022, top three named suppliers of the whole market</h3>
+        <span class="unit">% vs Jan 2022 · shaded = 95% CI</span></div>
+      <div class="chartbox" id="boxC"><svg id="cC" viewBox="0 0 900 264" role="img"
+        aria-label="Monthly price gap per one standard deviation of CR3 over 55 months."></svg>
+        <div class="tip" id="tipC"></div></div>
+    </div>
+    <div class="card">
+      <div class="panel-title"><h3>Shekel</h3>
+        <span class="unit">USD/ILS · depreciates to Oct 2023, then appreciates</span></div>
+      <div class="chartbox" id="boxF"><svg id="cF" viewBox="0 0 900 168" role="img"
+        aria-label="US dollar to shekel exchange rate over the panel."></svg>
+        <div class="tip" id="tipF"></div></div>
+    </div>
+    <p class="caveat"><b>The two panels do not line up, and that is the finding.</b> The
+    currency rises 27% and then falls 24%; the concentration gap does neither. It drops
+    early and stays. Both currency phases reject a flat line on their own — F = 3.34 during
+    the depreciation, F = 2.17 during the appreciation — but rejecting flatness is not the
+    same as responding to the exchange rate.</p>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>The other two terms</h2>
+      <p class="sub">Same regression, same scale. Both are jointly significant and neither
+      changes the concentration result.</p>
+    </div>
+    <div class="card">
+      <div class="panel-title"><h3>Giant present — one of the five large suppliers</h3>
+        <span class="unit">% vs Jan 2022 · shaded = 95% CI</span></div>
+      <div class="chartbox" id="boxG"><svg id="cG" viewBox="0 0 900 264" role="img"
+        aria-label="Monthly price gap for categories containing a giant supplier."></svg>
+        <div class="tip" id="tipG"></div></div>
+    </div>
+    <div class="card">
+      <div class="panel-title"><h3>Import exposure — per +1 SD of input-cost currency exposure</h3>
+        <span class="unit">% vs Jan 2022 · shaded = 95% CI</span></div>
+      <div class="chartbox" id="boxE"><svg id="cE" viewBox="0 0 900 264" role="img"
+        aria-label="Monthly price gap per one standard deviation of import exposure."></svg>
+        <div class="tip" id="tipE"></div></div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <div class="sechead">
+      <h2>Why the window decides the number</h2>
+      <p class="sub">One regression, one path — but the effect you report depends entirely
+      on where you start reading it. These are the same coefficients, differenced from
+      four different base months to July 2026.</p>
+    </div>
+    <div class="tablewrap">
+      <table><thead><tr><th scope="col">Read from</th><th scope="col">CR3</th>
+        <th scope="col">Giant</th><th scope="col">Import exposure</th></tr></thead>
+        <tbody id="wt"></tbody></table>
+    </div>
+    <p class="caveat"><b>An earlier version of this analysis started in January 2024 and
+    reported a positive concentration effect.</b> That row is visible above as −0.09%, and
+    it was positive under the older concentration measure. Nothing in the data changed; the
+    starting point did. Any single number here is a difference between two noisy months
+    against standard errors of 1.0 to 1.5, which is why the honest statement is about the
+    level of the path, not about a change across a window.</p>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <div class="sechead"><h2>Specification and limits</h2></div>
+    <div class="eq">log P<sub>ct</sub> = α<sub>c</sub> + δ<sub>t</sub> + Σ<sub>t</sub> β<sub>t</sub>(CR3<sub>z</sub>×1[t]) + Σ<sub>t</sub> φ<sub>t</sub>(Giant×1[t]) + Σ<sub>t</sub> ψ<sub>t</sub>(Exposure<sub>z</sub>×1[t]) + ε<sub>ct</sub></div>
+    <div class="notes">
+      <p>280 categories observed in all 55 months, 15,400 observations, January 2022 as
+      reference, errors clustered by category, R² = 0.9949. <b>CR3 is measured on 2022</b>
+      and ranks the three largest <i>named</i> suppliers as a share of the whole category,
+      leaving aggregation buckets in the denominator — without that, categories like
+      בשר טחון טרי score 96 on a market where the named firms hold 8.5%.</p>
+      <p><b>The import control does almost nothing to the others</b> while being strongly
+      significant itself (F = 4.13). Restricting the panel to 2023 onward, so the 2022
+      concentration base no longer overlaps the outcome window, reproduces every result.</p>
+      <p><b>What this cannot tell you.</b> A persistent level difference has many possible
+      causes and this design separates none of them. Price here is a unit value, so a
+      category whose product mix drifts toward cheaper lines shows the same pattern as one
+      that held prices down. Concentrated categories differ from others in more than
+      concentration. And a gap that appears within three months of the panel opening and
+      then holds is as consistent with a fixed difference the fixed effects failed to
+      absorb as with anything causal.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const D={"cr3":[{"m":"2022-01","b":0.0,"se":0.0,"lo":0.0,"hi":0.0},{"m":"2022-02","b":-0.229,"se":0.243,"lo":-0.705,"hi":0.247},{"m":"2022-03","b":-0.863,"se":0.446,"lo":-1.738,"hi":0.011},{"m":"2022-04","b":-1.112,"se":0.752,"lo":-2.587,"hi":0.363},{"m":"2022-05","b":-1.791,"se":0.542,"lo":-2.854,"hi":-0.729},{"m":"2022-06","b":-1.505,"se":0.501,"lo":-2.487,"hi":-0.523},{"m":"2022-07","b":-1.326,"se":0.505,"lo":-2.315,"hi":-0.336},{"m":"2022-08","b":-1.216,"se":0.514,"lo":-2.224,"hi":-0.208},{"m":"2022-09","b":-0.889,"se":0.599,"lo":-2.064,"hi":0.285},{"m":"2022-10","b":-1.216,"se":0.576,"lo":-2.345,"hi":-0.088},{"m":"2022-11","b":0.306,"se":0.606,"lo":-0.882,"hi":1.494},{"m":"2022-12","b":0.708,"se":0.771,"lo":-0.804,"hi":2.22},{"m":"2023-01","b":0.509,"se":0.774,"lo":-1.008,"hi":2.025},{"m":"2023-02","b":0.286,"se":0.783,"lo":-1.248,"hi":1.821},{"m":"2023-03","b":-1.178,"se":0.877,"lo":-2.897,"hi":0.54},{"m":"2023-04","b":-2.761,"se":0.814,"lo":-4.357,"hi":-1.166},{"m":"2023-05","b":-1.715,"se":0.844,"lo":-3.369,"hi":-0.062},{"m":"2023-06","b":-0.924,"se":0.796,"lo":-2.484,"hi":0.636},{"m":"2023-07","b":-0.852,"se":0.804,"lo":-2.428,"hi":0.723},{"m":"2023-08","b":-0.83,"se":0.794,"lo":-2.386,"hi":0.726},{"m":"2023-09","b":-1.34,"se":0.853,"lo":-3.012,"hi":0.332},{"m":"2023-10","b":-1.353,"se":0.892,"lo":-3.101,"hi":0.395},{"m":"2023-11","b":-1.364,"se":0.905,"lo":-3.137,"hi":0.409},{"m":"2023-12","b":-1.12,"se":0.967,"lo":-3.014,"hi":0.775},{"m":"2024-01","b":-1.485,"se":0.915,"lo":-3.278,"hi":0.308},{"m":"2024-02","b":-1.678,"se":0.953,"lo":-3.546,"hi":0.19},{"m":"2024-03","b":-2.245,"se":0.98,"lo":-4.165,"hi":-0.324},{"m":"2024-04","b":-2.863,"se":1.125,"lo":-5.069,"hi":-0.658},{"m":"2024-05","b":-2.382,"se":0.973,"lo":-4.289,"hi":-0.474},{"m":"2024-06","b":-1.144,"se":0.995,"lo":-3.093,"hi":0.806},{"m":"2024-07","b":-0.867,"se":0.976,"lo":-2.779,"hi":1.046},{"m":"2024-08","b":-0.519,"se":1.06,"lo":-2.596,"hi":1.558},{"m":"2024-09","b":-0.612,"se":1.034,"lo":-2.639,"hi":1.415},{"m":"2024-10","b":-1.898,"se":1.051,"lo":-3.957,"hi":0.161},{"m":"2024-11","b":-0.836,"se":1.042,"lo":-2.878,"hi":1.205},{"m":"2024-12","b":0.009,"se":1.019,"lo":-1.989,"hi":2.006},{"m":"2025-01","b":-0.419,"se":1.019,"lo":-2.417,"hi":1.578},{"m":"2025-02","b":0.129,"se":1.069,"lo":-1.966,"hi":2.225},{"m":"2025-03","b":-0.566,"se":1.086,"lo":-2.694,"hi":1.562},{"m":"2025-04","b":-1.079,"se":1.183,"lo":-3.399,"hi":1.24},{"m":"2025-05","b":-0.696,"se":1.136,"lo":-2.923,"hi":1.53},{"m":"2025-06","b":-0.275,"se":0.992,"lo":-2.219,"hi":1.669},{"m":"2025-07","b":-0.875,"se":1.454,"lo":-3.725,"hi":1.974},{"m":"2025-08","b":-0.841,"se":1.193,"lo":-3.179,"hi":1.496},{"m":"2025-09","b":-0.525,"se":1.232,"lo":-2.94,"hi":1.889},{"m":"2025-10","b":-0.432,"se":1.18,"lo":-2.745,"hi":1.881},{"m":"2025-11","b":0.052,"se":1.295,"lo":-2.486,"hi":2.591},{"m":"2025-12","b":0.098,"se":1.41,"lo":-2.666,"hi":2.861},{"m":"2026-01","b":-0.736,"se":1.403,"lo":-3.486,"hi":2.013},{"m":"2026-02","b":-0.809,"se":1.443,"lo":-3.637,"hi":2.019},{"m":"2026-03","b":-1.839,"se":1.447,"lo":-4.675,"hi":0.996},{"m":"2026-04","b":-2.34,"se":1.417,"lo":-5.117,"hi":0.436},{"m":"2026-05","b":-1.684,"se":1.385,"lo":-4.398,"hi":1.03},{"m":"2026-06","b":-1.863,"se":1.458,"lo":-4.72,"hi":0.993},{"m":"2026-07","b":-1.578,"se":1.473,"lo":-4.466,"hi":1.31}],"gnt":[{"m":"2022-01","b":0.0,"se":0.0,"lo":0.0,"hi":0.0},{"m":"2022-02","b":-0.016,"se":0.524,"lo":-1.044,"hi":1.011},{"m":"2022-03","b":0.184,"se":0.969,"lo":-1.716,"hi":2.083},{"m":"2022-04","b":1.112,"se":1.201,"lo":-1.242,"hi":3.467},{"m":"2022-05","b":0.263,"se":1.016,"lo":-1.728,"hi":2.254},{"m":"2022-06","b":0.713,"se":1.098,"lo":-1.44,"hi":2.866},{"m":"2022-07","b":0.214,"se":1.14,"lo":-2.021,"hi":2.45},{"m":"2022-08","b":-0.278,"se":1.102,"lo":-2.438,"hi":1.881},{"m":"2022-09","b":-1.297,"se":1.257,"lo":-3.761,"hi":1.168},{"m":"2022-10","b":-0.33,"se":1.262,"lo":-2.803,"hi":2.143},{"m":"2022-11","b":-0.781,"se":1.248,"lo":-3.228,"hi":1.666},{"m":"2022-12","b":-2.9,"se":1.543,"lo":-5.925,"hi":0.125},{"m":"2023-01","b":-1.335,"se":1.476,"lo":-4.229,"hi":1.559},{"m":"2023-02","b":0.191,"se":1.498,"lo":-2.746,"hi":3.128},{"m":"2023-03","b":0.937,"se":1.592,"lo":-2.184,"hi":4.057},{"m":"2023-04","b":0.658,"se":1.577,"lo":-2.433,"hi":3.749},{"m":"2023-05","b":0.279,"se":1.616,"lo":-2.888,"hi":3.446},{"m":"2023-06","b":0.004,"se":1.558,"lo":-3.048,"hi":3.057},{"m":"2023-07","b":0.579,"se":1.537,"lo":-2.433,"hi":3.591},{"m":"2023-08","b":0.306,"se":1.548,"lo":-2.728,"hi":3.341},{"m":"2023-09","b":0.108,"se":1.63,"lo":-3.087,"hi":3.303},{"m":"2023-10","b":-0.214,"se":1.678,"lo":-3.502,"hi":3.075},{"m":"2023-11","b":-0.088,"se":1.65,"lo":-3.321,"hi":3.146},{"m":"2023-12","b":0.483,"se":1.723,"lo":-2.894,"hi":3.86},{"m":"2024-01","b":-0.187,"se":1.601,"lo":-3.324,"hi":2.951},{"m":"2024-02","b":0.008,"se":1.685,"lo":-3.294,"hi":3.31},{"m":"2024-03","b":1.293,"se":1.816,"lo":-2.266,"hi":4.852},{"m":"2024-04","b":2.858,"se":2.018,"lo":-1.098,"hi":6.813},{"m":"2024-05","b":1.164,"se":1.819,"lo":-2.402,"hi":4.73},{"m":"2024-06","b":1.874,"se":1.847,"lo":-1.745,"hi":5.493},{"m":"2024-07","b":2.203,"se":1.866,"lo":-1.454,"hi":5.86},{"m":"2024-08","b":1.898,"se":1.994,"lo":-2.01,"hi":5.806},{"m":"2024-09","b":2.088,"se":1.98,"lo":-1.793,"hi":5.968},{"m":"2024-10","b":1.9,"se":2.071,"lo":-2.159,"hi":5.958},{"m":"2024-11","b":2.787,"se":2.03,"lo":-1.191,"hi":6.765},{"m":"2024-12","b":1.278,"se":1.962,"lo":-2.568,"hi":5.123},{"m":"2025-01","b":2.257,"se":1.978,"lo":-1.62,"hi":6.134},{"m":"2025-02","b":3.431,"se":2.107,"lo":-0.698,"hi":7.561},{"m":"2025-03","b":2.868,"se":2.202,"lo":-1.448,"hi":7.184},{"m":"2025-04","b":3.322,"se":2.261,"lo":-1.11,"hi":7.753},{"m":"2025-05","b":0.745,"se":2.358,"lo":-3.876,"hi":5.366},{"m":"2025-06","b":2.092,"se":1.969,"lo":-1.769,"hi":5.952},{"m":"2025-07","b":1.869,"se":2.199,"lo":-2.441,"hi":6.179},{"m":"2025-08","b":1.858,"se":2.073,"lo":-2.206,"hi":5.921},{"m":"2025-09","b":0.864,"se":2.188,"lo":-3.425,"hi":5.154},{"m":"2025-10","b":3.01,"se":2.203,"lo":-1.308,"hi":7.329},{"m":"2025-11","b":1.381,"se":2.151,"lo":-2.834,"hi":5.597},{"m":"2025-12","b":2.003,"se":2.227,"lo":-2.362,"hi":6.369},{"m":"2026-01","b":1.142,"se":2.173,"lo":-3.118,"hi":5.402},{"m":"2026-02","b":1.26,"se":2.18,"lo":-3.013,"hi":5.534},{"m":"2026-03","b":3.331,"se":2.32,"lo":-1.218,"hi":7.879},{"m":"2026-04","b":2.921,"se":2.157,"lo":-1.306,"hi":7.148},{"m":"2026-05","b":1.2,"se":2.172,"lo":-3.057,"hi":5.458},{"m":"2026-06","b":0.441,"se":2.42,"lo":-4.303,"hi":5.184},{"m":"2026-07","b":0.983,"se":2.198,"lo":-3.326,"hi":5.292}],"exp":[{"m":"2022-01","b":0.0,"se":0.0,"lo":0.0,"hi":0.0},{"m":"2022-02","b":-0.492,"se":0.213,"lo":-0.908,"hi":-0.075},{"m":"2022-03","b":-0.16,"se":0.362,"lo":-0.869,"hi":0.549},{"m":"2022-04","b":0.661,"se":0.667,"lo":-0.647,"hi":1.968},{"m":"2022-05","b":0.582,"se":0.407,"lo":-0.215,"hi":1.379},{"m":"2022-06","b":0.433,"se":0.41,"lo":-0.369,"hi":1.236},{"m":"2022-07","b":-0.242,"se":0.438,"lo":-1.1,"hi":0.616},{"m":"2022-08","b":-0.342,"se":0.427,"lo":-1.18,"hi":0.496},{"m":"2022-09","b":-0.788,"se":0.511,"lo":-1.789,"hi":0.214},{"m":"2022-10","b":-0.264,"se":0.531,"lo":-1.306,"hi":0.777},{"m":"2022-11","b":-0.247,"se":0.447,"lo":-1.122,"hi":0.628},{"m":"2022-12","b":0.536,"se":0.579,"lo":-0.598,"hi":1.671},{"m":"2023-01","b":0.005,"se":0.528,"lo":-1.031,"hi":1.04},{"m":"2023-02","b":0.029,"se":0.602,"lo":-1.151,"hi":1.209},{"m":"2023-03","b":-0.067,"se":0.668,"lo":-1.376,"hi":1.243},{"m":"2023-04","b":0.25,"se":0.705,"lo":-1.132,"hi":1.632},{"m":"2023-05","b":0.53,"se":0.648,"lo":-0.739,"hi":1.799},{"m":"2023-06","b":-0.572,"se":0.66,"lo":-1.865,"hi":0.721},{"m":"2023-07","b":-0.725,"se":0.652,"lo":-2.004,"hi":0.554},{"m":"2023-08","b":-0.782,"se":0.667,"lo":-2.09,"hi":0.526},{"m":"2023-09","b":-0.978,"se":0.692,"lo":-2.334,"hi":0.377},{"m":"2023-10","b":-0.442,"se":0.768,"lo":-1.948,"hi":1.064},{"m":"2023-11","b":-0.399,"se":0.679,"lo":-1.729,"hi":0.932},{"m":"2023-12","b":0.206,"se":0.745,"lo":-1.254,"hi":1.666},{"m":"2024-01","b":0.692,"se":0.734,"lo":-0.747,"hi":2.132},{"m":"2024-02","b":1.008,"se":0.754,"lo":-0.471,"hi":2.486},{"m":"2024-03","b":1.05,"se":0.755,"lo":-0.429,"hi":2.529},{"m":"2024-04","b":1.796,"se":0.913,"lo":0.006,"hi":3.585},{"m":"2024-05","b":0.838,"se":0.799,"lo":-0.728,"hi":2.404},{"m":"2024-06","b":1.18,"se":0.802,"lo":-0.392,"hi":2.752},{"m":"2024-07","b":0.196,"se":0.761,"lo":-1.297,"hi":1.688},{"m":"2024-08","b":0.347,"se":0.808,"lo":-1.236,"hi":1.93},{"m":"2024-09","b":0.436,"se":0.832,"lo":-1.196,"hi":2.067},{"m":"2024-10","b":-0.675,"se":1.177,"lo":-2.981,"hi":1.631},{"m":"2024-11","b":0.437,"se":0.775,"lo":-1.081,"hi":1.956},{"m":"2024-12","b":0.82,"se":0.817,"lo":-0.782,"hi":2.423},{"m":"2025-01","b":0.628,"se":0.82,"lo":-0.979,"hi":2.235},{"m":"2025-02","b":0.939,"se":0.83,"lo":-0.687,"hi":2.565},{"m":"2025-03","b":0.577,"se":0.948,"lo":-1.282,"hi":2.435},{"m":"2025-04","b":1.398,"se":0.951,"lo":-0.466,"hi":3.262},{"m":"2025-05","b":0.592,"se":1.178,"lo":-1.717,"hi":2.901},{"m":"2025-06","b":0.64,"se":0.861,"lo":-1.047,"hi":2.326},{"m":"2025-07","b":0.164,"se":1.0,"lo":-1.795,"hi":2.123},{"m":"2025-08","b":0.525,"se":0.976,"lo":-1.389,"hi":2.439},{"m":"2025-09","b":0.795,"se":0.995,"lo":-1.156,"hi":2.746},{"m":"2025-10","b":1.079,"se":1.019,"lo":-0.917,"hi":3.075},{"m":"2025-11","b":0.75,"se":1.019,"lo":-1.248,"hi":2.747},{"m":"2025-12","b":1.056,"se":1.039,"lo":-0.979,"hi":3.092},{"m":"2026-01","b":0.706,"se":1.039,"lo":-1.331,"hi":2.742},{"m":"2026-02","b":0.897,"se":1.022,"lo":-1.106,"hi":2.901},{"m":"2026-03","b":1.519,"se":1.133,"lo":-0.701,"hi":3.74},{"m":"2026-04","b":0.363,"se":1.078,"lo":-1.75,"hi":2.477},{"m":"2026-05","b":1.139,"se":1.012,"lo":-0.845,"hi":3.123},{"m":"2026-06","b":-0.823,"se":1.405,"lo":-3.576,"hi":1.929},{"m":"2026-07","b":-0.018,"se":1.056,"lo":-2.088,"hi":2.052}],"fx":[{"m":"2022-01","usd":3.1343,"usd_pct":0.0},{"m":"2022-02","usd":3.2138,"usd_pct":2.537},{"m":"2022-03","usd":3.2433,"usd_pct":3.476},{"m":"2022-04","usd":3.2422,"usd_pct":3.442},{"m":"2022-05","usd":3.382,"usd_pct":7.902},{"m":"2022-06","usd":3.414,"usd_pct":8.924},{"m":"2022-07","usd":3.4655,"usd_pct":10.567},{"m":"2022-08","usd":3.2988,"usd_pct":5.248},{"m":"2022-09","usd":3.4422,"usd_pct":9.822},{"m":"2022-10","usd":3.5479,"usd_pct":13.196},{"m":"2022-11","usd":3.4796,"usd_pct":11.015},{"m":"2022-12","usd":3.4516,"usd_pct":10.121},{"m":"2023-01","usd":3.4453,"usd_pct":9.921},{"m":"2023-02","usd":3.5431,"usd_pct":13.043},{"m":"2023-03","usd":3.62,"usd_pct":15.494},{"m":"2023-04","usd":3.6384,"usd_pct":16.081},{"m":"2023-05","usd":3.6601,"usd_pct":16.774},{"m":"2023-06","usd":3.6446,"usd_pct":16.281},{"m":"2023-07","usd":3.6684,"usd_pct":17.038},{"m":"2023-08","usd":3.7459,"usd_pct":19.511},{"m":"2023-09","usd":3.8202,"usd_pct":21.881},{"m":"2023-10","usd":3.9783,"usd_pct":26.926},{"m":"2023-11","usd":3.8058,"usd_pct":21.422},{"m":"2023-12","usd":3.671,"usd_pct":17.122},{"m":"2024-01","usd":3.7133,"usd_pct":18.472},{"m":"2024-02","usd":3.6458,"usd_pct":16.32},{"m":"2024-03","usd":3.6278,"usd_pct":15.745},{"m":"2024-04","usd":3.7433,"usd_pct":19.429},{"m":"2024-05","usd":3.7075,"usd_pct":18.286},{"m":"2024-06","usd":3.7247,"usd_pct":18.837},{"m":"2024-07","usd":3.6814,"usd_pct":17.455},{"m":"2024-08","usd":3.7318,"usd_pct":19.061},{"m":"2024-09","usd":3.7328,"usd_pct":19.094},{"m":"2024-10","usd":3.7516,"usd_pct":19.693},{"m":"2024-11","usd":3.7188,"usd_pct":18.648},{"m":"2024-12","usd":3.6177,"usd_pct":15.421},{"m":"2025-01","usd":3.6153,"usd_pct":15.344},{"m":"2025-02","usd":3.5678,"usd_pct":13.83},{"m":"2025-03","usd":3.6551,"usd_pct":16.615},{"m":"2025-04","usd":3.6975,"usd_pct":17.967},{"m":"2025-05","usd":3.5627,"usd_pct":13.667},{"m":"2025-06","usd":3.4826,"usd_pct":11.111},{"m":"2025-07","usd":3.3522,"usd_pct":6.95},{"m":"2025-08","usd":3.3958,"usd_pct":8.341},{"m":"2025-09","usd":3.3432,"usd_pct":6.664},{"m":"2025-10","usd":3.2806,"usd_pct":4.666},{"m":"2025-11","usd":3.2548,"usd_pct":3.843},{"m":"2025-12","usd":3.2151,"usd_pct":2.578},{"m":"2026-01","usd":3.1456,"usd_pct":0.359},{"m":"2026-02","usd":3.1027,"usd_pct":-1.011},{"m":"2026-03","usd":3.1156,"usd_pct":-0.598},{"m":"2026-04","usd":3.0152,"usd_pct":-3.799},{"m":"2026-05","usd":2.9008,"usd_pct":-7.451},{"m":"2026-06","usd":2.936,"usd_pct":-6.329},{"m":"2026-07","usd":3.0314,"usd_pct":-3.285}],"meta":{"ncat":280,"nobs":15400,"r2":0.995,"peak":"2023-10"},"windows":[{"base":"2022-01","cr3":-1.58,"gnt":0.98,"exp":-0.02},{"base":"2023-01","cr3":-2.09,"gnt":2.32,"exp":-0.02},{"base":"2024-01","cr3":-0.09,"gnt":1.17,"exp":-0.71},{"base":"2025-01","cr3":-1.16,"gnt":-1.27,"exp":-0.65}]};
+const NS="http://www.w3.org/2000/svg";
+const el=(t,a={})=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const months=D.cr3.map(d=>d.m);
+const M={l:54,r:66,t:16,b:30};
+const mlab=m=>{const[y,mo]=m.split("-");return["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+mo-1]+" "+y;};
+const line=p=>p.map((q,i)=>(i?"L":"M")+q[0].toFixed(2)+" "+q[1].toFixed(2)).join(" ");
+const X=(i,w)=>M.l+(i/(months.length-1))*(w-M.l-M.r);
+function grid(svg,w,h,yMin,yMax,step){
+  const ih=h-M.t-M.b, y=v=>M.t+ih-((v-yMin)/(yMax-yMin))*ih;
+  for(let v=Math.ceil(yMin/step)*step; v<=yMax; v+=step){
+    svg.appendChild(el("line",{x1:M.l,x2:w-M.r,y1:y(v),y2:y(v),stroke:css("--rule"),"stroke-width":1}));
+    const t=el("text",{x:M.l-10,y:y(v)+4,"text-anchor":"end",fill:css("--ink-3"),
+      "font-size":11,"font-family":"IBM Plex Mono, monospace"});
+    t.textContent=(v>0?"+":"")+v+"%"; svg.appendChild(t);
+  }
+  months.forEach((m,i)=>{ if(!m.endsWith("-01")&&!m.endsWith("-07"))return;
+    const t=el("text",{x:X(i,w),y:h-10,"text-anchor":"middle",fill:css("--ink-3"),
+      "font-size":10,"font-family":"IBM Plex Mono, monospace"});
+    t.textContent=(m.endsWith("-01")?"Jan ":"Jul ")+m.slice(2,4); svg.appendChild(t); });
+  svg.appendChild(el("line",{x1:M.l,x2:w-M.r,y1:y(0),y2:y(0),stroke:css("--rule-strong"),"stroke-width":1.25}));
+  // mark the FX turning point
+  const pi=months.indexOf(D.meta.peak);
+  if(pi>0) svg.appendChild(el("line",{x1:X(pi,w),x2:X(pi,w),y1:M.t,y2:h-M.b,
+    stroke:css("--rule-strong"),"stroke-width":1,opacity:.65}));
+  return y;
+}
+function hover(svg,tipId,w,h,render){
+  const tip=document.getElementById(tipId);
+  const cross=el("line",{y1:M.t,y2:h-M.b,stroke:css("--rule-strong"),"stroke-width":1,opacity:0});
+  svg.appendChild(cross);
+  const hit=el("rect",{x:M.l,y:M.t,width:w-M.l-M.r,height:h-M.t-M.b,fill:"transparent",style:"cursor:crosshair"});
+  svg.appendChild(hit);
+  hit.addEventListener("mousemove",ev=>{
+    const r=svg.getBoundingClientRect(), sx=(ev.clientX-r.left)*(w/r.width);
+    let i=0,best=1e9;
+    for(let k=0;k<months.length;k++){const dd=Math.abs(X(k,w)-sx);if(dd<best){best=dd;i=k;}}
+    cross.setAttribute("x1",X(i,w));cross.setAttribute("x2",X(i,w));cross.setAttribute("opacity",1);
+    tip.innerHTML=render(i); tip.style.opacity=1;
+    const px=(X(i,w)/w)*r.width, tw=tip.offsetWidth;
+    tip.style.left=Math.max(4,Math.min(r.width-tw-4,px-tw/2))+"px"; tip.style.top="4px";
+  });
+  hit.addEventListener("mouseleave",()=>{cross.setAttribute("opacity",0);tip.style.opacity=0;});
+}
+const YMIN=-6,YMAX=6;
+function panel(key,svgId,tipId,colVar,fillVar,label){
+  const svg=document.getElementById(svgId); svg.textContent="";
+  const w=900,h=264,S=D[key];
+  const y=grid(svg,w,h,YMIN,YMAX,2);
+  const up=S.map((d,i)=>[X(i,w),y(d.hi)]), dn=S.map((d,i)=>[X(i,w),y(d.lo)]).reverse();
+  svg.appendChild(el("path",{d:line(up)+" "+line(dn).replace("M","L")+" Z",fill:css(fillVar),stroke:"none"}));
+  svg.appendChild(el("path",{d:line(S.map((d,i)=>[X(i,w),y(d.b)])),fill:"none",
+    stroke:css(colVar),"stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"}));
+  S.forEach((d,i)=>{const sig=i>0&&(d.lo>0||d.hi<0);
+    if(sig) svg.appendChild(el("circle",{cx:X(i,w),cy:y(d.b),r:3.2,fill:css(colVar),
+      stroke:css("--surface"),"stroke-width":1.4}));});
+  const last=S[S.length-1];
+  const t=el("text",{x:X(months.length-1,w)+9,y:y(last.b)+4,fill:css(colVar),"font-size":12.5,
+    "font-weight":600,"font-family":"IBM Plex Mono, monospace"});
+  t.textContent=(last.b>=0?"+":"−")+Math.abs(last.b).toFixed(2)+"%"; svg.appendChild(t);
+  hover(svg,tipId,w,h,i=>{const d=S[i];
+    return `<div class="tm">${mlab(d.m)}</div>
+      <div class="row"><span>${label}</span><span style="color:${css(colVar)}">${(d.b>=0?"+":"−")+Math.abs(d.b).toFixed(2)}%</span></div>
+      <div class="row"><span class="ci">95% CI</span><span class="ci">${d.lo.toFixed(2)} … ${d.hi.toFixed(2)}</span></div>
+      <div class="row"><span class="ci">USD/ILS</span><span class="ci">${(D.fx[i]||{}).usd??""}</span></div>`;});
+}
+function drawFX(){
+  const svg=document.getElementById("cF"); svg.textContent="";
+  const w=900,h=168, v=D.fx.map(d=>d.usd);
+  const lo=Math.floor(Math.min(...v)*10)/10-.05, hi=Math.ceil(Math.max(...v)*10)/10+.05;
+  const ih=h-M.t-M.b, y=x=>M.t+ih-((x-lo)/(hi-lo))*ih;
+  for(let t=Math.ceil(lo*10)/10;t<=hi;t+=0.3){
+    svg.appendChild(el("line",{x1:M.l,x2:w-M.r,y1:y(t),y2:y(t),stroke:css("--rule"),"stroke-width":1}));
+    const q=el("text",{x:M.l-10,y:y(t)+4,"text-anchor":"end",fill:css("--ink-3"),
+      "font-size":11,"font-family":"IBM Plex Mono, monospace"}); q.textContent=t.toFixed(1); svg.appendChild(q);
+  }
+  months.forEach((m,i)=>{ if(!m.endsWith("-01")&&!m.endsWith("-07"))return;
+    const q=el("text",{x:X(i,w),y:h-10,"text-anchor":"middle",fill:css("--ink-3"),
+      "font-size":10,"font-family":"IBM Plex Mono, monospace"});
+    q.textContent=(m.endsWith("-01")?"Jan ":"Jul ")+m.slice(2,4); svg.appendChild(q); });
+  const pi=months.indexOf(D.meta.peak);
+  if(pi>0){ svg.appendChild(el("line",{x1:X(pi,w),x2:X(pi,w),y1:M.t,y2:h-M.b,
+    stroke:css("--rule-strong"),"stroke-width":1,opacity:.65}));
+    const lb=el("text",{x:X(pi,w),y:M.t-4,"text-anchor":"middle",fill:css("--ink-3"),
+      "font-size":10,"font-family":"IBM Plex Mono, monospace"}); lb.textContent="peak"; svg.appendChild(lb);}
+  svg.appendChild(el("path",{d:line(D.fx.map((d,i)=>[X(i,w),y(d.usd)])),fill:"none",
+    stroke:css("--ink-3"),"stroke-width":2,"stroke-linejoin":"round","stroke-linecap":"round"}));
+  const last=D.fx[D.fx.length-1];
+  const t=el("text",{x:X(months.length-1,w)+9,y:y(last.usd)+4,fill:css("--ink-2"),"font-size":12,
+    "font-weight":600,"font-family":"IBM Plex Mono, monospace"}); t.textContent=last.usd.toFixed(2); svg.appendChild(t);
+  hover(svg,"tipF",w,h,i=>`<div class="tm">${mlab(D.fx[i].m)}</div>
+    <div class="row"><span>USD/ILS</span><span>${D.fx[i].usd.toFixed(3)}</span></div>
+    <div class="row"><span>vs Jan 2022</span><span>${D.fx[i].usd_pct.toFixed(1)}%</span></div>`);
+}
+document.getElementById("wt").innerHTML=D.windows.map(r=>{
+  const f=(v,c)=>`<td class="mono" style="color:${v<0?css(c):css("--ink")}">${v>=0?"+":"−"}${Math.abs(v).toFixed(2)}%</td>`;
+  return `<tr><td>${mlab(r.base)}</td>${f(r.cr3,"--s1")}${f(r.gnt,"--s2")}${f(r.exp,"--s3")}</tr>`;
+}).join("");
+function drawAll(){
+  panel("cr3","cC","tipC","--s1","--s1-fill","CR3 gap / SD");
+  panel("gnt","cG","tipG","--s2","--s2-fill","Giant gap");
+  panel("exp","cE","tipE","--s3","--s3-fill","Exposure gap / SD");
+  drawFX();
+}
+drawAll();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",drawAll);
+new MutationObserver(drawAll).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+</script>
