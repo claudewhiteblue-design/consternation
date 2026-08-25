@@ -94,6 +94,20 @@ DOMESTIC=['תנובה','מחלבות','מחלבת','זוגלובק','מאפיי�
  'מעדני הטלה','מיה תעשיות','סבא חביב','ביכורי שדה','מצות ראשלצ','טחנת קמח','מכבים',
  'דואט','מזרע','שקד תבור','טחנות','משק ','קיבוץ']
 BUCKET=['ספק כללי','יצרן פרטי','יצרן לא ידוע','ספק מותג פרטי','ספק קצביה כללי']
+# an importer's own shekel wedge depends on what kind of importer it is.
+# TRADER: a trading house with almost no marketing — landed cost is most of its price.
+# BRAND : a multinational's local arm carrying heavy marketing and distribution in shekels.
+TRADER=['וילי פוד','נטו סחר','טאמן','ליימן שליסל','שסטוביץ','אדיר ר.י','שמאי יבוא','אדום יבוא',
+ 'ג.ד. יבוא','דנשר','יורוסטנדרט','גלוברנדס','אמריקן סוי','דוידוביץ','אקרמן','חסלט','ישרקו',
+ 'מוצרי איכות אמריקאיים','קוואקר','פוסט פודס','יבוא','סחר']
+BRAND=['פרוקטר וגמבל','קולגייט','רקיט','הנקל','מונדלז','קרפט היינץ',"ג'נרל מילס",'פררו','מארס',
+ 'מרס ','לינדט','לואקר','לוטוס','פרינגלס',"ג'קובס דאו",'אבוט','ניאופרם','לוריאל','BDF',
+ 'קימברלי','הרשיז','נסטלה פור','ביק ','דיפלומט','שקדיה','מאיה','פוליבה']
+def imp_kind(m):
+    if any(k in m for k in BRAND):  return 'BRAND'
+    if any(k in m for k in TRADER): return 'TRADER'
+    return 'MIXED'
+LAND_ADJ={'TRADER':+0.12,'BRAND':-0.10,'MIXED':0.0}
 def role(m):
     if any(k in m for k in BUCKET): return 'BUCKET'
     if any(k in m for k in IMPORTER): return 'IMP'
@@ -109,7 +123,8 @@ prm=pairs.apply(lambda r: cat_params(r.ctg,r.dep),axis=1,result_type='expand')
 pairs[['mat','imp_mat','m_retail','land']]=prm
 pairs['role']=pairs.mfr.map(role)
 pairs['core_dom']=np.minimum(pairs.mat*pairs.imp_mat+PACK,1.0)
-pairs['core_imp']=pairs.land
+pairs['imp_kind']=np.where(pairs.role=='IMP',pairs.mfr.map(imp_kind),'')
+pairs['core_imp']=np.clip(pairs.land+pairs.imp_kind.map(LAND_ADJ).fillna(0),0.45,0.85)
 pairs['core']=np.where(pairs.role=='IMP',pairs.core_imp,
               np.where(pairs.role=='DOM',pairs.core_dom,np.nan))
 # BUCKET / UNK: the mix implied by the identified pairs in the same category
@@ -136,7 +151,9 @@ g=pairs.groupby('ctg').apply(lambda d: pd.Series({
    'dep':d.dep.iloc[0],'rev':d.rev.sum(),
    'fx_v2':(d.fx*d.rev).sum()/d.rev.sum(),
    'fx_dom':100*(1-d.m_retail.iloc[0])*d.core_dom.iloc[0],
-   'fx_imp':100*(1-d.m_retail.iloc[0])*d.core_imp.iloc[0],
+   'fx_imp':100*(1-d.m_retail.iloc[0])*d.land.iloc[0],
+   'fx_imp_trader':100*(1-d.m_retail.iloc[0])*min(.85,d.land.iloc[0]+.12),
+   'fx_imp_brand':100*(1-d.m_retail.iloc[0])*max(.45,d.land.iloc[0]-.10),
    'imp_share':100*d.loc[d.role=='IMP','rev'].sum()/d.rev.sum(),
    'unk_share':100*d.loc[d.role=='UNK','rev'].sum()/d.rev.sum(),
    'identified':100*d.loc[d.role.isin(['DOM','IMP']),'rev'].sum()/d.rev.sum(),
