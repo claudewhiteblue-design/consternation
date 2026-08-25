@@ -46,9 +46,10 @@ def fit(d,col,ctrl,weighted):
             Rm=np.zeros((len(ms),len(nn)))
             for j,m in enumerate(ms): Rm[j,nn.index(f'{pre}|{pd.Timestamp(m):%Y-%m}')]=1
             ft=r.f_test(Rm)
-            idx=[nn.index(f'{pre}|{pd.Timestamp(m):%Y-%m}') for m in ms]
-            b=100*np.mean([r.params[i] for i in idx])
-            out[(pname,pre)]=(b,float(ft.fvalue),float(ft.pvalue))
+            Lv=Rm.mean(axis=0)            # average of the month interactions
+            tt=r.t_test(Lv)
+            b=100*float(np.squeeze(tt.effect)); se=100*float(np.squeeze(tt.sd))
+            out[(pname,pre)]=(b,se,float(np.squeeze(tt.pvalue)),float(ft.fvalue),float(ft.pvalue))
     return out
 
 rows=[]
@@ -67,10 +68,10 @@ for exmeat in [False,True]:
                     if pre=='exp' and not ctrl: continue
                     line=f'{pname:20}{lab:10}'
                     for nm,_ in MEAS:
-                        b,F,pv=res[nm][(pname,pre)]
-                        line+=f'  b={b:+6.3f}% F={F:5.2f} p={pv:.4f}{"*" if pv<0.05 else " "}'
+                        b,se,pb,F,pv=res[nm][(pname,pre)]
+                        line+=f'  b={b:+6.3f}%({se:.3f}) F={F:5.2f} p={pv:.4f}{"*" if pv<0.05 else " "}'
                         rows.append(dict(sample=tag,weighted=weighted,control=ctrl,phase=pname,
-                                         term=lab,measure=nm,coef_pct=b,F=F,p=pv))
+                                         term=lab,measure=nm,coef_pct=b,se_pct=se,p_coef=pb,F=F,p_joint=pv))
                     print(line)
                 print()
 pd.DataFrame(rows).to_csv('weighted_regression_grid.csv',index=False)
