@@ -1,0 +1,130 @@
+<title>ריכוזיות ומסלול מחירים</title>
+<style>
+:root{color-scheme:light;--bg:#fcfcfb;--surf:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--ink3:#83827c;
+--line:#e4e3dd;--grid:#eeede8;--s1:#2a78d6;--s2:#eb6834;--band:rgba(11,11,11,.045)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#141413;--surf:#1a1a19;
+--ink:#ffffff;--ink2:#c3c2b7;--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--s1:#3987e5;--s2:#d95926;--band:rgba(255,255,255,.05)}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#141413;--surf:#1a1a19;--ink:#ffffff;--ink2:#c3c2b7;
+--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--s1:#3987e5;--s2:#d95926;--band:rgba(255,255,255,.05)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);direction:rtl;
+font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6}
+.wrap{max-width:940px;margin:0 auto;padding:40px 24px 72px}
+h1{font-size:27px;line-height:1.25;margin:0 0 8px;letter-spacing:-.01em}
+.sub{color:var(--ink2);margin:0 0 28px;max-width:64ch}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:20px 18px 12px;margin:0 0 20px}
+.ct{font-size:16px;font-weight:600;margin:0 0 2px}.cs{font-size:13px;color:var(--ink2);margin:0 0 14px}
+.leg{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:0 0 10px}
+.leg i{display:inline-block;width:22px;height:3px;border-radius:2px;vertical-align:middle;margin-left:7px}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:13px;width:100%;min-width:520px}
+th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums}
+th{color:var(--ink2);font-weight:600;position:sticky;top:0;background:var(--surf)}
+details{margin-top:8px}summary{cursor:pointer;font-size:13px;color:var(--ink2);padding:6px 0}
+.note{font-size:13.5px;color:var(--ink2);max-width:66ch}
+.note b{color:var(--ink)}
+#tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;background:var(--surf);
+border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:13px;
+box-shadow:0 4px 16px rgba(0,0,0,.14);z-index:9;min-width:170px}
+#tip .r{display:flex;justify-content:space-between;gap:16px}
+#tip .r b{font-variant-numeric:tabular-nums}
+#tip .m{color:var(--ink2);margin-bottom:6px;font-size:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:6px}
+</style>
+<div class="wrap">
+<h1>קטגוריות מרוכזות מול מפוזרות — מסלול המחיר, 2022–2026</h1>
+<p class="sub">חלוקה לפי חציון CR3 ללא ספקים מאוגדים במדידת 2022 (74.5). כל קטגוריה מנורמלת למחיר של ינואר 2022 = 100, והקו הוא הממוצע הגיאומטרי בקבוצה. 278 קטגוריות בפאנל מאוזן על פני 55 חודשים.</p>
+
+<div class="card">
+  <p class="ct">מדד מחיר, ינואר 2022 = 100</p>
+  <p class="cs">קו אנכי מקווקו: נובמבר 2023, המעבר מפיחות לייסוף בשער השקל־דולר</p>
+  <div class="leg">
+    <span><i style="background:var(--s1)"></i>מרוכזות (CR3 ≥ 74.5) — 134 קטגוריות</span>
+    <span><i style="background:var(--s2)"></i>מפוזרות (CR3 &lt; 74.5) — 144 קטגוריות</span>
+  </div>
+  <svg id="c1" viewBox="0 0 900 400"></svg>
+</div>
+
+<div class="card">
+  <p class="ct">הפער בין הקבוצות</p>
+  <p class="cs">מרוכזות פחות מפוזרות, בנקודות מדד</p>
+  <svg id="c2" viewBox="0 0 900 190"></svg>
+</div>
+
+<p class="note"><b>שני המסלולים כמעט חופפים.</b> אחרי 55 חודשים המרוכזות עומדות על 115.2 והמפוזרות על 117.7 — פער של 2.5 נקודות, בכיוון ההפוך לציפייה. הפער המרבי לאורך כל התקופה הוא כ־3.5 נקודות, ובשקלול לפי מכר 2022 הוא מתאפס לגמרי (116.6 מול 116.3).</p>
+<p class="note" style="margin-top:14px">זה לא סותר את מבחן ה־F המובהק מהמודל הקודם, אבל כן מסייג אותו: המובהקות שם נובעת מתזוזות חודשיות בתוך הפיזור הרציף של CR3, ולא מהיפרדות מתמשכת של מרוכזות ממפוזרות. חלוקה לפי חציון מוותרת על רוב השונות — 89.5 מול 54.2 בממוצע הקבוצות — ומה שנשאר הוא הבדל שאינו נראה לעין בגובה המחיר.</p>
+
+<details><summary>הצג טבלה</summary><div class="scroll"><table id="tb"></table></div></details>
+</div>
+<div id="tip"></div>
+<script>
+const D=[{"month": "2022-01", "high": 100.0, "high_w": 100.0, "low": 100.0, "low_w": 100.0, "gap": 0.0, "gap_w": 0.0}, {"month": "2022-02", "high": 99.964, "high_w": 99.322, "low": 100.378, "low_w": 99.914, "gap": -0.414, "gap_w": -0.592}, {"month": "2022-03", "high": 99.335, "high_w": 98.851, "low": 100.2, "low_w": 100.228, "gap": -0.865, "gap_w": -1.377}, {"month": "2022-04", "high": 100.7, "high_w": 99.642, "low": 102.339, "low_w": 103.935, "gap": -1.639, "gap_w": -4.293}, {"month": "2022-05", "high": 99.652, "high_w": 99.065, "low": 102.593, "low_w": 102.952, "gap": -2.94, "gap_w": -3.887}, {"month": "2022-06", "high": 100.827, "high_w": 99.828, "low": 103.152, "low_w": 103.55, "gap": -2.326, "gap_w": -3.722}, {"month": "2022-07", "high": 101.41, "high_w": 100.202, "low": 104.034, "low_w": 103.725, "gap": -2.624, "gap_w": -3.523}, {"month": "2022-08", "high": 101.464, "high_w": 100.303, "low": 104.236, "low_w": 103.522, "gap": -2.772, "gap_w": -3.219}, {"month": "2022-09", "high": 101.247, "high_w": 100.263, "low": 103.401, "low_w": 102.769, "gap": -2.154, "gap_w": -2.505}, {"month": "2022-10", "high": 102.359, "high_w": 101.77, "low": 105.098, "low_w": 105.286, "gap": -2.739, "gap_w": -3.516}, {"month": "2022-11", "high": 103.094, "high_w": 102.182, "low": 103.347, "low_w": 104.033, "gap": -0.253, "gap_w": -1.851}, {"month": "2022-12", "high": 105.231, "high_w": 102.85, "low": 104.068, "low_w": 104.743, "gap": 1.163, "gap_w": -1.894}, {"month": "2023-01", "high": 105.33, "high_w": 103.738, "low": 104.244, "low_w": 104.976, "gap": 1.086, "gap_w": -1.239}, {"month": "2023-02", "high": 105.796, "high_w": 104.351, "low": 104.121, "low_w": 104.82, "gap": 1.675, "gap_w": -0.469}, {"month": "2023-03", "high": 105.306, "high_w": 103.737, "low": 105.845, "low_w": 106.743, "gap": -0.539, "gap_w": -3.007}, {"month": "2023-04", "high": 104.502, "high_w": 103.181, "low": 108.712, "low_w": 109.072, "gap": -4.21, "gap_w": -5.891}, {"month": "2023-05", "high": 102.671, "high_w": 102.198, "low": 106.055, "low_w": 105.569, "gap": -3.384, "gap_w": -3.371}, {"month": "2023-06", "high": 105.161, "high_w": 104.439, "low": 106.835, "low_w": 105.995, "gap": -1.674, "gap_w": -1.556}, {"month": "2023-07", "high": 105.653, "high_w": 105.63, "low": 107.282, "low_w": 106.626, "gap": -1.628, "gap_w": -0.996}, {"month": "2023-08", "high": 105.021, "high_w": 105.07, "low": 106.358, "low_w": 105.519, "gap": -1.338, "gap_w": -0.449}, {"month": "2023-09", "high": 104.584, "high_w": 104.556, "low": 106.303, "low_w": 105.543, "gap": -1.719, "gap_w": -0.987}, {"month": "2023-10", "high": 105.797, "high_w": 106.14, "low": 108.454, "low_w": 108.057, "gap": -2.656, "gap_w": -1.917}, {"month": "2023-11", "high": 106.005, "high_w": 105.962, "low": 108.709, "low_w": 108.784, "gap": -2.704, "gap_w": -2.821}, {"month": "2023-12", "high": 106.879, "high_w": 106.869, "low": 109.34, "low_w": 109.561, "gap": -2.462, "gap_w": -2.692}, {"month": "2024-01", "high": 106.064, "high_w": 105.937, "low": 109.262, "low_w": 109.965, "gap": -3.198, "gap_w": -4.028}, {"month": "2024-02", "high": 107.751, "high_w": 107.16, "low": 110.394, "low_w": 110.937, "gap": -2.643, "gap_w": -3.778}, {"month": "2024-03", "high": 108.082, "high_w": 107.697, "low": 110.996, "low_w": 111.76, "gap": -2.913, "gap_w": -4.063}, {"month": "2024-04", "high": 109.159, "high_w": 107.971, "low": 112.887, "low_w": 114.355, "gap": -3.727, "gap_w": -6.384}, {"month": "2024-05", "high": 108.36, "high_w": 108.229, "low": 112.295, "low_w": 112.465, "gap": -3.934, "gap_w": -4.236}, {"month": "2024-06", "high": 109.583, "high_w": 109.895, "low": 111.935, "low_w": 112.683, "gap": -2.352, "gap_w": -2.788}, {"month": "2024-07", "high": 110.803, "high_w": 111.22, "low": 111.697, "low_w": 112.123, "gap": -0.895, "gap_w": -0.903}, {"month": "2024-08", "high": 111.966, "high_w": 111.828, "low": 112.414, "low_w": 112.802, "gap": -0.447, "gap_w": -0.974}, {"month": "2024-09", "high": 110.378, "high_w": 110.466, "low": 110.122, "low_w": 111.152, "gap": 0.256, "gap_w": -0.687}, {"month": "2024-10", "high": 110.937, "high_w": 111.699, "low": 114.385, "low_w": 113.619, "gap": -3.448, "gap_w": -1.92}, {"month": "2024-11", "high": 112.18, "high_w": 112.614, "low": 112.474, "low_w": 113.263, "gap": -0.294, "gap_w": -0.65}, {"month": "2024-12", "high": 112.823, "high_w": 112.93, "low": 112.167, "low_w": 112.893, "gap": 0.656, "gap_w": 0.037}, {"month": "2025-01", "high": 113.653, "high_w": 113.591, "low": 113.492, "low_w": 113.987, "gap": 0.161, "gap_w": -0.397}, {"month": "2025-02", "high": 114.356, "high_w": 114.475, "low": 112.941, "low_w": 114.438, "gap": 1.415, "gap_w": 0.037}, {"month": "2025-03", "high": 115.109, "high_w": 114.788, "low": 114.883, "low_w": 115.863, "gap": 0.227, "gap_w": -1.075}, {"month": "2025-04", "high": 114.31, "high_w": 114.197, "low": 114.93, "low_w": 116.687, "gap": -0.62, "gap_w": -2.489}, {"month": "2025-05", "high": 113.562, "high_w": 113.354, "low": 114.621, "low_w": 114.401, "gap": -1.059, "gap_w": -1.047}, {"month": "2025-06", "high": 115.862, "high_w": 116.835, "low": 116.188, "low_w": 116.07, "gap": -0.326, "gap_w": 0.764}, {"month": "2025-07", "high": 115.841, "high_w": 116.341, "low": 115.233, "low_w": 114.934, "gap": 0.608, "gap_w": 1.407}, {"month": "2025-08", "high": 115.653, "high_w": 115.965, "low": 116.002, "low_w": 115.451, "gap": -0.348, "gap_w": 0.514}, {"month": "2025-09", "high": 113.845, "high_w": 114.762, "low": 113.377, "low_w": 113.571, "gap": 0.468, "gap_w": 1.191}, {"month": "2025-10", "high": 115.524, "high_w": 116.137, "low": 114.802, "low_w": 115.421, "gap": 0.722, "gap_w": 0.716}, {"month": "2025-11", "high": 116.074, "high_w": 116.819, "low": 114.087, "low_w": 113.867, "gap": 1.987, "gap_w": 2.952}, {"month": "2025-12", "high": 116.205, "high_w": 116.672, "low": 113.785, "low_w": 114.376, "gap": 2.42, "gap_w": 2.296}, {"month": "2026-01", "high": 115.604, "high_w": 116.021, "low": 115.204, "low_w": 115.503, "gap": 0.401, "gap_w": 0.518}, {"month": "2026-02", "high": 115.817, "high_w": 116.565, "low": 115.525, "low_w": 115.888, "gap": 0.292, "gap_w": 0.676}, {"month": "2026-03", "high": 115.435, "high_w": 115.603, "low": 116.699, "low_w": 118.008, "gap": -1.264, "gap_w": -2.406}, {"month": "2026-04", "high": 115.43, "high_w": 116.906, "low": 118.103, "low_w": 118.515, "gap": -2.673, "gap_w": -1.61}, {"month": "2026-05", "high": 115.731, "high_w": 117.19, "low": 117.848, "low_w": 119.077, "gap": -2.117, "gap_w": -1.887}, {"month": "2026-06", "high": 116.423, "high_w": 118.07, "low": 119.885, "low_w": 117.53, "gap": -3.463, "gap_w": 0.541}, {"month": "2026-07", "high": 115.23, "high_w": 116.642, "low": 117.721, "low_w": 116.282, "gap": -2.491, "gap_w": 0.36}];
+const S1=getComputedStyle(document.documentElement).getPropertyValue('--s1');
+const fmt=v=>v.toFixed(1);
+function ax(v){return v}
+function draw(){
+const W=900,H=400,M={t:18,r:20,b:34,l:52};
+const iw=W-M.l-M.r, ih=H-M.t-M.b;
+const lo=98,hi=122;
+const x=i=>M.l+iw*(i/(D.length-1)), y=v=>M.t+ih*(1-(v-lo)/(hi-lo));
+let g='';
+for(let v=100;v<=120;v+=5){g+=`<line x1="${M.l}" x2="${W-M.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/>`+
+  `<text x="${M.l-10}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="12">${v}</text>`;}
+D.forEach((d,i)=>{if(d.month.endsWith('-01')){g+=`<text x="${x(i)}" y="${H-M.b+20}" text-anchor="middle" fill="var(--ink3)" font-size="12">${d.month.slice(0,4)}</text>`;}});
+const iv=D.findIndex(d=>d.month==='2023-11');
+g+=`<line x1="${x(iv)}" x2="${x(iv)}" y1="${M.t}" y2="${M.t+ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="4 4"/>`;
+g+=`<text x="${x(iv)-6}" y="${M.t+13}" text-anchor="end" fill="var(--ink3)" font-size="11.5">11/2023</text>`;
+const path=k=>D.map((d,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(d[k]).toFixed(1)).join(' ');
+g+=`<path d="${path('low')}" fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+g+=`<path d="${path('high')}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+const L=D.length-1;
+g+=`<circle cx="${x(L)}" cy="${y(D[L].high)}" r="4.5" fill="var(--s1)" stroke="var(--surf)" stroke-width="2"/>`;
+g+=`<circle cx="${x(L)}" cy="${y(D[L].low)}" r="4.5" fill="var(--s2)" stroke="var(--surf)" stroke-width="2"/>`;
+g+=`<text x="${x(L)-9}" y="${y(D[L].high)+4}" text-anchor="end" fill="var(--ink)" font-size="12.5" font-weight="600">${fmt(D[L].high)}</text>`;
+g+=`<text x="${x(L)-9}" y="${y(D[L].low)+4}" text-anchor="end" fill="var(--ink)" font-size="12.5" font-weight="600">${fmt(D[L].low)}</text>`;
+g+=`<line id="ch" x1="0" x2="0" y1="${M.t}" y2="${M.t+ih}" stroke="var(--ink3)" stroke-width="1" opacity="0"/>`;
+g+=`<circle id="p1" r="5" fill="var(--s1)" stroke="var(--surf)" stroke-width="2" opacity="0"/>`;
+g+=`<circle id="p2" r="5" fill="var(--s2)" stroke="var(--surf)" stroke-width="2" opacity="0"/>`;
+g+=`<rect id="hit" x="${M.l}" y="${M.t}" width="${iw}" height="${ih}" fill="transparent"/>`;
+document.getElementById('c1').innerHTML=g;
+
+const W2=900,H2=190,M2={t:14,r:20,b:30,l:52},iw2=W2-M2.l-M2.r,ih2=H2-M2.t-M2.b;
+const glo=-5,ghi=3;
+const x2=i=>M2.l+iw2*(i/(D.length-1)), y2=v=>M2.t+ih2*(1-(v-glo)/(ghi-glo));
+let h='';
+for(let v=-4;v<=2;v+=2){h+=`<line x1="${M2.l}" x2="${W2-M2.r}" y1="${y2(v)}" y2="${y2(v)}" stroke="${v===0?'var(--line)':'var(--grid)'}" stroke-width="1"/>`+
+ `<text x="${M2.l-10}" y="${y2(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="12">${v>0?'+'+v:v}</text>`;}
+D.forEach((d,i)=>{if(d.month.endsWith('-01')){h+=`<text x="${x2(i)}" y="${H2-M2.b+20}" text-anchor="middle" fill="var(--ink3)" font-size="12">${d.month.slice(0,4)}</text>`;}});
+const gp=D.map((d,i)=>(i?'L':'M')+x2(i).toFixed(1)+' '+y2(Math.max(glo,Math.min(ghi,d.gap))).toFixed(1)).join(' ');
+h+=`<path d="${gp} L ${x2(D.length-1).toFixed(1)} ${y2(0)} L ${x2(0).toFixed(1)} ${y2(0)} Z" fill="var(--band)"/>`;
+h+=`<path d="${gp}" fill="none" stroke="var(--ink2)" stroke-width="2" stroke-linejoin="round"/>`;
+h+=`<text x="${x2(D.length-1)-9}" y="${y2(D[L].gap)-10}" text-anchor="end" fill="var(--ink)" font-size="12.5" font-weight="600">${D[L].gap>0?'+':''}${fmt(D[L].gap)}</text>`;
+document.getElementById('c2').innerHTML=h;
+
+const tip=document.getElementById('tip'),ch=document.getElementById('ch'),p1=document.getElementById('p1'),p2=document.getElementById('p2');
+const svg=document.getElementById('c1');
+svg.addEventListener('pointermove',e=>{
+  const r=svg.getBoundingClientRect(), sx=(e.clientX-r.left)*W/r.width;
+  let i=Math.round((sx-M.l)/iw*(D.length-1)); i=Math.max(0,Math.min(D.length-1,i));
+  const d=D[i];
+  [ch,p1,p2].forEach(n=>n.setAttribute('opacity','1'));
+  ch.setAttribute('x1',x(i));ch.setAttribute('x2',x(i));
+  p1.setAttribute('cx',x(i));p1.setAttribute('cy',y(d.high));
+  p2.setAttribute('cx',x(i));p2.setAttribute('cy',y(d.low));
+  tip.innerHTML=`<div class="m">${d.month}</div>`+
+   `<div class="r"><span><span class="dot" style="background:var(--s1)"></span>מרוכזות</span><b>${fmt(d.high)}</b></div>`+
+   `<div class="r"><span><span class="dot" style="background:var(--s2)"></span>מפוזרות</span><b>${fmt(d.low)}</b></div>`+
+   `<div class="r" style="margin-top:5px;color:var(--ink2)"><span>פער</span><b>${d.gap>0?'+':''}${fmt(d.gap)}</b></div>`;
+  tip.style.opacity=1;
+  const tw=tip.offsetWidth,th=tip.offsetHeight;
+  let lx=e.clientX-tw-16; if(lx<8)lx=e.clientX+16;
+  tip.style.left=lx+'px'; tip.style.top=Math.max(8,Math.min(innerHeight-th-8,e.clientY-th/2))+'px';
+});
+svg.addEventListener('pointerleave',()=>{tip.style.opacity=0;[ch,p1,p2].forEach(n=>n.setAttribute('opacity','0'));});
+
+document.getElementById('tb').innerHTML='<thead><tr><th>חודש</th><th>מרוכזות</th><th>מפוזרות</th><th>פער</th><th>מרוכזות (משוקלל)</th><th>מפוזרות (משוקלל)</th></tr></thead><tbody>'+
+ D.map(d=>`<tr><td>${d.month}</td><td>${fmt(d.high)}</td><td>${fmt(d.low)}</td><td>${d.gap>0?'+':''}${fmt(d.gap)}</td><td>${fmt(d.high_w)}</td><td>${fmt(d.low_w)}</td></tr>`).join('')+'</tbody>';
+}
+draw();
+</script>
