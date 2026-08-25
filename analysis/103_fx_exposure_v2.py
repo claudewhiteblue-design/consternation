@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 """FX exposure v2 — the share of the RETAIL price that is denominated in foreign currency.
 
-   retail price = retailer gross margin (shekel)  +  supplier's selling price
+   The retailer sets a PERCENTAGE markup, so its margin scales with the supplier
+   price and cancels out of the elasticity: retail = supplier / (1 - m), hence
+   dln(retail) = dln(supplier). The FX elasticity of the shelf price therefore
+   equals the FX-linked share of the SUPPLIER's price, with no (1-m) factor.
+   (An earlier version multiplied by (1-m). That would be right only if the
+   retailer held an absolute shekel margin, which is not how grocery retail works.)
    supplier's selling price, for a DOMESTIC manufacturer
         = imported materials + domestic materials + packaging/energy + domestic value add
    supplier's selling price, for an IMPORTER
         = landed cost (all FX) + local distribution, marketing, margin (shekel)
 
-   fx_share = (1 - m_retail) * core ,  core in [0,1]
+   fx_share = core , core in [0,1]
+      fx = core
       DOM core = mat * imp_mat + pack        (pack = FX-linked packaging & energy)
       IMP core = land                        (landed-cost share of the importer's price)
       BUCKET / UNK core = the category's revenue-weighted mix of the identified pairs
@@ -140,7 +146,7 @@ def infer(r):
     return k*cm+(1-k)*dm
 pairs['core']=pairs.apply(infer,axis=1)
 pairs['identified']=pairs.ctg.map(idsh)
-pairs['fx']=100*(1-pairs.m_retail)*pairs.core
+pairs['fx']=100*pairs.core
 pairs.to_csv('/tmp/pairs_fx_v2.csv',index=False)
 print(f'{len(pairs):,} pairs | roles by revenue: '+
       ' '.join(f'{k} {100*v/pairs.rev.sum():.1f}%' for k,v in pairs.groupby("role").rev.sum().items()))
@@ -150,10 +156,10 @@ print(f'unidentified share fell from 11.3% (v1) to '
 g=pairs.groupby('ctg').apply(lambda d: pd.Series({
    'dep':d.dep.iloc[0],'rev':d.rev.sum(),
    'fx_v2':(d.fx*d.rev).sum()/d.rev.sum(),
-   'fx_dom':100*(1-d.m_retail.iloc[0])*d.core_dom.iloc[0],
-   'fx_imp':100*(1-d.m_retail.iloc[0])*d.land.iloc[0],
-   'fx_imp_trader':100*(1-d.m_retail.iloc[0])*min(.85,d.land.iloc[0]+.12),
-   'fx_imp_brand':100*(1-d.m_retail.iloc[0])*max(.45,d.land.iloc[0]-.10),
+   'fx_dom':100*d.core_dom.iloc[0],
+   'fx_imp':100*d.land.iloc[0],
+   'fx_imp_trader':100*min(.85,d.land.iloc[0]+.12),
+   'fx_imp_brand':100*max(.45,d.land.iloc[0]-.10),
    'imp_share':100*d.loc[d.role=='IMP','rev'].sum()/d.rev.sum(),
    'unk_share':100*d.loc[d.role=='UNK','rev'].sum()/d.rev.sum(),
    'identified':100*d.loc[d.role.isin(['DOM','IMP']),'rev'].sum()/d.rev.sum(),
