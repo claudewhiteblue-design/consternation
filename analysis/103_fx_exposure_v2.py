@@ -113,7 +113,7 @@ def imp_kind(m):
     if any(k in m for k in BRAND):  return 'BRAND'
     if any(k in m for k in TRADER): return 'TRADER'
     return 'MIXED'
-LAND_ADJ={'TRADER':+0.12,'BRAND':-0.10,'MIXED':0.0}
+LAND_ADJ={'TRADER':+0.05,'BRAND':-0.05,'MIXED':0.0}
 def role(m):
     if any(k in m for k in BUCKET): return 'BUCKET'
     if any(k in m for k in IMPORTER): return 'IMP'
@@ -158,8 +158,8 @@ g=pairs.groupby('ctg').apply(lambda d: pd.Series({
    'fx_v2':(d.fx*d.rev).sum()/d.rev.sum(),
    'fx_dom':100*d.core_dom.iloc[0],
    'fx_imp':100*d.land.iloc[0],
-   'fx_imp_trader':100*min(.85,d.land.iloc[0]+.12),
-   'fx_imp_brand':100*max(.45,d.land.iloc[0]-.10),
+   'fx_imp_trader':100*min(.85,d.land.iloc[0]+.05),
+   'fx_imp_brand':100*max(.45,d.land.iloc[0]-.05),
    'imp_share':100*d.loc[d.role=='IMP','rev'].sum()/d.rev.sum(),
    'unk_share':100*d.loc[d.role=='UNK','rev'].sum()/d.rev.sum(),
    'identified':100*d.loc[d.role.isin(['DOM','IMP']),'rev'].sum()/d.rev.sum(),
