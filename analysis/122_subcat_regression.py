@@ -13,6 +13,7 @@ cc=pd.read_csv('/home/user/consternation/subcategory_concentration_2022.csv')[['
 d=c.execute(f'''SELECT "תת קטגוריה" AS sc, any_value("קטגוריה") AS cat, any_value("מחלקה") AS dep,
    "חודש" AS month, sum({R}) AS rev, sum({SQ}) AS qty
    FROM {p} WHERE {SQ} IS NOT NULL GROUP BY 1,4''').df()
+d['month']=d.month.str.replace('/','-',regex=False)
 d=d[(d.qty>0)&(d.rev>0)].merge(cc,on='sc')
 d=d[~d.dep.isin(EXDEP)].copy()
 NP=d.month.nunique(); n=d.groupby('sc').month.nunique()
