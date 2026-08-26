@@ -393,8 +393,8 @@ dimension (`תת קטגוריה`), covers the identical 55 months.
 
 | file | rows |
 |---|---|
-| `subcategory/subcat_{2022..2026}.parquet` | 2,823,922 (unfiltered), split by year to stay under GitHub's 100 MB file limit |
-| `subcategory_map.csv` | 1,163 category × sub-category pairs |
+| `subcategory/subcat_{2022..2026}.parquet` | 2,811,395 (unfiltered), split by year to stay under GitHub's 100 MB file limit |
+| `subcategory_map.csv` | 1,148 category × sub-category pairs, 301 categories |
 
 **Reconciliation.** Applying the main panel's volume threshold and restricting
 to the 296 categories already in the DB, the new export matches the existing
@@ -403,9 +403,12 @@ data to five decimal places in every year (largest yearly gap 0.00025%). 54 of
 between adjacent categories between exports (עוגיות בייסיק ↔ פרימיום,
 ממרחים מצוננים ↔ ממרחים שאינם מתוקים); the two sides of each pair offset.
 
-**What is new.** Seven categories in `ירקות שטופים וארוזים` appear only in the
-new export (962 M ₪ over the period, 48 months each). They are flagged in the
-map by `בדאטה הקיים = False`.
+**Scope.** The department `ירקות שטופים וארוזים` was present only in the new
+export (7 categories, 969 M ₪, 48 months) and has been removed so the layer
+covers exactly the same universe as the main panel. Ten further categories
+(mostly fresh herbs) appear in the unfiltered files but disappear entirely under
+the volume threshold, so they are absent from the map and from the main panel
+alike.
 
 `subcategory_map.csv` carries revenue (total, 2022, 2025), quantity in all three
 units, supplier and manufacturer counts, month coverage, and each

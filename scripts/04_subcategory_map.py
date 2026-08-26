@@ -26,14 +26,14 @@ SELECT a.y AS "שנה", round(a.v,2) AS "מכר חדש", round(b.v,2) AS "מכר
        round(100*(a.v/b.v-1),5) AS "פער %", a.n AS "שורות חדש", b.n AS "שורות קיים"
 FROM a JOIN b USING(y) ORDER BY 1''').df().to_string(index=False))
 
-print('\n=== 7 קטגוריות שקיימות רק בייצוא החדש ===')
+EXDEP='ירקות שטופים וארוזים'   # present only in the new export; dropped
+print(f'\n=== מוסר: מחלקת {EXDEP} ===')
 print(c.execute(f'''SELECT "מחלקה" AS dep,"קטגוריה" AS cat, round(sum({R}),1) AS rev,
    count(DISTINCT "תת קטגוריה") AS subs, count(DISTINCT "חודש") AS months
-   FROM {NEW} WHERE {KEEP} AND NOT {IN_OLD} GROUP BY 1,2 ORDER BY 3 DESC''').df().to_string(index=False))
+   FROM {NEW} WHERE {KEEP} AND "מחלקה"='{EXDEP}' GROUP BY 1,2 ORDER BY 3 DESC''').df().to_string(index=False))
 
 m=c.execute(f'''
 SELECT "מחלקה" AS "מחלקה", "קטגוריה" AS "קטגוריה", "תת קטגוריה" AS "תת קטגוריה",
-       {IN_OLD} AS "בדאטה הקיים",
        round(sum({R}),3) AS "מכר סה״כ",
        round(sum({R}) FILTER (WHERE "שנה"=2022),3) AS "מכר 2022",
        round(sum({R}) FILTER (WHERE "שנה"=2025),3) AS "מכר 2025",
@@ -42,7 +42,7 @@ SELECT "מחלקה" AS "מחלקה", "קטגוריה" AS "קטגוריה", "תת
        round(sum("מכר כמותי (אלפי יח' באריזה)"),2)    AS "אלפי יחידות",
        count(DISTINCT "ספק") AS "ספקים", count(DISTINCT "יצרן") AS "יצרנים",
        count(DISTINCT "חודש") AS "חודשים"
-FROM {NEW} WHERE {KEEP} GROUP BY 1,2,3''').df()
+FROM {NEW} WHERE {KEEP} AND "מחלקה"<>'{EXDEP}' GROUP BY 1,2,3''').df()
 tot=m.groupby('קטגוריה')['מכר סה״כ'].transform('sum')
 m['חלק מהקטגוריה %']=(100*m['מכר סה״כ']/tot).round(2)
 m=m.sort_values(['מחלקה','קטגוריה','מכר סה״כ'],ascending=[True,True,False]).reset_index(drop=True)
@@ -55,5 +55,5 @@ print('\nהמפורטות ביותר:')
 for cat,n in k.sort_values(ascending=False).head(8).items():
     print(f'  {cat[:32]:34}{n:>3}')
 print('\nדוגמה — חטיפים מתוקים:')
-for r in m[m['קטגוריה']=='חטיפים מתוקים'].itertuples():
-    print(f'  {r._3[:40]:42}{r._5:>9,.0f} מ׳ ₪  {r[len(r)-1]:>5.1f}%')
+for _,r in m[m['קטגוריה']=='חטיפים מתוקים'].iterrows():
+    print(f'  {r["תת קטגוריה"][:40]:42}{r["מכר סה״כ"]:>9,.0f} מ׳ ₪  {r["חלק מהקטגוריה %"]:>5.1f}%')
