@@ -48,7 +48,7 @@ border-radius:8px;padding:9px 12px;font-size:12.5px;box-shadow:0 4px 16px rgba(0
  <h2>מסלול המחיר של כל רבעון</h2>
  <p class="cs">ממוצע 2022 = 100. הרצועה האפורה היא שנת הבסיס — כל קו עובר בממוצע דרך 100 בתוכה.</p>
  <div class="leg" id="leg"></div>
- <div class="scroll"><svg id="ch" viewBox="0 0 940 380" style="width:100%;min-width:700px;height:auto"></svg></div>
+ <div class="scroll"><svg id="ch" viewBox="0 0 940 380" style="width:100%;min-width:700px;height:auto;direction:ltr"></svg></div>
 </div>
 
 <div class="card">
@@ -94,15 +94,15 @@ function draw(){
   g+=`<line x1="${pad.l}" x2="${W-pad.r}" y1="${y(v)}" y2="${y(v)}" stroke="${v===100?'var(--zero)':'var(--grid)'}" stroke-width="${v===100?1.5:1}"/>`;
   g+=`<text x="${pad.l-10}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11.5">${v}</text>`;}
  M.forEach((m,i)=>{if(m.endsWith('-01'))g+=`<text x="${x(i)}" y="${H-pad.b+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`;});
- const b0=M.indexOf('2022-01'), b1=M.indexOf('2022-12');
- g+=`<rect x="${x(b1)}" y="${pad.t}" width="${x(b0)-x(b1)}" height="${ih}" fill="rgba(128,128,128,.12)"/>`;
- g+=`<text x="${(x(b0)+x(b1))/2}" y="${pad.t+13}" text-anchor="middle" fill="var(--ink3)" font-size="11">בסיס</text>`;
+ const bs0=M.indexOf('2022-01'), bs1=M.indexOf('2022-12');
+ g+=`<rect x="${x(bs1)}" y="${pad.t}" width="${x(bs0)-x(bs1)}" height="${ih}" fill="rgba(128,128,128,.12)"/>`;
+ g+=`<text x="${(x(bs0)+x(bs1))/2}" y="${pad.t+13}" text-anchor="middle" fill="var(--ink3)" font-size="11">בסיס</text>`;
  [1,2,3,4].forEach(q=>{
   const cl=`var(--q${q})`, k='q'+q;
   g+=`<path d="${P.map((r,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(r[k]).toFixed(1)).join(' ')}" fill="none" stroke="${cl}" stroke-width="${q===1||q===4?2.4:1.6}" stroke-linejoin="round" opacity="${q===1||q===4?1:.75}"/>`;
   const L=P.length-1;
   g+=`<circle cx="${x(L)}" cy="${y(P[L][k])}" r="4" fill="${cl}" stroke="var(--surf)" stroke-width="2"/>`;
-  if(q===1||q===4) g+=`<text x="${x(L)-9}" y="${y(P[L][k])+4}" text-anchor="end" fill="var(--ink)" font-size="12.5" font-weight="600">${f(P[L][k])}</text>`;
+  if(q===1||q===4) g+=`<text x="${x(L)+12}" y="${y(P[L][k])+4}" text-anchor="start" fill="var(--ink)" font-size="12.5" font-weight="600">${f(P[L][k])}</text>`;
  });
  g+=`<line id="cross" x1="0" x2="0" y1="${pad.t}" y2="${pad.t+ih}" stroke="var(--ink3)" stroke-width="1" opacity="0"/>`;
  g+=`<rect id="hit" x="${pad.l}" y="${pad.t}" width="${iw}" height="${ih}" fill="transparent" style="cursor:crosshair"/>`;
@@ -120,7 +120,7 @@ function draw(){
    tip.style.left=lx+'px';tip.style.top=Math.max(8,Math.min(innerHeight-th-8,e.clientY-th/2))+'px';});
  svg.querySelector('#hit').addEventListener('pointerleave',()=>{tip.style.opacity=0;cross.setAttribute('opacity','0');});
 
- document.getElementById('qt').innerHTML='<thead><tr><th>רבעון</th><th>קטגוריות</th><th>מכר 2024 (מ׳ ₪)</th><th>נתח מהמחזור</th><th>טווח המדד</th><th>ממוצע משוקלל</th><th>מדד 1/2022</th><th>מדד 7/2026</th><th>שינוי מבסיס 2022</th></tr></thead><tbody>'+
+ document.getElementById('qt').innerHTML='<thead><tr><th>רבעון</th><th>קטגוריות</th><th>מכר 2022 (מ׳ ₪)</th><th>נתח מהמחזור</th><th>טווח המדד</th><th>ממוצע משוקלל</th><th>מדד 1/2022</th><th>מדד 7/2026</th><th>שינוי מבסיס 2022</th></tr></thead><tbody>'+
   Q.map(q=>{const a=P[0]['q'+q.q],b=P[P.length-1]['q'+q.q];
    return `<tr><td><span class="d" style="display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--q${q.q});margin-left:6px"></span>${q.q}</td>`+
    `<td>${q.n}</td><td>${q.rev.toLocaleString(undefined,{maximumFractionDigits:0})}</td><td>${q.share}%</td>`+
