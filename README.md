@@ -385,3 +385,32 @@ GROUP BY 1 ORDER BY y2026 DESC;
 Revenue totals for orientation, after the threshold: **47,431 M NIS** (2022), **50,362 M** (2023), **53,743 M** (2024), **56,231 M** (2025), **34,200 M**
 (2026, seven months). Largest department across
 the panel is `מוצרי חלב ותחליפיו`.
+
+## Sub-category layer (added later)
+
+A second set of nine workbooks, exported at the same grain plus one extra
+dimension (`תת קטגוריה`), covers the identical 55 months.
+
+| file | rows |
+|---|---|
+| `subcategory/subcat_{2022..2026}.parquet` | 2,823,922 (unfiltered), split by year to stay under GitHub's 100 MB file limit |
+| `subcategory_map.csv` | 1,163 category × sub-category pairs |
+
+**Reconciliation.** Applying the main panel's volume threshold and restricting
+to the 296 categories already in the DB, the new export matches the existing
+data to five decimal places in every year (largest yearly gap 0.00025%). 54 of
+16,172 category×month cells differ, all under 0.05 M ₪, from products moving
+between adjacent categories between exports (עוגיות בייסיק ↔ פרימיום,
+ממרחים מצוננים ↔ ממרחים שאינם מתוקים); the two sides of each pair offset.
+
+**What is new.** Seven categories in `ירקות שטופים וארוזים` appear only in the
+new export (962 M ₪ over the period, 48 months each). They are flagged in the
+map by `בדאטה הקיים = False`.
+
+`subcategory_map.csv` carries revenue (total, 2022, 2025), quantity in all three
+units, supplier and manufacturer counts, month coverage, and each
+sub-category's share of its category. Sub-category revenues sum exactly to the
+category revenues in the main panel.
+
+Built by `scripts/01b_xlsx_subcat_to_parquet.py` and
+`scripts/04_subcategory_map.py`.
