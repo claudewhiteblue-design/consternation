@@ -38,6 +38,14 @@ box-shadow:0 8px 26px #0000001f}
 .cb li.hi{background:var(--fill)}
 .cb .none{color:var(--ink3);cursor:default}
 .scroll{overflow-x:auto}svg{display:block;overflow:visible}
+.chwrap{position:relative}
+.tip{position:absolute;pointer-events:none;z-index:15;background:var(--surf);border:1px solid var(--line);
+border-radius:9px;padding:8px 11px;font-size:12.5px;line-height:1.5;box-shadow:0 6px 20px #00000021;
+white-space:nowrap;opacity:0;transition:opacity .08s}
+.tip.on{opacity:1}
+.tip b{font-size:13px}
+.tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--ink2)}
+.tip .r span:last-child{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 table{border-collapse:collapse;font-size:13px;width:100%;min-width:720px}
 th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums;white-space:nowrap}
 th{color:var(--ink2);font-weight:600;font-size:12px;line-height:1.35;vertical-align:bottom}
@@ -68,7 +76,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="card">
  <h2>ריכוזיות לאורך זמן</h2>
- <p class="cs">נתח הספקים בתוך היחידה הנבחרת, בכל חודש בנפרד. CR3 = נתח שלושת הספקים הגדולים; HHI = סכום ריבועי הנתחים (0–10,000). קבוצות תאגידיות מאוחדות.</p>
+ <p class="cs" style="max-width:80ch">נתח הספקים בתוך היחידה הנבחרת. הקו הוא <b>ממוצע נע של שלושה חודשים</b> — ולכן מתחיל במרץ 2022, שהוא החודש הראשון עם חלון מלא. שיוט עם העכבר מציג את החודש, את הממוצע הנע ואת הנתון החודשי הגולמי. CR3 = נתח שלושת הספקים הגדולים; HHI = סכום ריבועי הנתחים (0–10,000). קבוצות תאגידיות מאוחדות.</p>
  <div class="ctl">
   <div class="seg" id="lv"></div>
   <div class="cb" id="cb"><input id="pick" type="text" autocomplete="off" spellcheck="false">
@@ -76,7 +84,8 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
   <div class="seg" id="bk"></div>
  </div>
  <div class="leg"><span><i style="background:var(--acc)"></i><span id="l1"></span></span></div>
- <div class="scroll"><svg id="ch" viewBox="0 0 940 430" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg></div>
+ <div class="scroll"><div class="chwrap"><svg id="ch" viewBox="0 0 940 430" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="tip"></div></div></div>
  <p class="foot" id="cfoot"></p>
  <div class="sup" id="sup"></div>
 </div>
@@ -127,6 +136,10 @@ const BANDS=[{lo:0,hi:1500,lab:'שוק לא מרוכז',bg:'--b1',tx:'--b1t'},
              {lo:1500,hi:2500,lab:'ריכוזיות בינונית',bg:'--b2',tx:'--b2t'},
              {lo:2500,hi:1e9,lab:'ריכוזיות גבוהה',bg:'--b3',tx:'--b3t'}];
 const band=v=>BANDS.find(b=>v>=b.lo&&v<b.hi);
+const GEO={};
+/* 3-month trailing moving average; the first two months have no full window */
+const MAW=3, START=MAW-1;
+const ma=a=>a.map((_,i)=>i<START?null:a.slice(i-START,i+1).reduce((x,y)=>x+y,0)/MAW);
 const UNIT={'ק"ג':'טון','ליטר':'אלפי ליטרים',"יח' באריזה":"אלפי יח׳ באריזה",'מחזור':'מחזור'};
 const unit=b=>!b?'—':b.startsWith('מעורב')?b.replace('מעורב: ','מעורב — ').split('+').map(x=>UNIT[x]||x).join(' + '):(UNIT[b]||b);
 
@@ -188,18 +201,20 @@ function key(){return lv==='שוק'?'__market__':`${lv}|${sel}`}
 function draw(){
  [...lvEl.children].forEach((b,i)=>b.classList.toggle('on',LV[i][0]===lv));
  [...bkEl.children].forEach(b=>b.classList.toggle('on',b.textContent===bk));
- const S=D.series[bk], s=S[key()];
- const mk=null;
+ const S=D.series[bk], raw=S[key()];
+ const s={cr3:ma(raw.cr3),hhi:ma(raw.hhi),n:raw.n,rev:raw.rev};
+ GEO.raw=raw; GEO.s=s; GEO.panels=[];
  const name= lv==='שוק'?'כלל השוק': sel;
  document.getElementById('l1').textContent=name;
  const W=940,P={t:16,r:22,b:34,l:56},iw=W-P.l-P.r,ph=176,gapY=42;
  const xs=i=>P.l+iw*i/(M.length-1);
+ GEO.W=W;GEO.P=P;GEO.iw=iw;GEO.ph=ph;GEO.xs=xs;
  let g='';
  const panels=[['cr3','CR3 — נתח שלושת הגדולים',v=>v.toFixed(0)+'%',0],
                ['hhi','HHI — לפי רמות ריכוזיות מקובלות',v=>fmt(Math.round(v)),1]];
  panels.forEach(([k,ttl,f,pi])=>{
   const y0=P.t+pi*(ph+gapY);
-  const vals=s[k].concat(mk?mk[k]:[]);
+  const vals=s[k].slice(START);
   let lo=Math.min(...vals), hi=Math.max(...vals);
   const pad=(hi-lo)*0.14||1; lo=Math.max(0,lo-pad); hi=hi+pad;
   if(k==='cr3') hi=Math.min(100,hi);
@@ -215,21 +230,21 @@ function draw(){
    g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`;
    g+=`<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${f(v)}</text>`;}
   g+=`<text x="${P.l}" y="${y0-5}" text-anchor="start" fill="var(--ink)" font-size="12.5" font-weight="600">${ttl}</text>`;
-  const path=a=>a.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
-  if(mk) g+=`<path d="${path(mk[k])}" fill="none" stroke="var(--ink3)" stroke-width="1.4" opacity=".5" stroke-dasharray="4 3"/>`;
+  const path=a=>a.map((v,i)=>v===null?'':`${i===START?'M':'L'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
   g+=`<path d="${path(s[k])}" fill="none" stroke="var(--acc)" stroke-width="2.1" stroke-linejoin="round"/>`;
+  GEO.panels.push({k,y,y0,f});
   g+=`<circle cx="${xs(M.length-1)}" cy="${y(s[k].at(-1))}" r="3.6" fill="var(--acc)"/>`;
   M.forEach((m,i)=>{if(m.slice(5)==='01') g+=`<text x="${xs(i)}" y="${y0+ph+17}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`;});
  });
- document.getElementById('ch').innerHTML=g;
+ document.getElementById('ch').innerHTML=g+'<g id="ov"></g>';
  drawSup();
- const c0=s.cr3[0],c1=s.cr3.at(-1),h0=s.hhi[0],h1=s.hhi.at(-1);
+ const c0=s.cr3[START],c1=s.cr3.at(-1),h0=Math.round(s.hhi[START]),h1=Math.round(s.hhi.at(-1));
  const bd=band(h1), bd0=band(h0);
  document.getElementById('cfoot').innerHTML=
   `<b style="color:var(--ink)">${name}</b> · ${bk} · ${s.n.at(-1)} קבוצות ספקים בחודש האחרון · `+
   `CR3 ${c0.toFixed(1)}% ← ${c1.toFixed(1)}% (${sgn(c1-c0,1)}) · HHI ${fmt(h0)} ← ${fmt(h1)} (${sgn(h1-h0,0)}) `+
   `<span class="pill" style="background:var(${bd.bg});color:var(${bd.tx})">${bd.lab}</span>`+
-  (bd.lab!==bd0.lab?` <span style="color:var(--ink3)">(ב־2022: ${bd0.lab})</span>`:'')+
+  (bd.lab!==bd0.lab?` <span style="color:var(--ink3)">(בתחילת 2022: ${bd0.lab})</span>`:'')+
   (lv==='שוק'?'':` · ${s.rev.at(-1).toFixed(1)} מ׳ ₪ בחודש האחרון`);
 }
 function drawSup(){
@@ -239,10 +254,10 @@ function drawSup(){
  if(!t){el.innerHTML='';return}
  const mx=Math.max(...t.rows.map(r=>r.sh));
  el.innerHTML=`<h3>עשרת הספקים הגדולים ב־${sel} · 2026</h3>`+
-  `<p class="cs">חלון ${T.win} חודשים ראשונים של 2026, מול אותם חודשים ב־2022. יחידת הכמות: ${unit(t.basis)}. `+
+  `<p class="cs">חלון ${T.win} חודשים ראשונים של 2026, מול אותם חודשים ב־2022. `+
   `סך המכר ביחידה: ${fmt(Math.round(t.tot))} מ׳ ₪. כאן מוצגים גם מאגדים (מותג פרטי / ספק כללי) אם הם בעשירייה.</p>`+
   '<div class="scroll"><table><thead><tr><th></th><th class="nm">ספק</th><th>נתח<br>2026</th><th>Δ מול<br>2022</th>'+
-  '<th>מכר<br>מ׳ ₪</th><th>כמות<br>סטנדרטית</th><th>צמיחת<br>מכר</th></tr></thead><tbody>'+
+  `<th>מכר<br>מ׳ ₪</th><th>כמות<br>${unit(t.basis)}</th><th>צמיחת<br>מכר</th></tr></thead><tbody>`+
   t.rows.map((r,i)=>`<tr><td style="color:var(--ink3)">${i+1}</td><td class="nm">${r.g}</td>`+
    `<td><span class="bar" style="width:${(r.sh/mx*40).toFixed(1)}px"></span>${r.sh.toFixed(1)}%</td>`+
    `<td class="${r.dsh===null?'':cls(r.dsh)}">${r.dsh===null?'<span style="color:var(--ink3)">חדש</span>':sgn(r.dsh,1)}</td>`+
@@ -250,5 +265,32 @@ function drawSup(){
    `<td class="${r.growth===null?'':(r.growth>MKT?'up':'dn')}">${r.growth===null?'—':sgn(r.growth,1)+'%'}</td></tr>`).join('')+
   '</tbody></table></div>';
 }
+/* ---------- hover ---------- */
+const chEl=document.getElementById('ch'), tip=document.getElementById('tip');
+const HE=['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
+const mlab=m=>`${HE[+m.slice(5)-1]} ${m.slice(0,4)}`;
+function hover(ev){
+ if(!GEO.xs) return;
+ const r=chEl.getBoundingClientRect(), xv=(ev.clientX-r.left)*(GEO.W/r.width);
+ let i=Math.round((xv-GEO.P.l)/GEO.iw*(M.length-1));
+ i=Math.max(START,Math.min(M.length-1,i));
+ const x=GEO.xs(i);
+ let ov=`<line x1="${x}" x2="${x}" y1="${GEO.P.t}" y2="${GEO.panels.at(-1).y0+GEO.ph}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
+ GEO.panels.forEach(p=>{const v=GEO.s[p.k][i]; if(v!==null)
+   ov+=`<circle cx="${x}" cy="${p.y(v)}" r="4.2" fill="var(--acc)" stroke="var(--surf)" stroke-width="1.6"/>`;});
+ document.getElementById('ov').innerHTML=ov;
+ tip.innerHTML=`<b>${mlab(M[i])}</b><div style="color:var(--ink3);font-size:11.5px;margin-bottom:4px">ממוצע נע 3 חודשים</div>`+
+  `<div class="r"><span>CR3</span><span>${GEO.s.cr3[i].toFixed(1)}%</span></div>`+
+  `<div class="r"><span>HHI</span><span>${fmt(Math.round(GEO.s.hhi[i]))}</span></div>`+
+  `<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>החודש עצמו</span><span>${GEO.raw.cr3[i].toFixed(1)}% · ${fmt(GEO.raw.hhi[i])}</span></div>`+
+  `<div class="r"><span>מכר בחודש</span><span>${GEO.raw.rev[i].toFixed(1)} מ׳ ₪</span></div>`;
+ tip.classList.add('on');
+ const px=x/GEO.W*r.width, tw=tip.offsetWidth;
+ const want= px<r.width/2 ? px+18 : px-tw-18;
+ tip.style.left=Math.max(4,Math.min(r.width-tw-4,want))+'px';
+ tip.style.top='4px';
+}
+chEl.addEventListener('mousemove',hover);
+chEl.addEventListener('mouseleave',()=>{tip.classList.remove('on');const o=document.getElementById('ov');if(o)o.innerHTML='';});
 fill();draw();
 </script>
