@@ -1,0 +1,167 @@
+<title>לוח ריכוזיות — שוק המזון</title>
+<style>
+:root{color-scheme:light;--bg:#fcfcfb;--surf:#fff;--ink:#0b0b0b;--ink2:#52514e;--ink3:#83827c;
+--line:#e4e3dd;--grid:#eeede8;--acc:#1a5b9e;--acc2:#b5642a;--pos:#1f7a4d;--neg:#a8352b;--fill:#1a5b9e14}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#141413;--surf:#1a1a19;
+--ink:#fff;--ink2:#c3c2b7;--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--acc:#5b9ee0;--acc2:#d98d4f;
+--pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#141413;--surf:#1a1a19;--ink:#fff;--ink2:#c3c2b7;--ink3:#8f8e85;
+--line:#33322e;--grid:#2a2926;--acc:#5b9ee0;--acc2:#d98d4f;--pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);direction:rtl;
+font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:36px 22px 80px}
+h1{font-size:27px;margin:0 0 6px;letter-spacing:-.01em}
+h2{font-size:18px;margin:0 0 4px}
+.sub{color:var(--ink2);margin:0 0 22px;max-width:74ch;font-size:14.5px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:18px;margin:0 0 18px}
+.cs{font-size:13px;color:var(--ink2);margin:0 0 14px;max-width:76ch}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 18px}
+.kpi div{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi b{display:block;font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.kpi span{font-size:12.5px;color:var(--ink3)}
+.kpi em{font-style:normal;font-size:12.5px}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+.seg{display:flex;border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.seg button{font:inherit;font-size:13px;padding:5px 14px;border:0;background:transparent;color:var(--ink2);cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--bg)}
+select{font:inherit;font-size:13px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);
+background:var(--surf);color:var(--ink);max-width:270px}
+.scroll{overflow-x:auto}svg{display:block;overflow:visible}
+table{border-collapse:collapse;font-size:13px;width:100%;min-width:720px}
+th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums;white-space:nowrap}
+th{color:var(--ink2);font-weight:600;font-size:12px;line-height:1.35;vertical-align:bottom}
+tbody tr:hover{background:var(--fill)}
+td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
+.up{color:var(--pos)}.dn{color:var(--neg)}
+.bar{display:inline-block;height:7px;border-radius:2px;background:var(--acc);vertical-align:1px;margin-left:6px}
+.note{font-size:13.5px;color:var(--ink2);max-width:74ch}.note b{color:var(--ink)}
+.leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin:2px 0 4px}
+.leg i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:4px;margin-left:6px}
+.foot{font-size:12.5px;color:var(--ink3);margin-top:10px}
+</style>
+<div class="wrap">
+<h1>לוח ריכוזיות — שוק המזון</h1>
+<p class="sub" id="hdr"></p>
+
+<div class="kpi" id="kpi"></div>
+
+<div class="card">
+ <h2>עשר קבוצות המזון הגדולות</h2>
+ <p class="cs" id="tcs"></p>
+ <div class="scroll"><table id="tb"></table></div>
+ <p class="foot" id="tfoot"></p>
+</div>
+
+<div class="card">
+ <h2>ריכוזיות לאורך זמן</h2>
+ <p class="cs">נתח הספקים בתוך היחידה הנבחרת, בכל חודש בנפרד. CR3 = נתח שלושת הספקים הגדולים; HHI = סכום ריבועי הנתחים (0–10,000). קבוצות תאגידיות מאוחדות.</p>
+ <div class="ctl">
+  <div class="seg" id="lv"></div>
+  <select id="pick"></select>
+  <div class="seg" id="bk"></div>
+ </div>
+ <div class="leg"><span><i style="background:var(--acc)"></i><span id="l1"></span></span>
+  <span id="l2"><i style="background:var(--ink3);opacity:.55"></i><span id="l2t"></span></span></div>
+ <div class="scroll"><svg id="ch" viewBox="0 0 940 430" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg></div>
+ <p class="foot" id="cfoot"></p>
+</div>
+</div>
+<script>
+const D=__DATA__;
+const M=D.months, T=D.table;
+const fmt=n=>n.toLocaleString('en-US');
+const sgn=(v,d=2)=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(d);
+const cls=v=>v>0.02?'up':v<-0.02?'dn':'';
+
+document.getElementById('hdr').textContent=
+ `נתוני ${T.last.replace('-','/')} · חלון 2026 מכסה ${T.win} חודשים, וכל השוואה ל־2022 היא מול אותם ${T.win} חודשים בדיוק. `+
+ `${fmt(T.tot26)} מ׳ ₪ ב־${T.ncat} קטגוריות, ${fmt(T.nsup)} קבוצות ספקים.`;
+
+const BK=['כולל מאגדים','ללא מאגדים'];
+document.getElementById('kpi').innerHTML=[
+ ['נתח עשר הגדולות',T.top10_share.toFixed(1)+'%',`2022: ${T.top10_share22.toFixed(1)}% · ${sgn(T.top10_share-T.top10_share22,1)}`],
+ ['נתח מאגדים',T.bucket_share.toFixed(1)+'%',`2022: ${T.bucket_share22.toFixed(1)}% · ${sgn(T.bucket_share-T.bucket_share22,1)}`],
+ ['HHI כלל־שוקי',Math.round(D.series[BK[0]].__market__.hhi.at(-1)),
+  `2022/01: ${D.series[BK[0]].__market__.hhi[0]}`],
+ ['CR3 כלל־שוקי',D.series[BK[0]].__market__.cr3.at(-1).toFixed(1)+'%',
+  `2022/01: ${D.series[BK[0]].__market__.cr3[0].toFixed(1)}%`],
+ ['צמיחת מכר',sgn(100*(T.tot26/T.tot22-1),1)+'%',`${fmt(T.tot22)} ← ${fmt(T.tot26)} מ׳ ₪`]
+].map(([a,b,c])=>`<div><span>${a}</span><b>${b}</b><em style="color:var(--ink3)">${c}</em></div>`).join('');
+
+document.getElementById('tcs').textContent=
+ `דירוג לפי מכר כספי ב־2026. "פעילה" = נמכר בקטגוריה באותו חלון. עמודות ה־30%/50% סופרות קטגוריות שבהן הקבוצה מחזיקה נתח כזה, והמספר האפור לצידן הוא הערך המקביל ב־2022.`;
+const mx=Math.max(...T.rows.map(r=>r.share)), MKT=100*(T.tot26/T.tot22-1);
+document.getElementById('tb').innerHTML=
+ '<thead><tr><th></th><th class="nm">קבוצה</th><th>נתח שוק<br>2026</th><th>Δ מול<br>2022</th><th>צמיחת<br>מכר</th>'+
+ '<th>מכר<br>מ׳ ₪</th><th>קטגוריות<br>פעילות</th><th>מחלקות</th><th>≥30%<br>בקטגוריה</th><th>≥50%<br>בקטגוריה</th></tr></thead><tbody>'+
+ T.rows.map((r,i)=>`<tr><td style="color:var(--ink3)">${i+1}</td>`+
+  `<td class="nm">${r.g}${r.nent>1?`<span style="color:var(--ink3);font-weight:400;font-size:11.5px"> · ${r.nent} ישויות</span>`:''}</td>`+
+  `<td><span class="bar" style="width:${(r.share/mx*46).toFixed(1)}px"></span>${r.share.toFixed(2)}%</td>`+
+  `<td class="${cls(r.dshare)}">${sgn(r.dshare)}</td>`+
+  `<td class="${r.growth>MKT?'up':r.growth<MKT?'dn':''}">${sgn(r.growth,1)}%</td>`+
+  `<td>${fmt(r.rev)}</td>`+
+  `<td>${r.ncat}<span style="color:var(--ink3)"> · ${r.ncat22}</span></td><td>${r.ndep}</td>`+
+  `<td>${r.n30}<span style="color:var(--ink3)"> · ${r.n3022}</span></td>`+
+  `<td>${r.n50}<span style="color:var(--ink3)"> · ${r.n5022}</span></td></tr>`).join('')+'</tbody>';
+document.getElementById('tfoot').innerHTML=
+ `עמודת "צמיחת מכר" צבועה מול צמיחת השוק כולה (${sgn(100*(T.tot26/T.tot22-1),1)}%) — ירוק = צמחה מהר מהשוק. `+
+ `הטבלה אינה כוללת מאגדים (מותג פרטי, ספק כללי וכד׳), שמחזיקים יחד ${T.bucket_share.toFixed(1)}% מהשוק.`;
+
+/* ---------- time series ---------- */
+const LV=[['שוק','כלל השוק'],['dep','מחלקה'],['cat','קטגוריה']];
+let lv='שוק', bk=BK[0], sel=null;
+const lvEl=document.getElementById('lv'), bkEl=document.getElementById('bk'), pk=document.getElementById('pick');
+LV.forEach(([k,lab])=>{const b=document.createElement('button');b.textContent=lab;b.onclick=()=>{lv=k;sel=null;fill();draw()};lvEl.appendChild(b)});
+BK.forEach(k=>{const b=document.createElement('button');b.textContent=k;b.onclick=()=>{bk=k;draw()};bkEl.appendChild(b)});
+pk.onchange=()=>{sel=pk.value;draw()};
+function fill(){
+ if(lv==='שוק'){pk.style.display='none';return}
+ pk.style.display='';
+ const opts= lv==='dep' ? D.deps.map(d=>[d,d])
+   : D.cats.slice().sort((a,b)=>(D.catrev[b]||0)-(D.catrev[a]||0))
+       .map(cc=>[cc,`${cc} — ${D.cat2dep[cc]||''} (${Math.round(D.catrev[cc]||0)} מ׳ ₪)`]);
+ pk.innerHTML=opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+ sel=opts[0][0]; pk.value=sel;
+}
+function key(){return lv==='שוק'?'__market__':`${lv}|${sel}`}
+function draw(){
+ [...lvEl.children].forEach((b,i)=>b.classList.toggle('on',LV[i][0]===lv));
+ [...bkEl.children].forEach(b=>b.classList.toggle('on',b.textContent===bk));
+ const S=D.series[bk], s=S[key()];
+ const mk= lv==='שוק'?null : S[lv==='dep'?'__depavg__':'__catavg__'];
+ const name= lv==='שוק'?'כלל השוק': sel;
+ document.getElementById('l1').textContent=name;
+ document.getElementById('l2').style.display=lv==='שוק'?'none':'';
+ document.getElementById('l2t').textContent= lv==='dep'?'ממוצע כל המחלקות (משוקלל מכר)':'ממוצע כל הקטגוריות (משוקלל מכר)';
+ const W=940,P={t:16,r:22,b:34,l:56},iw=W-P.l-P.r,ph=176,gapY=42;
+ const xs=i=>P.l+iw*i/(M.length-1);
+ let g='';
+ const panels=[['cr3','CR3 — נתח שלושת הגדולים',v=>v.toFixed(0)+'%',0],
+               ['hhi','HHI',v=>fmt(Math.round(v)),1]];
+ panels.forEach(([k,ttl,f,pi])=>{
+  const y0=P.t+pi*(ph+gapY);
+  const vals=s[k].concat(mk?mk[k]:[]);
+  let lo=Math.min(...vals), hi=Math.max(...vals);
+  const pad=(hi-lo)*0.14||1; lo=Math.max(0,lo-pad); hi=hi+pad;
+  if(k==='cr3') hi=Math.min(100,hi);
+  const y=v=>y0+ph*(1-(v-lo)/(hi-lo));
+  for(let t=0;t<=4;t++){const v=lo+(hi-lo)*t/4;
+   g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`;
+   g+=`<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${f(v)}</text>`;}
+  g+=`<text x="${P.l}" y="${y0-5}" text-anchor="start" fill="var(--ink)" font-size="12.5" font-weight="600">${ttl}</text>`;
+  const path=a=>a.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
+  if(mk) g+=`<path d="${path(mk[k])}" fill="none" stroke="var(--ink3)" stroke-width="1.4" opacity=".5" stroke-dasharray="4 3"/>`;
+  g+=`<path d="${path(s[k])}" fill="none" stroke="var(--acc)" stroke-width="2.1" stroke-linejoin="round"/>`;
+  g+=`<circle cx="${xs(M.length-1)}" cy="${y(s[k].at(-1))}" r="3.6" fill="var(--acc)"/>`;
+  M.forEach((m,i)=>{if(m.slice(5)==='01') g+=`<text x="${xs(i)}" y="${y0+ph+17}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`;});
+ });
+ document.getElementById('ch').innerHTML=g;
+ const c0=s.cr3[0],c1=s.cr3.at(-1),h0=s.hhi[0],h1=s.hhi.at(-1);
+ document.getElementById('cfoot').innerHTML=
+  `<b style="color:var(--ink)">${name}</b> · ${bk} · ${s.n.at(-1)} קבוצות ספקים בחודש האחרון · `+
+  `CR3 ${c0.toFixed(1)}% ← ${c1.toFixed(1)}% (${sgn(c1-c0,1)}) · HHI ${fmt(h0)} ← ${fmt(h1)} (${sgn(h1-h0,0)})`+
+  (lv==='שוק'?'':` · ${s.rev.at(-1).toFixed(1)} מ׳ ₪ בחודש האחרון`);
+}
+fill();draw();
+</script>
