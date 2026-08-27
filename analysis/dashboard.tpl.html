@@ -25,8 +25,18 @@ h2{font-size:18px;margin:0 0 4px}
 .seg{display:flex;border:1px solid var(--line);border-radius:20px;overflow:hidden}
 .seg button{font:inherit;font-size:13px;padding:5px 14px;border:0;background:transparent;color:var(--ink2);cursor:pointer}
 .seg button.on{background:var(--ink);color:var(--bg)}
-select{font:inherit;font-size:13px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);
-background:var(--surf);color:var(--ink);max-width:270px}
+.cb{position:relative;min-width:300px}
+.cb input{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);
+background:var(--surf);color:var(--ink);width:100%}
+.cb input:focus{outline:2px solid var(--acc);outline-offset:-1px}
+.cb ul{position:absolute;z-index:20;top:calc(100% + 4px);right:0;left:0;margin:0;padding:4px;list-style:none;
+background:var(--surf);border:1px solid var(--line);border-radius:10px;max-height:280px;overflow-y:auto;
+box-shadow:0 8px 26px #0000001f}
+.cb ul[hidden]{display:none}
+.cb li{padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1.4}
+.cb li small{color:var(--ink3);font-size:11.5px}
+.cb li.hi{background:var(--fill)}
+.cb .none{color:var(--ink3);cursor:default}
 .scroll{overflow-x:auto}svg{display:block;overflow:visible}
 table{border-collapse:collapse;font-size:13px;width:100%;min-width:720px}
 th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -61,11 +71,11 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <p class="cs">נתח הספקים בתוך היחידה הנבחרת, בכל חודש בנפרד. CR3 = נתח שלושת הספקים הגדולים; HHI = סכום ריבועי הנתחים (0–10,000). קבוצות תאגידיות מאוחדות.</p>
  <div class="ctl">
   <div class="seg" id="lv"></div>
-  <select id="pick"></select>
+  <div class="cb" id="cb"><input id="pick" type="text" autocomplete="off" spellcheck="false">
+   <ul id="opts" hidden></ul></div>
   <div class="seg" id="bk"></div>
  </div>
- <div class="leg"><span><i style="background:var(--acc)"></i><span id="l1"></span></span>
-  <span id="l2"><i style="background:var(--ink3);opacity:.55"></i><span id="l2t"></span></span></div>
+ <div class="leg"><span><i style="background:var(--acc)"></i><span id="l1"></span></span></div>
  <div class="scroll"><svg id="ch" viewBox="0 0 940 430" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg></div>
  <p class="foot" id="cfoot"></p>
  <div class="sup" id="sup"></div>
@@ -123,29 +133,65 @@ const unit=b=>!b?'—':b.startsWith('מעורב')?b.replace('מעורב: ','מע
 /* ---------- time series ---------- */
 const LV=[['שוק','כלל השוק'],['dep','מחלקה'],['cat','קטגוריה']];
 let lv='שוק', bk=BK[0], sel=null;
-const lvEl=document.getElementById('lv'), bkEl=document.getElementById('bk'), pk=document.getElementById('pick');
+const lvEl=document.getElementById('lv'), bkEl=document.getElementById('bk'),
+      pk=document.getElementById('pick'), cb=document.getElementById('cb'), ul=document.getElementById('opts');
 LV.forEach(([k,lab])=>{const b=document.createElement('button');b.textContent=lab;b.onclick=()=>{lv=k;sel=null;fill();draw()};lvEl.appendChild(b)});
 BK.forEach(k=>{const b=document.createElement('button');b.textContent=k;b.onclick=()=>{bk=k;draw()};bkEl.appendChild(b)});
-pk.onchange=()=>{sel=pk.value;draw()};
+let OPTS=[], hi=0;
 function fill(){
- if(lv==='שוק'){pk.style.display='none';return}
- pk.style.display='';
- const opts= lv==='dep' ? D.deps.map(d=>[d,d])
+ if(lv==='שוק'){cb.style.display='none';OPTS=[];return}
+ cb.style.display='';
+ OPTS= lv==='dep' ? D.deps.slice().sort((a,b)=>(DEPREV[b]||0)-(DEPREV[a]||0)).map(d=>({v:d,t:d,s:`${Math.round(DEPREV[d]||0)} מ׳ ₪`}))
    : D.cats.slice().sort((a,b)=>(D.catrev[b]||0)-(D.catrev[a]||0))
-       .map(cc=>[cc,`${cc} — ${D.cat2dep[cc]||''} (${Math.round(D.catrev[cc]||0)} מ׳ ₪)`]);
- pk.innerHTML=opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
- sel=opts[0][0]; pk.value=sel;
+       .map(cc=>({v:cc,t:cc,s:`${D.cat2dep[cc]||''} · ${Math.round(D.catrev[cc]||0)} מ׳ ₪`}));
+ sel=OPTS[0].v; pk.value=OPTS[0].t;
+ pk.placeholder= lv==='dep'?`חיפוש מתוך ${OPTS.length} מחלקות…`:`חיפוש מתוך ${OPTS.length} קטגוריות…`;
+ closeList();
 }
+const DEPREV={};
+Object.entries(D.catrev).forEach(([cc,v])=>{const d=D.cat2dep[cc];if(d)DEPREV[d]=(DEPREV[d]||0)+v;});
+function matches(q){
+ q=q.trim();
+ if(!q) return OPTS;
+ return OPTS.filter(o=>o.t.includes(q)||o.s.includes(q));
+}
+function openList(q){
+ const m=matches(q); hi=0;
+ ul.innerHTML= m.length? m.slice(0,120).map((o,i)=>
+   `<li data-v="${o.v}" class="${i===0?'hi':''}">${o.t}<br><small>${o.s}</small></li>`).join('')
+  +(m.length>120?`<li class="none">…ועוד ${m.length-120}. צמצם את החיפוש.</li>`:'')
+  : '<li class="none">לא נמצאה התאמה</li>';
+ ul.hidden=false;
+}
+function closeList(){ul.hidden=true}
+function choose(v){
+ const o=OPTS.find(x=>x.v===v); if(!o) return;
+ sel=o.v; pk.value=o.t; closeList(); pk.blur(); draw();
+}
+pk.addEventListener('focus',()=>{pk.select();openList('')});
+pk.addEventListener('input',()=>openList(pk.value));
+pk.addEventListener('keydown',e=>{
+ const items=[...ul.querySelectorAll('li[data-v]')];
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+  if(ul.hidden) openList(pk.value);
+  hi=Math.max(0,Math.min(items.length-1,hi+(e.key==='ArrowDown'?1:-1)));
+  items.forEach((li,i)=>li.classList.toggle('hi',i===hi));
+  if(items[hi]) items[hi].scrollIntoView({block:'nearest'});
+  e.preventDefault();
+ } else if(e.key==='Enter'){ if(items[hi]) choose(items[hi].dataset.v); e.preventDefault(); }
+ else if(e.key==='Escape'){ closeList(); pk.value=(OPTS.find(o=>o.v===sel)||{}).t||''; pk.blur(); }
+});
+ul.addEventListener('mousedown',e=>{const li=e.target.closest('li[data-v]');if(li){e.preventDefault();choose(li.dataset.v)}});
+document.addEventListener('click',e=>{if(!cb.contains(e.target)){closeList();
+ if(OPTS.length){const o=OPTS.find(x=>x.v===sel); if(o) pk.value=o.t;}}});
 function key(){return lv==='שוק'?'__market__':`${lv}|${sel}`}
 function draw(){
  [...lvEl.children].forEach((b,i)=>b.classList.toggle('on',LV[i][0]===lv));
  [...bkEl.children].forEach(b=>b.classList.toggle('on',b.textContent===bk));
  const S=D.series[bk], s=S[key()];
- const mk= lv==='שוק'?null : S[lv==='dep'?'__depavg__':'__catavg__'];
+ const mk=null;
  const name= lv==='שוק'?'כלל השוק': sel;
  document.getElementById('l1').textContent=name;
- document.getElementById('l2').style.display=lv==='שוק'?'none':'';
- document.getElementById('l2t').textContent= lv==='dep'?'ממוצע כל המחלקות (משוקלל מכר)':'ממוצע כל הקטגוריות (משוקלל מכר)';
  const W=940,P={t:16,r:22,b:34,l:56},iw=W-P.l-P.r,ph=176,gapY=42;
  const xs=i=>P.l+iw*i/(M.length-1);
  let g='';
