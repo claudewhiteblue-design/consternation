@@ -1,0 +1,96 @@
+<title>קשיחות מחירים כלפי מטה</title>
+<style>
+:root{color-scheme:light;--bg:#fcfcfb;--surf:#fff;--ink:#0b0b0b;--ink2:#52514e;--ink3:#83827c;
+--line:#e4e3dd;--grid:#eeede8;--zero:#b9b8b1;--q1:#86b6ef;--q2:#2a78d6;--q3:#184f95;--s2:#eb6834}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#141413;--surf:#1a1a19;
+--ink:#fff;--ink2:#c3c2b7;--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--zero:#5c5b55;--q1:#cde2fb;--q2:#3987e5;--q3:#184f95;--s2:#d95926}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#141413;--surf:#1a1a19;--ink:#fff;--ink2:#c3c2b7;
+--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--zero:#5c5b55;--q1:#cde2fb;--q2:#3987e5;--q3:#184f95;--s2:#d95926}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);direction:rtl;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:40px 22px 80px}
+h1{font-size:26px;margin:0 0 8px;letter-spacing:-.01em;line-height:1.28}
+h2{font-size:17px;margin:0 0 3px}
+.sub{color:var(--ink2);margin:0 0 20px;max-width:70ch}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:18px 18px 12px;margin:0 0 18px}
+.cs{font-size:13px;color:var(--ink2);margin:0 0 12px;max-width:74ch}
+.scroll{overflow-x:auto}svg{display:block;overflow:visible}
+.leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin:0 0 10px}
+.leg i{display:inline-block;width:20px;height:3px;border-radius:2px;vertical-align:middle;margin-left:6px}
+.note{font-size:13.5px;color:var(--ink2);max-width:70ch}.note b{color:var(--ink)}
+table{border-collapse:collapse;font-size:12.5px;width:100%;min-width:560px}
+th,td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums;white-space:nowrap}
+th{color:var(--ink2);font-weight:600}tr.sig td{font-weight:600}
+.tag{font-size:11px;padding:2px 9px;border-radius:11px;display:inline-block;background:var(--grid);color:var(--ink2);margin-right:6px}
+</style>
+<div class="wrap">
+<h1>האם קטגוריות מרוכזות קשיחות כלפי מטה?</h1>
+<p class="sub">שלושה מבחנים בלתי תלויים, ללא שער חליפין וללא מדד הייבוא: (i) צורת ההתפלגות של שינויי המחיר בכל תת-קטגוריה, (ii) בטא כלפי מעלה מול כלפי מטה מול השוק, (iii) תגובה אסימטרית למחלקה כרפרנס (leave-own-category-out). 875 תת-קטגוריות, ללא בשר ועוף, 54 שינויים חודשיים.</p>
+
+<div class="card">
+<h2>(i) מה ההתפלגות עצמה אומרת — שלישוני ריכוזיות שווי־מכר</h2>
+<p class="cs">השינויים בניכוי ממוצע השוק החודשי. חיזוי הקשיחות: פחות חודשי ירידה, יחס גודל נמוך, skew גבוה, drawdown קטן, שיעור היפוך גבוה.</p>
+<div class="scroll"><table id="ter"></table></div>
+<div style="margin-top:16px"><h2 style="font-size:15px">כמה תת-קטגוריות ירדו לפחות X% מהשיא (יחסית לשוק)</h2>
+<p class="cs">חלק משוקלל-מכר בכל שלישון. זו הבדיקה שהצעת, על כל טווח הספים.</p>
+<div class="leg"><span><i style="background:var(--q1)"></i>שלישון 1 — מפוזר</span><span><i style="background:var(--q2)"></i>שלישון 2</span><span><i style="background:var(--q3)"></i>שלישון 3 — מרוכז</span></div>
+<div class="scroll"><svg id="dd" viewBox="0 0 900 300" style="width:100%;min-width:640px;height:auto;direction:ltr"></svg></div></div>
+<div class="scroll" style="margin-top:14px"><table id="xr"></table></div>
+</div>
+
+<div class="card">
+<h2>(ii) בטא מול השוק, מעלה מול מטה</h2>
+<p class="cs" id="c2"></p>
+<div class="scroll"><table id="t2"></table></div>
+</div>
+
+<div class="card">
+<h2>(iii) המחלקה כרפרנס — המבחן המרכזי</h2>
+<p class="cs" id="c3"></p>
+<div class="scroll"><table id="t3"></table></div>
+</div>
+
+<div class="card"><h2>שורה תחתונה</h2><div id="txt"></div></div>
+</div>
+<script>
+const G={"ter": {"1": {"cr3": 65.03936919247022, "freq": 0.49926368753362976, "ratio": 1.021098880861691, "skw": -0.15590506891943667, "sd": 0.05032268441333336, "maxdd": 0.26316001003875367, "rev": 0.4464459235373354, "dd": {"1": 1.0, "2": 1.0, "3": 0.9702316095281804, "4": 0.9702316095281804, "5": 0.9358069925363574, "6": 0.9226904804813408, "7": 0.9194530076311558, "8": 0.898104020635535, "9": 0.8477973995423238, "10": 0.8441796211970707, "11": 0.8064663596669095, "12": 0.7697535437029268, "13": 0.7603085694352723, "14": 0.7362929291426721, "15": 0.7231684489203465}}, "2": {"cr3": 87.49106273841784, "freq": 0.4893139144618162, "ratio": 1.0015190389521944, "skw": -0.021940075387503373, "sd": 0.043837029667402425, "maxdd": 0.19562872165095846, "rev": 0.4758169074947416, "dd": {"1": 1.0, "2": 1.0, "3": 0.9713835932598887, "4": 0.9681025697964605, "5": 0.9525329580786437, "6": 0.9444140837819719, "7": 0.8880992861479475, "8": 0.8283710069653527, "9": 0.7848492571255877, "10": 0.7779506964114167, "11": 0.6954187416643886, "12": 0.6620770151895577, "13": 0.594356283759943, "14": 0.5767770659910926, "15": 0.5576857112460756}}, "3": {"cr3": 98.61027039820817, "freq": 0.5049452787934656, "ratio": 0.9893038488737733, "skw": -0.05139711312883971, "sd": 0.034974780322853005, "maxdd": 0.17457775137510329, "rev": 0.45199775777414253, "dd": {"1": 1.0, "2": 1.0, "3": 1.0, "4": 0.9534085286229839, "5": 0.8452672681493827, "6": 0.8071528646168401, "7": 0.7132661444606572, "8": 0.702545734662037, "9": 0.6823005081118583, "10": 0.6590258071791655, "11": 0.6302186802379934, "12": 0.5902359653029015, "13": 0.5073890960881351, "14": 0.5030290826218509, "15": 0.4851033160031585}}}, "xrows": [{"stat": "שכיחות ירידות", "weighted": true, "b": 0.0010797048067113396, "se": 0.004486997781703857, "p": 0.8098421504744908}, {"stat": "שכיחות ירידות", "weighted": false, "b": 0.003788146058414782, "se": 0.0022616301261331705, "p": 0.0939415540957468}, {"stat": "יחס גודל ירידה/עלייה", "weighted": true, "b": -0.017215654790887155, "se": 0.0155974790307145, "p": 0.26970334361699433}, {"stat": "יחס גודל ירידה/עלייה", "weighted": false, "b": -0.00837949831121014, "se": 0.007945936004669526, "p": 0.29162476105038815}, {"stat": "skewness", "weighted": true, "b": 0.057871761126432934, "se": 0.07752660647250663, "p": 0.455379846069754}, {"stat": "skewness", "weighted": false, "b": -0.022988535738462663, "se": 0.030220757286327442, "p": 0.4468440702586096}, {"stat": "ירידה מקס׳ מהשיא", "weighted": true, "b": -0.04173106590269428, "se": 0.01868117370688453, "p": 0.025492500382733603}, {"stat": "ירידה מקס׳ מהשיא", "weighted": false, "b": -0.002984295569543775, "se": 0.010010039476843645, "p": 0.7656037547645571}, {"stat": "ירידה מקס׳ | בקרת sd", "weighted": true, "b": -0.01973327692664524, "se": 0.013111370401316923, "p": 0.1323110478121063}, {"stat": "ירידה מקס׳ | בקרת sd", "weighted": false, "b": -0.0017238824448703456, "se": 0.006059617142137419, "p": 0.7760371770798573}, {"stat": "ירדה ≥5% מהשיא", "weighted": true, "b": -0.010329552941019704, "se": 0.01141586980629043, "p": 0.36554935403799826}, {"stat": "ירדה ≥5% מהשיא", "weighted": false, "b": -0.006940092444706074, "se": 0.00438227650649599, "p": 0.1132681800362128}, {"stat": "ירדה ≥10% מהשיא", "weighted": true, "b": -0.01218410177592649, "se": 0.027447602123502456, "p": 0.6571119555131844}, {"stat": "ירדה ≥10% מהשיא", "weighted": false, "b": -0.000582502782681594, "se": 0.013461110115173399, "p": 0.965483904182515}, {"stat": "שיעור היפוך", "weighted": true, "b": 0.0118543468954853, "se": 0.011325796830627434, "p": 0.29525281793787206}, {"stat": "שיעור היפוך", "weighted": false, "b": -0.006214662842349596, "se": 0.0048039312580726995, "p": 0.19578223083358393}], "res2": {"משוקלל": {"mp": [0.9930960874973014, 0.08251409562697021, 2.3130731489480045e-33], "mn": [0.9725663869570499, 0.13895992320632072, 2.5798281296139646e-12], "mpz": [-0.08572724454933844, 0.1011282501263745, 0.39660051137984564], "mnz": [-0.3406485892289479, 0.1352238546873309, 0.0117639973453431], "diff": [0.2549213446796095, 0.11229547761253923, 0.02320185074241245]}, "משקל שווה": {"mp": [0.844688474958439, 0.08240419486959394, 1.1766974289238482e-24], "mn": [1.0365555629298244, 0.15037423961671886, 5.45616707307326e-12], "mpz": [0.02491337250918217, 0.06003415031259899, 0.678151656711858], "mnz": [-0.20958110646360664, 0.11589346558563153, 0.07054512238028986], "diff": [0.2344944789727888, 0.12082135011660644, 0.05227811955180206]}}, "res3": {"משוקלל": {"dpos": [0.4378541494519256, 0.06030799445823114, 3.862319174148026e-13], "dneg": [0.34222941387966893, 0.06219967570923253, 3.752741841701917e-08], "dposz": [-0.004844369171879939, 0.0564672283185218, 0.9316327132846666], "dnegz": [-0.07352933488943934, 0.051415133084413665, 0.15268523336375722], "diff": [0.0686849657175594, 0.03513469056055508, 0.05059433985339513]}, "משקל שווה": {"dpos": [0.33108538816858357, 0.052960456321191555, 4.0637695913828325e-10], "dneg": [0.23068402736839358, 0.04507009074043023, 3.082373238366893e-07], "dposz": [-0.10240842938375361, 0.0492654191974566, 0.037644181599660806], "dnegz": [-0.06795188095771328, 0.036679129815190226, 0.06393922339826745], "diff": [-0.03445654842604033, 0.039479755814911796, 0.38279118949630253]}}, "negm": 22, "nmonths": 54, "n": 875, "lost": 4.4, "dd_neg_share": 44.3};
+const f=(v,n=2)=>(v>0?'+':'')+v.toFixed(n), pct=v=>(100*v).toFixed(1)+'%';
+// tercile table
+const T=G.ter;
+document.getElementById('ter').innerHTML='<thead><tr><th>שלישון</th><th>CR3 ממוצע</th><th>% חודשי ירידה</th><th>|ירידה|÷עלייה</th><th>skew</th><th>סטיית תקן חודשית</th><th>ירידה מקס׳ מהשיא</th><th>% מהירידות מתהפך תוך חודשיים</th></tr></thead><tbody>'+
+ [1,2,3].map(t=>{const r=T[t];return `<tr><td>${t}${t===1?' — מפוזר':t===3?' — מרוכז':''}</td><td>${r.cr3.toFixed(1)}</td><td>${pct(r.freq)}</td><td>${r.ratio.toFixed(2)}</td><td>${r.skw.toFixed(2)}</td><td>${pct(r.sd)}</td><td>${pct(r.maxdd)}</td><td>${pct(r.rev)}</td></tr>`;}).join('')+'</tbody>';
+// drawdown exceedance chart
+const KS=Object.keys(T[1].dd).map(Number).sort((a,b)=>a-b);
+const W=900,H=300,P={t:14,r:20,b:36,l:52},iw=W-P.l-P.r,ih=H-P.t-P.b;
+const x=k=>P.l+iw*(k-KS[0])/(KS[KS.length-1]-KS[0]), y=v=>P.t+ih*(1-v);
+let g='';
+for(let v=0;v<=1;v+=.25){g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`;
+ g+=`<text x="${P.l-8}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${(100*v)}%</text>`;}
+KS.filter(k=>k%2===1||k%5===0).forEach(k=>{g+=`<text x="${x(k)}" y="${H-P.b+16}" text-anchor="middle" fill="var(--ink3)" font-size="11">${k}%</text>`;});
+g+=`<text x="${P.l+iw/2}" y="${H-4}" text-anchor="middle" fill="var(--ink3)" font-size="11.5">סף הירידה מהשיא X</text>`;
+[[1,'--q1'],[2,'--q2'],[3,'--q3']].forEach(([t,cv])=>{
+ const pts=KS.map(k=>[x(k),y(T[t].dd[k])]);
+ g+=`<path d="${pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(${cv})" stroke-width="${t===2?1.8:2.4}" stroke-linejoin="round" opacity="${t===2?.8:1}"/>`;});
+document.getElementById('dd').innerHTML=g;
+// cross-sec table
+document.getElementById('xr').innerHTML='<thead><tr><th>רגרסיה חתכית (מקדם CR3, ‏z)</th><th>משוקלל</th><th>p</th><th>משקל שווה</th><th>p</th></tr></thead><tbody>'+
+ [...new Set(G.xrows.map(r=>r.stat))].map(s=>{
+  const a=G.xrows.find(r=>r.stat===s&&r.weighted), b=G.xrows.find(r=>r.stat===s&&!r.weighted);
+  return `<tr class="${(a.p<0.05||b.p<0.05)?'sig':''}"><td>${s}</td><td>${f(a.b,4)} (${a.se.toFixed(4)})</td><td>${a.p.toFixed(3)}</td><td>${f(b.b,4)} (${b.se.toFixed(4)})</td><td>${b.p.toFixed(3)}</td></tr>`;}).join('')+'</tbody>';
+// panels
+function ptab(id,res,labs){
+ document.getElementById(id).innerHTML='<thead><tr><th></th><th>β⁺ (עלייה)</th><th>β⁻ (ירידה)</th><th>γ⁺ = ריכוזיות×עלייה</th><th>γ⁻ = ריכוזיות×ירידה</th><th>H₀: γ⁺=γ⁻</th></tr></thead><tbody>'+
+  Object.entries(res).map(([nm,o])=>`<tr><td>${nm}</td><td>${o[labs[0]][0].toFixed(3)}</td><td>${o[labs[1]][0].toFixed(3)}</td>`+
+   `<td class="${o[labs[2]][2]<0.05?'sig':''}">${f(o[labs[2]][0],4)} (p=${o[labs[2]][2].toFixed(3)})</td>`+
+   `<td class="${o[labs[3]][2]<0.05?'sig':''}">${f(o[labs[3]][0],4)} (p=${o[labs[3]][2].toFixed(3)})</td>`+
+   `<td class="${o.diff[2]<0.05?'sig':''}">p=${o.diff[2].toFixed(4)}</td></tr>`).join('')+'</tbody>';}
+ptab('t2',G.res2,['mp','mn','mpz','mnz']);
+ptab('t3',G.res3,['dpos','dneg','dposz','dnegz']);
+document.getElementById('c2').textContent=`Δp של תת-הקטגוריה על שינוי מדד השוק, מפוצל לחודשי עלייה וירידה, באינטראקציה עם CR3 (z). ${G.negm} מתוך ${G.nmonths} חודשים היו חודשי ירידת שוק — יותר משחששנו. FE תת-קטגוריה, SE מקובצות לפי קטגוריה.`;
+document.getElementById('txt').innerHTML=
+ `<p class="note"><b>ההשערה מקבלת תמיכה חלקית — והיא חיה בעיקר במבחן השוק המשוקלל.</b> שם התבנית מדויקת: בעליות שוק המרוכזות עוקבות כמו כולן (γ⁺=‎-0.09‎, p=0.40) אבל בירידות הן מגלגלות שליש פחות (γ⁻=‎-0.34‎, p=0.012), וההבדל בין שני המקדמים עצמו מובהק (p=0.023). סטיית תקן אחת של ריכוזיות מוחקת כשליש מהתגובה לירידת שוק.</p>`+
+ `<p class="note" style="margin-top:14px"><b>מבחן המחלקה — שקראתי לו המרכזי — נותן את הכיוון הנכון אבל על הגבול.</b> משוקלל: γ⁻=‎-0.07‎ מול γ⁺=‎0.00‎, והאסימטריה על סף המובהקות (p=0.051). במשקל שווה מתקבלת תמונה אחרת: המרוכזות מגלגלות פחות <em>בשני הכיוונים</em> (γ⁺=‎-0.10‎, p=0.038) — קשיחות סימטרית, לא כלפי מטה.</p>`+
+ `<p class="note" style="margin-top:14px"><b>וההתפלגויות מסכימות עם הקריאה הזהירה.</b> שכיחות הירידות זהה בין השלישונים (50%-49%), יחס הגדלים כמעט 1 בכולם. מה שכן שונה הוא התנודתיות: 3.5% למרוכזות מול 5.0% למפוזרות — סדרות חלקות יותר. ה־drawdown הקטן של המרוכזות (17.5% מול 26.3%) מובהק לבד (p=0.026) אך נעלם בבקרת תנודתיות (p=0.13) — בדיוק המוקש שצפינו: זו חלקוּת, לא אסימטריה.</p>`+
+ `<p class="note" style="margin-top:14px"><b>שורה תחתונה:</b> בקטגוריות הגדולות (המשקל הכספי) יש עדות ממשית לקשיחות כלפי מטה מול השוק; בממוצע הפשוט של 875 הנישות מה שנמצא הוא קשיחות כללית — מחירים שזזים פחות, לשני הכיוונים. שני הדברים מעניינים, אבל הם טענות שונות. הזיהוי בכולם חתכי, והמבחנים אינם בלתי תלויים זה בזה.</p>`;
+document.getElementById('c3').textContent=`Δp על שינוי מדד המחלקה בנטרול הקטגוריה של תת-הקטגוריה עצמה (leave-own-category-out), מפוצל לעליות וירידות, באינטראקציה עם CR3. ${G.dd_neg_share}% מתצפיות מחלקה-חודש הן ירידות. נשמט ${G.lost}% מהמשקל (מחלקות חד-קטגוריאליות). FE תת-קטגוריה וחודש, SE מקובצות לפי קטגוריה.`;
+</script>
