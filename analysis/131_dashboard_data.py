@@ -13,8 +13,10 @@ def grp(s):
         if any(k in s for k in keys): return g
     return s
 
+SQ='"כמות סטנדרטית"'; BS='"בסיס מדידה"'
 raw=c.execute(f'''SELECT "חודש" AS month,"מחלקה" AS dep,"קטגוריה" AS cat,"ספק" AS sup,
-   sum({R}) AS rev FROM {P} WHERE {R} IS NOT NULL GROUP BY 1,2,3,4''').df()
+   sum({R}) AS rev, sum({SQ}) AS qty, any_value({BS}) AS basis
+   FROM {P} WHERE {R} IS NOT NULL GROUP BY 1,2,3,4''').df()
 raw['month']=raw.month.str.replace('/','-',regex=False)
 raw['g']=raw.sup.map(grp)
 raw['bucket']=raw.g.isin(BUCKET)
@@ -94,11 +96,42 @@ for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.buc
     series[tag]=S
     print(f'{tag}: {len(S)} סדרות')
 
+
+# ---------- (C) top suppliers inside each department / category ----------
+def toplist(keys,name_of):
+    out={}
+    d26=raw[(raw.month.str[:4]=='2026')&(raw.month.str[5:].isin(WIN))]
+    d22=raw[(raw.month.str[:4]=='2022')&(raw.month.str[5:].isin(WIN))]
+    def agg(d):
+        z=d.groupby(keys+['g']).agg(rev=('rev','sum'),qty=('qty','sum')).reset_index()
+        tot=z.groupby(keys).rev.sum().rename('tot'); z=z.join(tot,on=keys)
+        z['sh']=100*z.rev/z.tot
+        return z
+    a=agg(d26); b=agg(d22).set_index(keys+['g'])
+    bases=d26.groupby(keys).basis.agg(lambda s:sorted(set(s.dropna())))
+    for nm,x in a.groupby(keys[0]):
+        x=x.sort_values('rev',ascending=False).head(10)
+        rr=[]
+        for r in x.itertuples():
+            k=(nm,r.g)
+            p=b.loc[k] if k in b.index else None
+            rr.append(dict(g=r.g,rev=round(float(r.rev),1),qty=round(float(r.qty),1),
+                sh=round(float(r.sh),1),
+                sh22=round(float(p.sh),1) if p is not None else None,
+                dsh=round(float(r.sh-p.sh),1) if p is not None else None,
+                growth=round(100*(r.rev/p.rev-1),1) if p is not None and p.rev>0 else None))
+        bl=bases.loc[nm] if nm in bases.index else []
+        out[name_of+'|'+nm]=dict(rows=rr,tot=round(float(a[a[keys[0]]==nm].rev.sum()),1),
+            basis=('+'.join(bl) if len(bl)<=1 else 'מעורב: '+'+'.join(bl)))
+    return out
+tops={}; tops.update(toplist(['dep'],'dep')); tops.update(toplist(['cat'],'cat'))
+print(f'רשימות ספקים: {len(tops)} יחידות')
+
 deps=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('dep|')})
 cats=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('cat|')})
 cat2dep=raw.groupby('cat').dep.agg(lambda s:s.mode().iat[0]).to_dict()
 rev26=raw[raw.month.str[:4]=='2026'].groupby('cat').rev.sum().to_dict()
-json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,
+json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,tops=tops,
     cat2dep={k:v for k,v in cat2dep.items() if k in cats},
     catrev={k:round(float(v),1) for k,v in rev26.items() if k in cats}),
     open('/home/user/consternation/analysis/dash_data.json','w'),ensure_ascii=False)

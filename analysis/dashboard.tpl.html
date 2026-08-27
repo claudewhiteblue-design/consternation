@@ -1,12 +1,12 @@
 <title>לוח ריכוזיות — שוק המזון</title>
 <style>
 :root{color-scheme:light;--bg:#fcfcfb;--surf:#fff;--ink:#0b0b0b;--ink2:#52514e;--ink3:#83827c;
---line:#e4e3dd;--grid:#eeede8;--acc:#1a5b9e;--acc2:#b5642a;--pos:#1f7a4d;--neg:#a8352b;--fill:#1a5b9e14}
+--line:#e4e3dd;--grid:#eeede8;--acc:#1a5b9e;--acc2:#b5642a;--pos:#1f7a4d;--neg:#a8352b;--fill:#1a5b9e14;--b1:#eaf3ea;--b2:#fbf2df;--b3:#fae8e4;--b1t:#2f7a52;--b2t:#96701c;--b3t:#a8352b}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#141413;--surf:#1a1a19;
 --ink:#fff;--ink2:#c3c2b7;--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--acc:#5b9ee0;--acc2:#d98d4f;
---pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f}}
+--pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f;--b1:#1c2b22;--b2:#2e2718;--b3:#2f1e1b;--b1t:#7fcfa2;--b2t:#d8b45c;--b3t:#e0796d}}
 :root[data-theme="dark"]{color-scheme:dark;--bg:#141413;--surf:#1a1a19;--ink:#fff;--ink2:#c3c2b7;--ink3:#8f8e85;
---line:#33322e;--grid:#2a2926;--acc:#5b9ee0;--acc2:#d98d4f;--pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f}
+--line:#33322e;--grid:#2a2926;--acc:#5b9ee0;--acc2:#d98d4f;--pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f;--b1:#1c2b22;--b2:#2e2718;--b3:#2f1e1b;--b1t:#7fcfa2;--b2t:#d8b45c;--b3t:#e0796d}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);direction:rtl;
 font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6}
@@ -39,6 +39,9 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 .leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin:2px 0 4px}
 .leg i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:4px;margin-left:6px}
 .foot{font-size:12.5px;color:var(--ink3);margin-top:10px}
+.pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12.5px;font-weight:600}
+.sup h3{font-size:14.5px;margin:22px 0 4px}
+.sup table{min-width:640px}
 </style>
 <div class="wrap">
 <h1>לוח ריכוזיות — שוק המזון</h1>
@@ -65,6 +68,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
   <span id="l2"><i style="background:var(--ink3);opacity:.55"></i><span id="l2t"></span></span></div>
  <div class="scroll"><svg id="ch" viewBox="0 0 940 430" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg></div>
  <p class="foot" id="cfoot"></p>
+ <div class="sup" id="sup"></div>
 </div>
 </div>
 <script>
@@ -108,6 +112,14 @@ document.getElementById('tfoot').innerHTML=
  `עמודת "צמיחת מכר" צבועה מול צמיחת השוק כולה (${sgn(100*(T.tot26/T.tot22-1),1)}%) — ירוק = צמחה מהר מהשוק. `+
  `הטבלה אינה כוללת מאגדים (מותג פרטי, ספק כללי וכד׳), שמחזיקים יחד ${T.bucket_share.toFixed(1)}% מהשוק.`;
 
+/* ---------- HHI concentration bands (US DOJ/FTC Horizontal Merger Guidelines) ---------- */
+const BANDS=[{lo:0,hi:1500,lab:'שוק לא מרוכז',bg:'--b1',tx:'--b1t'},
+             {lo:1500,hi:2500,lab:'ריכוזיות בינונית',bg:'--b2',tx:'--b2t'},
+             {lo:2500,hi:1e9,lab:'ריכוזיות גבוהה',bg:'--b3',tx:'--b3t'}];
+const band=v=>BANDS.find(b=>v>=b.lo&&v<b.hi);
+const UNIT={'ק"ג':'טון','ליטר':'אלפי ליטרים',"יח' באריזה":"אלפי יח׳ באריזה",'מחזור':'מחזור'};
+const unit=b=>!b?'—':b.startsWith('מעורב')?b.replace('מעורב: ','מעורב — ').split('+').map(x=>UNIT[x]||x).join(' + '):(UNIT[b]||b);
+
 /* ---------- time series ---------- */
 const LV=[['שוק','כלל השוק'],['dep','מחלקה'],['cat','קטגוריה']];
 let lv='שוק', bk=BK[0], sel=null;
@@ -138,7 +150,7 @@ function draw(){
  const xs=i=>P.l+iw*i/(M.length-1);
  let g='';
  const panels=[['cr3','CR3 — נתח שלושת הגדולים',v=>v.toFixed(0)+'%',0],
-               ['hhi','HHI',v=>fmt(Math.round(v)),1]];
+               ['hhi','HHI — לפי רמות ריכוזיות מקובלות',v=>fmt(Math.round(v)),1]];
  panels.forEach(([k,ttl,f,pi])=>{
   const y0=P.t+pi*(ph+gapY);
   const vals=s[k].concat(mk?mk[k]:[]);
@@ -146,6 +158,13 @@ function draw(){
   const pad=(hi-lo)*0.14||1; lo=Math.max(0,lo-pad); hi=hi+pad;
   if(k==='cr3') hi=Math.min(100,hi);
   const y=v=>y0+ph*(1-(v-lo)/(hi-lo));
+  if(k==='hhi'){
+   BANDS.forEach(bd=>{
+    const a=Math.max(lo,bd.lo), b2=Math.min(hi,bd.hi);
+    if(b2<=a) return;
+    g+=`<rect x="${P.l}" y="${y(b2)}" width="${iw}" height="${(y(a)-y(b2)).toFixed(1)}" fill="var(${bd.bg})"/>`;
+    if(y(a)-y(b2)>15) g+=`<text x="${P.l+6}" y="${y(b2)+13}" text-anchor="start" fill="var(${bd.tx})" font-size="10.5" font-weight="600" opacity=".9">${bd.lab}</text>`;});
+  }
   for(let t=0;t<=4;t++){const v=lo+(hi-lo)*t/4;
    g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`;
    g+=`<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${f(v)}</text>`;}
@@ -157,11 +176,33 @@ function draw(){
   M.forEach((m,i)=>{if(m.slice(5)==='01') g+=`<text x="${xs(i)}" y="${y0+ph+17}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`;});
  });
  document.getElementById('ch').innerHTML=g;
+ drawSup();
  const c0=s.cr3[0],c1=s.cr3.at(-1),h0=s.hhi[0],h1=s.hhi.at(-1);
+ const bd=band(h1), bd0=band(h0);
  document.getElementById('cfoot').innerHTML=
   `<b style="color:var(--ink)">${name}</b> · ${bk} · ${s.n.at(-1)} קבוצות ספקים בחודש האחרון · `+
-  `CR3 ${c0.toFixed(1)}% ← ${c1.toFixed(1)}% (${sgn(c1-c0,1)}) · HHI ${fmt(h0)} ← ${fmt(h1)} (${sgn(h1-h0,0)})`+
+  `CR3 ${c0.toFixed(1)}% ← ${c1.toFixed(1)}% (${sgn(c1-c0,1)}) · HHI ${fmt(h0)} ← ${fmt(h1)} (${sgn(h1-h0,0)}) `+
+  `<span class="pill" style="background:var(${bd.bg});color:var(${bd.tx})">${bd.lab}</span>`+
+  (bd.lab!==bd0.lab?` <span style="color:var(--ink3)">(ב־2022: ${bd0.lab})</span>`:'')+
   (lv==='שוק'?'':` · ${s.rev.at(-1).toFixed(1)} מ׳ ₪ בחודש האחרון`);
+}
+function drawSup(){
+ const el=document.getElementById('sup');
+ if(lv==='שוק'){el.innerHTML='';return}
+ const t=D.tops[`${lv}|${sel}`];
+ if(!t){el.innerHTML='';return}
+ const mx=Math.max(...t.rows.map(r=>r.sh));
+ el.innerHTML=`<h3>עשרת הספקים הגדולים ב־${sel} · 2026</h3>`+
+  `<p class="cs">חלון ${T.win} חודשים ראשונים של 2026, מול אותם חודשים ב־2022. יחידת הכמות: ${unit(t.basis)}. `+
+  `סך המכר ביחידה: ${fmt(Math.round(t.tot))} מ׳ ₪. כאן מוצגים גם מאגדים (מותג פרטי / ספק כללי) אם הם בעשירייה.</p>`+
+  '<div class="scroll"><table><thead><tr><th></th><th class="nm">ספק</th><th>נתח<br>2026</th><th>Δ מול<br>2022</th>'+
+  '<th>מכר<br>מ׳ ₪</th><th>כמות<br>סטנדרטית</th><th>צמיחת<br>מכר</th></tr></thead><tbody>'+
+  t.rows.map((r,i)=>`<tr><td style="color:var(--ink3)">${i+1}</td><td class="nm">${r.g}</td>`+
+   `<td><span class="bar" style="width:${(r.sh/mx*40).toFixed(1)}px"></span>${r.sh.toFixed(1)}%</td>`+
+   `<td class="${r.dsh===null?'':cls(r.dsh)}">${r.dsh===null?'<span style="color:var(--ink3)">חדש</span>':sgn(r.dsh,1)}</td>`+
+   `<td>${fmt(Math.round(r.rev))}</td><td>${fmt(Math.round(r.qty))}</td>`+
+   `<td class="${r.growth===null?'':(r.growth>MKT?'up':'dn')}">${r.growth===null?'—':sgn(r.growth,1)+'%'}</td></tr>`).join('')+
+  '</tbody></table></div>';
 }
 fill();draw();
 </script>
