@@ -102,6 +102,8 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 </div><!-- /p0 -->
 
 <div class="page" id="p1" hidden>
+<div class="seg" id="sub1" style="margin:0 0 20px"></div>
+<div id="s0">
 <p class="sub">שני ניתוחים על אותה שאלה: האם קטגוריות מרוכזות יותר התייקרו יותר מאז 2022. הראשון הוא אמידה, השני תיאור. בסיס המדידה בשניהם זהה — <b>ממוצע המחיר של אותה יחידה ב־2022 כולה</b>, לא חודש בודד.</p>
 
 <div class="card">
@@ -131,11 +133,57 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 </div>
 
 <div class="card"><h2>איך לקרוא את זה</h2><div id="anote"></div></div>
+</div><!-- /s0 -->
+
+<div id="s1" hidden>
+<p class="sub">אותה מכונה בדיוק, עם רגרסור אחר: <b>חשיפת הקטגוריה לייבוא</b>. כאן ההשערה הפוכה בסימנה — בתקופה שנבדקה השקל התחזק, ולכן קטגוריה חשופה יותר אמורה להתייקר <em>פחות</em>. רק ברמת קטגוריה: מדד החשיפה לא נבנה ברזולוציית תת-קטגוריה.</p>
+
+<div class="card">
+ <h2>השפעת חשיפה לייבוא על מחירים</h2>
+ <p class="cs" style="max-width:82ch">שני מדדים: <b>חשיפת מט״ח</b> — החלק ממחיר המדף שזז אחד־לאחד עם שער החליפין, מודל שנבנה ברמת צמד יצרן־קטגוריה ואומת מול נתוני יבוא של Comtrade; ו<b>נתח יבואנים</b> — פשוט אחוז המחזור שנמכר על ידי יבואנים. המקדם נקרא כמו קודם: אחוז סטייה מממוצע 2022 של אותה קטגוריה, לכל סטיית תקן של חשיפה.</p>
+ <div class="ctl">
+  <div class="seg" id="i_sm"></div><div class="seg" id="i_ms"></div><div class="seg" id="i_wt"></div>
+ </div>
+ <div class="leg"><span><i style="background:var(--acc2)"></i>מקדם γ</span>
+  <span><i style="background:var(--acc2);opacity:.22;height:9px"></i>רווח בר־סמך 95%</span></div>
+ <div class="scroll"><div class="chwrap"><svg id="ich" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="itip"></div></div></div>
+ <p class="foot" id="ifoot"></p>
+</div>
+
+<div class="card">
+ <h2>שלישוני חשיפה — התפתחות המחירים</h2>
+ <p class="cs" style="max-width:82ch">שלישונים שווי־מכר לפי החשיפה ב־2022, בסיס ממוצע 2022 של כל קטגוריה.</p>
+ <div class="ctl"><div class="seg" id="it_sm"></div><div class="seg" id="it_ms"></div></div>
+ <div class="leg" id="itleg"></div>
+ <div class="scroll"><div class="chwrap"><svg id="itch" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="ittip"></div></div></div>
+ <p class="foot" id="itfoot"></p>
+</div>
+
+<div class="card">
+ <h2>קודם כל: השניים חופפים מבנית</h2>
+ <p class="cs" style="max-width:82ch">התפלגות שלישוני החשיפה בתוך כל שלישון ריכוזיות, באחוזי מכר 2022. המתאם הרציף ביניהם חלש — אבל בקצוות החפיפה חזקה מאוד, ולכן אי אפשר לקרוא כל אחד מהם כאילו השני אינו קיים.</p>
+ <div class="ctl"><div class="seg" id="d_sm"></div><div class="seg" id="d_cm"></div><div class="seg" id="d_fm"></div></div>
+ <div class="scroll"><table id="dstb"></table></div>
+ <p class="foot" id="dsfoot"></p>
+</div>
+
+<div class="card">
+ <h2 id="dshttl"></h2>
+ <p class="cs">כל תא הוא ההצטלבות של שלישון ריכוזיות ושלישון חשיפה. אדום = התייקרות גבוהה, כחול = נמוכה. בסיס 2022 = 100.</p>
+ <div class="scroll"><div id="dsheat"></div></div>
+ <p class="foot" id="dsh2"></p>
+</div>
+
+<div class="card"><h2>מה עולה מזה</h2><div id="inote"></div></div>
+</div><!-- /s1 -->
 </div><!-- /p1 -->
 </div>
 <script>
 const D=__DATA__;
 const A=__ADATA__;
+const I=__IDATA__;
 const M=D.months, T=D.table;
 const fmt=n=>n.toLocaleString('en-US');
 const sgn=(v,d=2)=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(d);
@@ -468,5 +516,136 @@ function ahover(ev,G,svgId,ovId,tipId,mode){
  el.addEventListener('mouseleave',()=>{const tp=document.getElementById(k?'ttip':'atip');tp.classList.remove('on');
   const o=document.getElementById(k?'tov':'aov'); if(o)o.innerHTML='';});});
 aDraw(); tDraw();
+
+/* ================= analyses sub-tabs ================= */
+const SUB=['ריכוזיות','ייבוא'];
+const sub1=document.getElementById('sub1');
+SUB.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;
+ b.onclick=()=>{[...sub1.children].forEach((x,j)=>x.classList.toggle('on',j===i));
+  document.getElementById('s0').hidden=i!==0; document.getElementById('s1').hidden=i!==1;
+  if(i===1){iDraw();itDraw();dsDraw();}};
+ sub1.appendChild(b)});
+sub1.children[0].classList.add('on');
+
+/* ================= imports ================= */
+const IM=[['fx_v2','חשיפת מט״ח'],['imp_share','נתח יבואנים']];
+const CM=[['cr3','CR3'],['hhi','HHI']];
+Object.assign(st,{ism:'no_meat',ims:'fx_v2',iwt:'w',itsm:'no_meat',itms:'fx_v2',
+                  dsm:'no_meat',dcm:'cr3',dfm:'fx_v2'});
+seg('i_sm',AS,'ism',()=>iDraw()); seg('i_ms',IM,'ims',()=>iDraw()); seg('i_wt',AW,'iwt',()=>iDraw());
+seg('it_sm',AS,'itsm',()=>itDraw()); seg('it_ms',IM,'itms',()=>itDraw());
+seg('d_sm',AS,'dsm',()=>dsDraw()); seg('d_cm',CM,'dcm',()=>dsDraw()); seg('d_fm',IM,'dfm',()=>dsDraw());
+const IG={},ITG={};
+
+function evChart(svgId,ovId,r,col,G){
+ const m=r.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
+ const xs=i=>P.l+iw*i/(m.length-1);
+ const up=r.est.map((v,i)=>v+1.96*r.se[i]), dn=r.est.map((v,i)=>v-1.96*r.se[i]);
+ let lo=Math.min(...dn,0), hi=Math.max(...up,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
+ const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
+ Object.assign(G,{y,xs,W,P,iw,ih,r,m});
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
+ g+=`<path d="${up.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}`+
+    `${dn.map((v,i)=>`L${xs(dn.length-1-i).toFixed(1)},${y(dn[dn.length-1-i]).toFixed(1)}`).join('')}Z" fill="var(${col})" opacity=".16"/>`;
+ g+=`<path d="${r.est.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${col})" stroke-width="2.1"/>`;
+ g+=`<rect x="${P.l}" y="${P.t}" width="${xs(11)-P.l}" height="${ih}" fill="var(--ink3)" opacity=".05"/>`;
+ g+=`<text x="${(P.l+xs(11))/2}" y="${P.t+13}" text-anchor="middle" fill="var(--ink3)" font-size="10.5">בסיס 2022</text>`;
+ m.forEach((mm,i)=>{if(mm.slice(5)==='01') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ document.getElementById(svgId).innerHTML=g+`<g id="${ovId}"></g>`;
+}
+function iDraw(){
+ ['i_sm','i_ms','i_wt'].forEach(segSync);
+ const r=I.runs[`${st.ism}|${st.ims}|${st.iwt}`]; if(!r) return;
+ evChart('ich','iov',r,'--acc2',IG);
+ const last=r.est.at(-1);
+ document.getElementById('ifoot').innerHTML=
+  `${r.n} קטגוריות · מדד ${IM.find(x=>x[0]===st.ims)[1]} ממוצע ${r.mean_v} (ס״ת ${r.sd_v}) · `+
+  `<b style="color:var(--ink)">${r.months.at(-1).replace('-','/')}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${r.p.at(-1)<0.001?'<0.001':r.p.at(-1).toFixed(3)}) · `+
+  `ממוצע התקופה שאחרי 2022: ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% (p=${r.avg[2].toFixed(3)}) · F: p=${r.joint_p<1e-4?r.joint_p.toExponential(1):r.joint_p.toFixed(4)}`;
+ iNote();
+}
+function pathChart(svgId,ovId,t,G){
+ const m=t.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
+ const xs=i=>P.l+iw*i/(m.length-1);
+ const all=t.groups.flatMap(g=>g.path);
+ let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
+ const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
+ Object.assign(G,{y,xs,W,P,iw,ih,t,m});
+ const COL=['--t1','--t2','--t3'];
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(0)+'%',nice(lo,hi,5));
+ t.groups.forEach((gr,i)=>{
+  g+=`<path d="${gr.path.map((v,j)=>`${j?'L':'M'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[i]})" stroke-width="2.2"/>`;
+  g+=`<circle cx="${xs(m.length-1)}" cy="${y(gr.path.at(-1))}" r="3.6" fill="var(${COL[i]})"/>`;});
+ m.forEach((mm,i)=>{if(mm.slice(5)==='01') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ document.getElementById(svgId).innerHTML=g+`<g id="${ovId}"></g>`;
+}
+function itDraw(){
+ ['it_sm','it_ms'].forEach(segSync);
+ const t=I.terc[`${st.itsm}|${st.itms}`]; if(!t) return;
+ pathChart('itch','itov',t,ITG);
+ const COL=['--t1','--t2','--t3'], nm=IM.find(x=>x[0]===st.itms)[1];
+ document.getElementById('itleg').innerHTML=t.groups.map((gr,i)=>
+  `<span><i style="background:var(${COL[i]})"></i>שלישון ${gr.t}${gr.t===1?' — חשיפה נמוכה':gr.t===3?' — חשיפה גבוהה':''} · ${nm} ${gr.v} · ${gr.n} קט׳</span>`).join('');
+ const a=t.groups[0].path.at(-1), b=t.groups[2].path.at(-1);
+ document.getElementById('itfoot').innerHTML=
+  `בסוף התקופה: חשיפה נמוכה ${a>0?'+':''}${a.toFixed(1)}% · חשיפה גבוהה ${b>0?'+':''}${b.toFixed(1)}% · `+
+  `<b style="color:var(--ink)">פער ${(b-a)>0?'+':''}${(b-a).toFixed(1)} נקודות</b>.`;
+}
+const RL=['ריכוזיות נמוכה','ריכוזיות בינונית','ריכוזיות גבוהה'];
+function dsDraw(){
+ ['d_sm','d_cm','d_fm'].forEach(segSync);
+ const d=I.ds[`${st.dsm}|${st.dcm}|${st.dfm}`]; if(!d) return;
+ const nm=IM.find(x=>x[0]===st.dfm)[1];
+ const CL=[`${nm} נמוך`,`${nm} בינוני`,`${nm} גבוה`];
+ document.getElementById('dstb').innerHTML=
+  '<thead><tr><th></th>'+CL.map(c=>`<th>${c}</th>`).join('')+'<th>סה״כ</th></tr></thead><tbody>'+
+  d.cells.map((row,i)=>{const tot=d.rowtot[i];
+   return `<tr><td class="nm">${RL[i]} <span style="color:var(--ink3);font-weight:400">${st.dcm.toUpperCase()} ${d.cmean[i]}</span></td>`+
+    row.map(c=>`<td>${(100*c.rev/tot).toFixed(1)}%<span style="color:var(--ink3)"> · ${c.n}</span></td>`).join('')+
+    `<td style="color:var(--ink3)">${fmt(Math.round(tot))} מ׳ ₪</td></tr>`}).join('')+'</tbody>';
+ const c0=d.cells[0][2], c2=d.cells[2][0];
+ document.getElementById('dsfoot').innerHTML=
+  `מתאם רציף ${st.dcm.toUpperCase()}–${nm}: <b style="color:var(--ink)">${d.corr>0?'+':''}${d.corr}</b> — חלש. `+
+  `אבל הקטגוריות המפוזרות ברובן חשופות (${(100*c0.rev/d.rowtot[0]).toFixed(1)}% מהן בשלישון החשיפה הגבוה), `+
+  `והמרוכזות ברובן מוגנות (${(100*c2.rev/d.rowtot[2]).toFixed(1)}% בשלישון הנמוך). שני "האפקטים" נמדדים על אותן קטגוריות מכיוונים הפוכים.`;
+ const last=d.months.at(-1);
+ document.getElementById('dshttl').textContent=`מדד המחיר ב־${last.replace('-','/')}, בתשעת התאים`;
+ const vals=d.cells.flat().map(c=>c.idx).filter(v=>v!==null);
+ const lo=Math.min(...vals), hi=Math.max(...vals), mid=(lo+hi)/2;
+ const col=v=>{const t=(v-mid)/((hi-lo)/2||1);
+  return t>=0?`rgba(200,66,52,${(0.12+0.62*Math.min(1,t)).toFixed(3)})`
+             :`rgba(42,120,214,${(0.12+0.62*Math.min(1,-t)).toFixed(3)})`;};
+ document.getElementById('dsheat').innerHTML=
+  '<table style="min-width:560px"><thead><tr><th></th>'+CL.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>'+
+  d.cells.map((row,i)=>`<tr><td class="nm">${RL[i]}</td>`+row.map(c=>c.idx===null?'<td>—</td>':
+   `<td style="padding:4px"><div style="background:${col(c.idx)};border-radius:7px;padding:12px 8px;text-align:center;font-weight:600;font-size:14px">${c.idx.toFixed(1)}</div></td>`).join('')+'</tr>').join('')+
+  '</tbody></table>';
+ const colAvg=j=>{const v=d.cells.map(r=>r[j]).filter(c=>c.rev>0);
+  return v.reduce((a,c)=>a+c.idx*c.rev,0)/v.reduce((a,c)=>a+c.rev,0)};
+ const rowAvg=i=>{const v=d.cells[i].filter(c=>c.rev>0);
+  return v.reduce((a,c)=>a+c.idx*c.rev,0)/v.reduce((a,c)=>a+c.rev,0)};
+ const cg=colAvg(0)-colAvg(2), rg=rowAvg(2)-rowAvg(0);
+ document.getElementById('dsh2').innerHTML=
+  `שני השוליים נעים, ולא רק אחד. לפי שלישון חשיפה: ${[0,1,2].map(j=>colAvg(j).toFixed(1)).join(' · ')} — `+
+  `<b style="color:var(--ink)">${cg.toFixed(1)} נקודות</b>, יורד ככל שהחשיפה עולה. `+
+  `לפי שלישון ריכוזיות: ${[0,1,2].map(i=>rowAvg(i).toFixed(1)).join(' · ')} — <b style="color:var(--ink)">${rg.toFixed(1)} נקודות</b>, עולה עם הריכוזיות. `+
+  `<b style="color:var(--ink)">שני השוליים האלה אינם נקיים זה מזה</b>: בגלל החפיפה בטבלה למעלה, חלק מכל אחד מהם הוא בעצם השני. `+
+  `ההשוואה הנקייה היא בתוך שורה או בתוך עמודה — למשל בשורת הריכוזיות הנמוכה הפער בין חשיפה נמוכה לגבוהה הוא `+
+  `${(d.cells[0][0].idx-d.cells[0][2].idx).toFixed(1)} נקודות, ובעמודת החשיפה הנמוכה הפער בין ריכוזיות נמוכה לגבוהה הוא `+
+  `${(d.cells[2][0].idx-d.cells[0][0].idx).toFixed(1)} נקודות.`;
+}
+function iNote(){
+ const u=I.runs[`${st.ism}|${st.ims}|u`];
+ const d=I.ds[`${st.ism}|cr3|${st.ims}`];
+ const hh=I.runs['no_meat|fx_v2|w'];
+ document.getElementById('inote').innerHTML=
+  `<p class="note"><b>זה הממצא החזק ביותר בכל הניתוח — וגם הוא לא עובר את הרף.</b> חשיפת מט״ח, משוקלל, ללא בשר ועוף: ${hh.avg[0].toFixed(2)}% לכל ס״ת עם p=${hh.avg[2].toFixed(3)}. הסימן הוא הצפוי: השקל התחזק בתקופה, וקטגוריות חשופות יותר לייבוא התייקרו פחות. המקדם של החודש האחרון כן מובהק (${hh.est.at(-1).toFixed(2)}%, p=${hh.p.at(-1).toFixed(3)}), אבל הממוצע על פני כל התקופה אינו, והמפרט הלא־משוקלל מאפס את זה לגמרי (${(u.avg[0]>0?'+':'')+u.avg[0].toFixed(2)}%).</p>`+
+  `<p class="note" style="margin-top:14px"><b>שלישוני החשיפה הם החתך היחיד שנשאר מונוטוני</b> בכל דגימה ובכל מדד — בניגוד לשלישוני הריכוזיות, שמתהפכים. זו הסיבה שאני נוטה יותר אמון בכיוון של הייבוא מאשר בזה של הריכוזיות, גם אם אף אחד מהם לא מגיע למובהקות.</p>`+
+  `<p class="note" style="margin-top:14px"><b>והחפיפה המבנית היא הסיבה להיזהר משניהם.</b> המתאם הרציף בין ${st.ims==='fx_v2'?'חשיפת מט״ח':'נתח יבואנים'} ל־CR3 הוא ${d?d.corr:'—'} בלבד, אבל בקצוות הם כמעט מתלכדים. מי שמריץ רגרסיית ריכוזיות בלי בקרת ייבוא מודד חלק מאפקט הייבוא, ולהפך.</p>`;
+}
+['ich','itch'].forEach((id,k)=>{const el=document.getElementById(id);
+ el.addEventListener('mousemove',e=>ahover(e,k?ITG:IG,id,k?'itov':'iov',k?'ittip':'itip',k?'t':'a'));
+ el.addEventListener('mouseleave',()=>{const tp=document.getElementById(k?'ittip':'itip');tp.classList.remove('on');
+  const o=document.getElementById(k?'itov':'iov'); if(o)o.innerHTML='';});});
 
 </script>
