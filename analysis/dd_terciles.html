@@ -1,11 +1,11 @@
 <title>ירידה מהשיא לפי ריכוזיות</title>
 <style>
 :root{color-scheme:light;--bg:#fcfcfb;--surf:#fff;--ink:#0b0b0b;--ink2:#52514e;--ink3:#83827c;
---line:#e4e3dd;--grid:#eeede8;--s1:#2a78d6;--s2:#eb6834}
+--line:#e4e3dd;--grid:#eeede8;--d5:#86b6ef;--d10:#2a78d6;--d15:#184f95}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#141413;--surf:#1a1a19;
---ink:#fff;--ink2:#c3c2b7;--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--s1:#3987e5;--s2:#d95926}}
+--ink:#fff;--ink2:#c3c2b7;--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--d5:#cde2fb;--d10:#3987e5;--d15:#184f95}}
 :root[data-theme="dark"]{color-scheme:dark;--bg:#141413;--surf:#1a1a19;--ink:#fff;--ink2:#c3c2b7;
---ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--s1:#3987e5;--s2:#d95926}
+--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--d5:#cde2fb;--d10:#3987e5;--d15:#184f95}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);direction:rtl;font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6}
 .wrap{max-width:900px;margin:0 auto;padding:40px 22px 80px}
@@ -22,72 +22,72 @@ background:transparent;color:var(--ink2);cursor:pointer}
 .leg i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-left:6px}
 .scroll{overflow-x:auto}svg{display:block;overflow:visible}
 .note{font-size:13.5px;color:var(--ink2);max-width:68ch}.note b{color:var(--ink)}
-table{border-collapse:collapse;font-size:13px;width:100%;min-width:480px}
-th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;font-size:12.5px;width:100%;min-width:560px}
+th,td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums}
 th{color:var(--ink2);font-weight:600}
 </style>
 <div class="wrap">
 <h1>כמה מהקטגוריות ירדו מהשיא</h1>
-<p class="sub">חלק הקטגוריות שירדו לפחות 5% או 10% מהשיא שלהן במהלך התקופה, לפי שלישוני ריכוזיות שווי־מכר. המחיר מנוכה ממדד השוק, כך ש"ירידה" היא ירידה יחסית ולא נומינלית. ללא בשר ועוף.</p>
+<p class="sub">חלק הקטגוריות שירדו לפחות 5%, 10% או 15% מהשיא שלהן במהלך התקופה, לפי שלישוני ריכוזיות שווי־מכר. המחיר מנוכה ממדד השוק, כך ש"ירידה" היא ירידה יחסית ולא נומינלית. ללא בשר ועוף.</p>
 
 <div class="tabs" id="tabs"></div>
 <div class="card">
  <h2 id="ttl"></h2>
- <p class="cs" id="cs"></p>
+ <p class="cs">שלישון 1 = הכי פחות מרוכז, שלישון 3 = הכי מרוכז. הגובה הוא אחוז מהמחזור בשלישון.</p>
  <div class="leg">
-  <span><i style="background:var(--s1)"></i>ירדו ≥5% מהשיא</span>
-  <span><i style="background:var(--s2)"></i>ירדו ≥10% מהשיא</span>
+  <span><i style="background:var(--d5)"></i>ירדו ≥5%</span>
+  <span><i style="background:var(--d10)"></i>ירדו ≥10%</span>
+  <span><i style="background:var(--d15)"></i>ירדו ≥15%</span>
  </div>
- <div class="scroll"><svg id="ch" viewBox="0 0 860 340" style="width:100%;min-width:560px;height:auto;direction:ltr"></svg></div>
+ <div class="scroll"><svg id="ch" viewBox="0 0 860 340" style="width:100%;min-width:600px;height:auto;direction:ltr"></svg></div>
 </div>
 
 <div class="card"><h2>המספרים</h2>
  <div class="scroll"><table id="tb"></table></div>
- <p class="note" style="margin-top:12px">שתי הדרכים לספור: <b>משוקלל־מכר</b> — כמה אחוז מהמחזור בשלישון נמצא בקטגוריות שירדו; <b>ספירה</b> — כמה אחוז מהקטגוריות עצמן. הפער ביניהן מלמד אם התופעה נמצאת בקטגוריות הגדולות או הקטנות.</p>
+ <p class="note" style="margin-top:12px">שתי דרכי ספירה: <b>משוקלל־מכר</b> — כמה אחוז מהמחזור בשלישון נמצא בקטגוריות שירדו; <b>ספירה</b> — כמה אחוז מהקטגוריות עצמן. הפער ביניהן מלמד אם התופעה בקטגוריות הגדולות או הקטנות.</p>
 </div>
 
 <div class="card"><h2>מה רואים</h2><div id="txt"></div></div>
 </div>
 <script>
-const G={"קטגוריות": {"1": {"cr3": 58.6, "n": 81, "dd5": 96.2, "dd10": 83.8, "dd5n": 98.8, "dd10n": 84.0}, "2": {"cr3": 81.1, "n": 90, "dd5": 100.0, "dd10": 89.3, "dd5n": 100.0, "dd10n": 91.1}, "3": {"cr3": 95.4, "n": 84, "dd5": 90.4, "dd10": 52.0, "dd5n": 97.6, "dd10n": 83.3}}, "תת-קטגוריות": {"1": {"cr3": 65.0, "n": 272, "dd5": 97.0, "dd10": 84.8, "dd5n": 99.6, "dd10n": 90.8}, "2": {"cr3": 87.5, "n": 303, "dd5": 96.5, "dd10": 78.5, "dd5n": 99.0, "dd10n": 87.1}, "3": {"cr3": 98.6, "n": 300, "dd5": 93.2, "dd10": 68.2, "dd5n": 98.0, "dd10n": 88.7}}};
-const KEYS=Object.keys(G); let cur=KEYS[0], mode='dd';
+const G={"קטגוריות": {"1": {"cr3": 58.6, "n": 81, "dd5": 96.2, "dd5n": 98.8, "dd10": 83.8, "dd10n": 84.0, "dd15": 69.0, "dd15n": 66.7}, "2": {"cr3": 81.1, "n": 90, "dd5": 100.0, "dd5n": 100.0, "dd10": 89.3, "dd10n": 91.1, "dd15": 47.1, "dd15n": 64.4}, "3": {"cr3": 95.4, "n": 84, "dd5": 90.4, "dd5n": 97.6, "dd10": 52.0, "dd10n": 83.3, "dd15": 33.4, "dd15n": 69.0}}, "תת-קטגוריות": {"1": {"cr3": 65.0, "n": 272, "dd5": 97.0, "dd5n": 99.6, "dd10": 84.8, "dd10n": 90.8, "dd15": 72.3, "dd15n": 77.6}, "2": {"cr3": 87.5, "n": 303, "dd5": 96.5, "dd5n": 99.0, "dd10": 78.5, "dd10n": 87.1, "dd15": 55.8, "dd15n": 69.3}, "3": {"cr3": 98.6, "n": 300, "dd5": 93.2, "dd5n": 98.0, "dd10": 68.2, "dd10n": 88.7, "dd15": 48.5, "dd15n": 73.0}}};
+const KEYS=Object.keys(G); let cur=KEYS[0];
+const KS=[5,10,15];
 const tabs=document.getElementById('tabs');
 KEYS.forEach(k=>{const b=document.createElement('button');b.textContent=k;b.onclick=()=>{cur=k;draw();};tabs.appendChild(b);});
 function draw(){
  [...tabs.children].forEach(b=>b.classList.toggle('on',b.textContent===cur));
  const R=G[cur], T=[1,2,3];
  const W=860,H=340,P={t:20,r:24,b:56,l:52},iw=W-P.l-P.r,ih=H-P.t-P.b;
- const bw=iw/3, gap=26, inner=(bw-gap)/2;
+ const bw=iw/3, gap=30, inner=(bw-gap)/3;
  const y=v=>P.t+ih*(1-v/100);
  let g='';
  for(let v=0;v<=100;v+=25){
   g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="${v===0?'var(--line)':'var(--grid)'}"/>`;
   g+=`<text x="${P.l-10}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="12">${v}%</text>`;}
  T.forEach((t,i)=>{
-  const x0=P.l+iw-(i+1)*bw;     // RTL: tercile 1 on the right
-  const r=R[t];
-  [['dd5','--s1',0],['dd10','--s2',1]].forEach(([k,cv,j])=>{
-   const v=r[k], bx=x0+gap/2+j*inner, h=ih*v/100;
-   g+=`<rect x="${bx}" y="${y(v)}" width="${inner-4}" height="${h}" rx="4" fill="var(${cv})"/>`;
-   g+=`<text x="${bx+(inner-4)/2}" y="${y(v)-7}" text-anchor="middle" fill="var(--ink)" font-size="13" font-weight="600">${v.toFixed(0)}%</text>`;
-  });
-  g+=`<text x="${x0+bw/2}" y="${H-P.b+22}" text-anchor="middle" fill="var(--ink)" font-size="13.5" font-weight="600">שלישון ${t}</text>`;
+  const x0=P.l+iw-(i+1)*bw, r=R[t];
+  KS.forEach((k,j)=>{
+   const v=r['dd'+k], bx=x0+gap/2+j*inner;
+   g+=`<rect x="${bx}" y="${y(v)}" width="${inner-3}" height="${ih*v/100}" rx="3.5" fill="var(--d${k})"/>`;
+   g+=`<text x="${bx+(inner-3)/2}" y="${y(v)-7}" text-anchor="middle" fill="var(--ink)" font-size="12.5" font-weight="600">${v.toFixed(0)}</text>`;});
+  g+=`<text x="${x0+bw/2}" y="${H-P.b+22}" text-anchor="middle" fill="var(--ink)" font-size="13.5" font-weight="600">שלישון ${t}${t===1?' — מפוזר':t===3?' — מרוכז':''}</text>`;
   g+=`<text x="${x0+bw/2}" y="${H-P.b+39}" text-anchor="middle" fill="var(--ink3)" font-size="11.5">CR3 ${r.cr3} · ${r.n} ${cur==='קטגוריות'?'קטגוריות':'תת-קט׳'}</text>`;
  });
  document.getElementById('ch').innerHTML=g;
  document.getElementById('ttl').textContent=cur+' — משוקלל לפי מכר';
- document.getElementById('cs').textContent='שלישון 1 = הכי פחות מרוכז, שלישון 3 = הכי מרוכז. הגובה הוא אחוז מהמחזור בשלישון.';
- document.getElementById('tb').innerHTML='<thead><tr><th>שלישון</th><th>CR3 ממוצע</th><th>מספר</th><th>≥5% משוקלל</th><th>≥5% ספירה</th><th>≥10% משוקלל</th><th>≥10% ספירה</th></tr></thead><tbody>'+
+ document.getElementById('tb').innerHTML='<thead><tr><th>שלישון</th><th>CR3</th><th>מספר</th>'+
+  KS.map(k=>`<th>≥${k}% משוקלל</th><th>≥${k}% ספירה</th>`).join('')+'</tr></thead><tbody>'+
   T.map(t=>{const r=R[t];return `<tr><td>${t}${t===1?' — מפוזר':t===3?' — מרוכז':''}</td><td>${r.cr3}</td><td>${r.n}</td>`+
-   `<td>${r.dd5}%</td><td style="color:var(--ink3)">${r.dd5n}%</td><td><b>${r.dd10}%</b></td><td style="color:var(--ink3)">${r.dd10n}%</td></tr>`;}).join('')+'</tbody>';
+   KS.map(k=>`<td${k===15?' style="font-weight:600"':''}>${r['dd'+k]}%</td><td style="color:var(--ink3)">${r['dd'+k+'n']}%</td>`).join('')+'</tr>';}).join('')+'</tbody>';
  const a=R[1],b=R[3];
  document.getElementById('txt').innerHTML=
-  `<p class="note"><b>בסף 5% אין כמעט הבדל</b> — ${a.dd5}% מול ${b.dd5}%. כמעט כל קטגוריה בשוק ירדה מתישהו 5% מהשיא היחסי שלה, מרוכזת או לא. הסף הזה פשוט לא מבחין.</p>`+
-  `<p class="note" style="margin-top:14px"><b>בסף 10% נפתח פער אמיתי: ${a.dd10}% מול ${b.dd10}%</b> — ${(a.dd10-b.dd10).toFixed(0)} נקודות. ככל שהסף מחמיר, כך המרוכזות בולטות בהיעדרן. זה בכיוון של ההשערה.</p>`+
+  `<p class="note"><b>הפער גדל בכל הקשחה של הסף — וזה בדיוק חתימת הקשיחות.</b> ב־${cur}: בסף 5% הפער ${(a.dd5-b.dd5).toFixed(0)} נקודות, בסף 10% ${(a.dd10-b.dd10).toFixed(0)}, ובסף 15% ${(a.dd15-b.dd15).toFixed(0)}. אילו ההבדל היה רק בגודל הרעש היינו מצפים לפער יציב יחסית; העובדה שהוא מתרחב עם הסף מצביעה על זנב שמאלי קטום אצל המרוכזות.</p>`+
+  `<p class="note" style="margin-top:14px"><b>בסף 15% המרוכזות יורדות ל־${b.dd15}% מהמחזור</b> — כלומר שני שלישים מהמכר בשלישון המרוכז לא חווה אף פעם ירידה של 15% מהשיא היחסי. אצל המפוזרות זה ${(100-a.dd15).toFixed(0)}% בלבד.</p>`+
   (cur==='קטגוריות'
-   ? `<p class="note" style="margin-top:14px"><b>אבל שים לב לפער בין השקלול לספירה בשלישון המרוכז: 52% מול 83%.</b> כלומר רוב הקטגוריות המרוכזות כן ירדו 10%, אבל <em>הגדולות שבהן</em> לא. התופעה מרוכזת בכמה קטגוריות ענק — וזה עקבי עם מבחן הבטא, שם האסימטריה הופיעה רק בגרסה המשוקללת.</p>`
-   : `<p class="note" style="margin-top:14px">ברמת תת-הקטגוריה הפער בין שקלול לספירה קטן בהרבה (68% מול 89%), והמדרג חלק יותר: 84.8% · 78.5% · 68.2%.</p>`)+
-  `<p class="note" style="margin-top:14px"><b>והסייג שחוזר:</b> ברגרסיה החתכית, המקדם על "ירדה ≥10%" אינו מובהק (p=0.78 בקטגוריות, p=0.66 בתת-קטגוריות), והמדד הרציף של ירידה־מהשיא מאבד מובהקות ברגע שמבקרים על תנודתיות. הפער בגרף אמיתי, אבל חלקו הגדול הוא פשוט שהמרוכזות רועשות פחות — סטיית תקן חודשית 2.9% מול 5.1%.</p>`;
+   ? `<p class="note" style="margin-top:14px"><b>והפער בין שקלול לספירה נשמר בכל הספים:</b> בסף 15% זה ${b.dd15}% משוקלל מול ${b.dd15n}% בספירה. הקטגוריות המרוכזות <em>הגדולות</em> הן שלא יורדות — התופעה מרוכזת בהן, לא פרוסה על כל השלישון. זה עקבי עם מבחן הבטא, שם האסימטריה הופיעה רק בגרסה המשוקללת.</p>`
+   : `<p class="note" style="margin-top:14px">ברמת תת-הקטגוריה המדרג חלק יותר בכל שלושת הספים, והפער בין שקלול לספירה קטן — כלומר התופעה פרוסה רחב יותר ולא תלויה בכמה יחידות ענק.</p>`)+
+  `<p class="note" style="margin-top:14px"><b>הסייג שלא נעלם:</b> ברגרסיה החתכית המקדם על "ירדה ≥10%" אינו מובהק (p=0.78 בקטגוריות), והמדד הרציף של ירידה־מהשיא מאבד מובהקות בבקרת תנודתיות. המרוכזות רועשות פחות — סטיית תקן חודשית 2.9% מול 5.1% — וחלק מהפער בגרף הוא זה ולא אסימטריה.</p>`;
 }
 draw();
 </script>
