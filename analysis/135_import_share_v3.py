@@ -12,14 +12,12 @@ imp_share_v3(unit) = sum(rev x import_probability) / sum(rev over resolved rows)
 """
 import duckdb, pandas as pd, numpy as np, sys
 sys.path.insert(0,'/home/user/consternation/analysis')
-from brand_roles import IMP_BRANDS, DOM_BRANDS, BUCKET_BRANDS
+from brand_roles import brand_role
 c=duckdb.connect(); c.execute("SET enable_progress_bar=false")
 d=c.execute('''SELECT "מחלקה" dep,"קטגוריה" ctg,"תת קטגוריה" sc,"ספק" sup,"יצרן" mfr,
    "מותג" brand, "מכר כספי (מיליוני ₪)" rev FROM '/tmp/brands_202607.parquet'
    WHERE "מכר כספי (מיליוני ₪)">0''').df()
-d['brole']=np.where(d.brand.isin(IMP_BRANDS),'IMP',
-           np.where(d.brand.isin(DOM_BRANDS),'DOM',
-           np.where(d.brand.isin(BUCKET_BRANDS),'BUCKET','?')))
+d['brole']=[brand_role(b,p) for b,p in zip(d.brand,d.dep)]
 tot=d.rev.sum()
 cov=d[d.brole!='?'].rev.sum()/tot
 print(f'{len(d):,} שורות, {tot:,.0f} מ׳ ₪ | סווג ישירות לפי מותג: {100*cov:.1f}% מהמכר '

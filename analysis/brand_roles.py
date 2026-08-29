@@ -15,6 +15,11 @@ its classified brands (see 135_import_share_v3.py).
 """
 BUCKET_BRANDS={'לא ידוע','מותג פרטי','ללא מיתוג'}
 
+# second pass: the largest brands still unmatched after the first pass
+_ADD_DOM=['מאפית ברמן', 'שוופס', 'חמאת תנובה', 'טירת צבי', 'טמפו', 'פיטנס', 'עסיס', 'ספלנדיד', 'שלושת האופים', 'קליית גת', 'זריפה', 'אלוויר', 'זיתא', 'פרינוק', 'סיימן', 'מעולה', 'חמצוצים', 'פיצוחי הטיב', 'פרו', 'אל נחלה', 'אושן גורמה', 'מחנה יהודה', 'אחדות למהדרין', 'עלמה-וופל', 'מולינו', 'רפאלס', 'אקווה פרש', 'ש.י.ל.ה', 'עופר שיווק', 'All In', "קראנצ'וס", 'תמר', 'זהבי הכרם']
+_ADD_IMP=['בן&גריס', 'Fairy', 'אוראל בי', 'מנטוס', 'סאפה', 'לינדט', 'בריז', 'ארגניה', 'פרמה', 'או-בה', 'פילסברי', 'מלטיזרס', 'פרזידנט', 'הרבל אסנס', 'מר בראוני', "ג'השאן", 'קוסקוס מזון', 'פילד גוד', 'Freoli', 'צירנה', 'בייביסיטר']
+
+
 IMP_BRANDS={
 # --- שוקולד, ממתקים, מסטיקים ---
 'מילקה','אוראו','קינדר','נוטלה','טיק טק','פררו','ריטר','שמרלינגס','Tonys','הרשי',
@@ -128,3 +133,22 @@ DOM_BRANDS={
 }
 # note: 'דילר' the house brand rides on Diller's own imports; reclassified below
 IMP_BRANDS.add('דילר'); DOM_BRANDS.discard('דילר')
+DOM_BRANDS.update(_ADD_DOM); IMP_BRANDS.update(_ADD_IMP)
+
+# ---------------------------------------------------------------------------
+# Brand x department overrides.
+# A brand is not always the same origin everywhere: Neto sells imported frozen
+# beef under עטרה and locally-slaughtered fresh chicken under the same umbrella.
+# Israel imports frozen poultry but not FRESH poultry, so anything in a fresh
+# poultry department is local regardless of the brand's usual role.
+# (Fresh beef and fresh fish are genuinely imported chilled, so they are not
+# forced local here.)
+FRESH_POULTRY_DEPS={'עוף/הודו טרי ארוז','קצביה עוף טרי','קצביה הודו/בעלי כנף טרי'}
+
+def brand_role(brand, dep):
+    """IMP / DOM / BUCKET / '?' for one row."""
+    if brand in BUCKET_BRANDS: return 'BUCKET'
+    if dep in FRESH_POULTRY_DEPS: return 'DOM'
+    if brand in IMP_BRANDS: return 'IMP'
+    if brand in DOM_BRANDS: return 'DOM'
+    return '?'

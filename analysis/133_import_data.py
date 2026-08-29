@@ -27,17 +27,18 @@ for level in ['cat','sub']:
   fx=pd.read_csv('/home/user/consternation/analysis/'+f)[[kcol,'fx_v2']]
   v3=pd.read_csv(f'/home/user/consternation/analysis/import_share_v3_{level}.csv')
   v3=v3[v3.resolved_pct>=30][[kcol,'imp_share_v3']].rename(columns={'imp_share_v3':'imp_share'})
-  fx=fx.merge(v3,on=kcol,how='inner')
+  f3=pd.read_csv(f'/home/user/consternation/analysis/fx_exposure_v3_{level}.csv')[[kcol,'fx_v3']]
+  fx=fx.merge(v3,on=kcol,how='inner').merge(f3,on=kcol,how='inner')
   d=load(level).merge(fx,left_on='u',right_on=kcol,how='inner')
   print(f'{level}: {d.u.nunique()} יחידות עם מדד חשיפה')
   for drop in [True,False]:
       x=prep(d,drop); sk=f'{level}|'+('no_meat' if drop else 'all')
       u=x.groupby('u').agg(cr3=('cr3','first'),hhi=('hhi','first'),
-                           fx_v2=('fx_v2','first'),imp_share=('imp_share','first'),
-                           rev=('rev','sum'))
+                           fx_v2=('fx_v2','first'),fx_v3=('fx_v3','first'),
+                           imp_share=('imp_share','first'),rev=('rev','sum'))
       RES['corr'][sk]={f'{a}|{b}':round(float(u[a].corr(u[b])),3)
-                       for a in ['cr3','hhi'] for b in ['fx_v2','imp_share']}
-      for measure in ['fx_v2','imp_share']:
+                       for a in ['cr3','hhi'] for b in ['fx_v2','fx_v3','imp_share']}
+      for measure in ['fx_v2','fx_v3','imp_share']:
           RES['terc'][f'{sk}|{measure}']=terciles(x,measure)
           for weighted in [True,False]:
               k=f'{sk}|{measure}|{"w" if weighted else "u"}'
@@ -55,7 +56,7 @@ for level in ['cat','sub']:
           o=np.argsort(v); cw=np.cumsum(w[o])/w.sum()
           g=np.empty(len(v),dtype=int); g[o]=np.digitize(cw,[1/3,2/3]); return g
       for cm in ['cr3','hhi']:
-          for fm in ['fx_v2','imp_share']:
+          for fm in ['fx_v2','fx_v3','imp_share']:
               gc,gf=terc(meta[cm].values),terc(meta[fm].values)
               cells=[]
               for i in range(3):
