@@ -99,6 +99,23 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <p class="foot" id="cfoot"></p>
  <div class="sup" id="sup"></div>
 </div>
+
+<div class="card">
+ <h2>כמות ומחיר <span id="qttl" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
+ <p class="cs" style="max-width:82ch">שני מדדים על בסיס <b>ינואר 2022 = 100</b>. המחיר הוא מכר כספי חלקי כמות סטנדרטית. כדי שמחלקות עם בסיסי מדידה מעורבים יישארו בעלות משמעות, המדד נבנה כיחס של כל קטגוריה מול עצמה ואז ממוצע משוקלל־מכר 2022 של הקטגוריות שבתוך היחידה. הקו הוא ממוצע נע של שלושה חודשים. <b>הכמות עונתית מאוד</b> — הקפיצות הן פסח, ראש השנה וסוכות. ינואר עצמו הוא חודש שפל: ממוצע 2022 גבוה ממנו בכ־12%, ולכן <b>גובה קו הכמות מוטה כלפי מעלה</b> בגלל בחירת הבסיס. המספר הנקי הוא ההשוואה בשורת הסיכום — 12 חודשים אחרונים מול 12 הראשונים.</p>
+ <div class="leg"><span><i style="background:var(--acc)"></i>מחיר</span><span><i style="background:var(--acc2)"></i>כמות</span></div>
+ <div class="scroll"><div class="chwrap"><svg id="qch" viewBox="0 0 940 300" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="qtip"></div></div></div>
+ <p class="foot" id="qfoot"></p>
+</div>
+
+<div class="card">
+ <h2>נתח היבוא לאורך זמן <span id="ittl2" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
+ <p class="cs" style="max-width:82ch">אחוז המחזור שמקורו במוצרים המיוצרים בחו״ל. <b>הסיווג לכל ספק קבוע בערך של יולי 2026</b> — קובץ המותגים הוא חודש בודד — ולכן מה שזז כאן הוא <em>הרכב הספקים</em>, כלומר עלייה או ירידה בנתח של יבואנים, ולא שינוי במקור הייצור של ספק נתון.</p>
+ <div class="scroll"><div class="chwrap"><svg id="ich2" viewBox="0 0 940 280" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="itip2"></div></div></div>
+ <p class="foot" id="ifoot2"></p>
+</div>
 </div><!-- /p0 -->
 
 <div class="page" id="p1" hidden>
@@ -208,20 +225,21 @@ document.getElementById('tcs').textContent=
  `דירוג לפי מכר כספי ב־2026. "פעילה" = נמכר בקטגוריה באותו חלון. עמודות ה־30%/50% סופרות קטגוריות שבהן הקבוצה מחזיקה נתח כזה, והמספר האפור לצידן הוא הערך המקביל ב־2022.`;
 const mx=Math.max(...T.rows.map(r=>r.share)), MKT=100*(T.tot26/T.tot22-1);
 document.getElementById('tb').innerHTML=
- '<thead><tr><th></th><th class="nm">קבוצה</th><th>נתח שוק<br>2026</th><th>Δ מול<br>2022</th><th>צמיחת<br>מכר</th>'+
- '<th>מכר<br>מ׳ ₪</th><th>קטגוריות<br>פעילות</th><th>מחלקות</th><th>≥30%<br>בקטגוריה</th><th>≥50%<br>בקטגוריה</th></tr></thead><tbody>'+
+ '<thead><tr><th></th><th class="nm">קבוצה</th><th>נתח שוק<br>2026</th><th>Δ מול<br>2022</th>'+
+ '<th>מהמכר שלה<br>מיובא</th><th>מכר<br>מ׳ ₪</th><th>קטגוריות<br>פעילות</th><th>מחלקות</th><th>≥30%<br>בקטגוריה</th><th>≥50%<br>בקטגוריה</th></tr></thead><tbody>'+
  T.rows.map((r,i)=>`<tr><td style="color:var(--ink3)">${i+1}</td>`+
   `<td class="nm">${r.g}${r.nent>1?`<span style="color:var(--ink3);font-weight:400;font-size:11.5px"> · ${r.nent} ישויות</span>`:''}</td>`+
   `<td><span class="bar" style="width:${(r.share/mx*46).toFixed(1)}px"></span>${r.share.toFixed(2)}%</td>`+
   `<td class="${cls(r.dshare)}">${sgn(r.dshare)}</td>`+
-  `<td class="${r.growth>MKT?'up':r.growth<MKT?'dn':''}">${sgn(r.growth,1)}%</td>`+
+  `<td>${r.imp===null?'—':`<span class="bar" style="width:${(r.imp/100*34).toFixed(1)}px;background:var(--acc2)"></span>${r.imp.toFixed(1)}%`}</td>`+
   `<td>${fmt(r.rev)}</td>`+
   `<td>${r.ncat}<span style="color:var(--ink3)"> · ${r.ncat22}</span></td><td>${r.ndep}</td>`+
   `<td>${r.n30}<span style="color:var(--ink3)"> · ${r.n3022}</span></td>`+
   `<td>${r.n50}<span style="color:var(--ink3)"> · ${r.n5022}</span></td></tr>`).join('')+'</tbody>';
 document.getElementById('tfoot').innerHTML=
- `עמודת "צמיחת מכר" צבועה מול צמיחת השוק כולה (${sgn(100*(T.tot26/T.tot22-1),1)}%) — ירוק = צמחה מהר מהשוק. `+
- `הטבלה אינה כוללת מאגדים (מותג פרטי, ספק כללי וכד׳), שמחזיקים יחד ${T.bucket_share.toFixed(1)}% מהשוק.`;
+ `<b style="color:var(--ink)">"מהמכר שלה מיובא"</b> = אחוז ממחזור הקבוצה שמקורו במוצרים המיוצרים בחו״ל, לפי סיווג ידני של 560 מותגים בקובץ יולי 2026. `+
+ `הסיווג מכריע ${T.rows.map(r=>r.impres).filter(v=>v!==null).reduce((a,b)=>Math.min(a,b),100).toFixed(0)}–100% ממחזור כל קבוצה; מותג פרטי אינו ניתן להכרעה ואינו נספר. `+
+ `הטבלה אינה כוללת מאגדים, שמחזיקים יחד ${T.bucket_share.toFixed(1)}% מהשוק.`;
 
 /* ---------- HHI concentration bands (US DOJ/FTC Horizontal Merger Guidelines) ---------- */
 const BANDS=[{lo:0,hi:1500,lab:'שוק לא מרוכז',bg:'--b1',tx:'--b1t'},
@@ -330,6 +348,7 @@ function draw(){
  });
  document.getElementById('ch').innerHTML=g+'<g id="ov"></g>';
  drawSup();
+ drawIdx();
  const c0=s.cr3[START],c1=s.cr3.at(-1),h0=Math.round(s.hhi[START]),h1=Math.round(s.hhi.at(-1));
  const bd=band(h1), bd0=band(h0);
  document.getElementById('cfoot').innerHTML=
@@ -349,12 +368,12 @@ function drawSup(){
   `<p class="cs">חלון ${T.win} חודשים ראשונים של 2026, מול אותם חודשים ב־2022. `+
   `סך המכר ביחידה: ${fmt(Math.round(t.tot))} מ׳ ₪. כאן מוצגים גם מאגדים (מותג פרטי / ספק כללי) אם הם בעשירייה.</p>`+
   '<div class="scroll"><table><thead><tr><th></th><th class="nm">ספק</th><th>נתח<br>2026</th><th>Δ מול<br>2022</th>'+
-  `<th>מכר<br>מ׳ ₪</th><th>כמות<br>${unit(t.basis)}</th><th>צמיחת<br>מכר</th></tr></thead><tbody>`+
+  `<th>מכר<br>מ׳ ₪</th><th>כמות<br>${unit(t.basis)}</th><th>מהמכר שלו<br>מיובא</th></tr></thead><tbody>`+
   t.rows.map((r,i)=>`<tr><td style="color:var(--ink3)">${i+1}</td><td class="nm">${r.g}</td>`+
    `<td><span class="bar" style="width:${(r.sh/mx*40).toFixed(1)}px"></span>${r.sh.toFixed(1)}%</td>`+
    `<td class="${r.dsh===null?'':cls(r.dsh)}">${r.dsh===null?'<span style="color:var(--ink3)">חדש</span>':sgn(r.dsh,1)}</td>`+
    `<td>${fmt(Math.round(r.rev))}</td><td>${fmt(Math.round(r.qty))}</td>`+
-   `<td class="${r.growth===null?'':(r.growth>MKT?'up':'dn')}">${r.growth===null?'—':sgn(r.growth,1)+'%'}</td></tr>`).join('')+
+   `<td>${r.imp===null?'<span style="color:var(--ink3)">—</span>':r.imp.toFixed(1)+'%'}</td></tr>`).join('')+
   '</tbody></table></div>';
 }
 /* ---------- hover ---------- */
@@ -384,6 +403,104 @@ function hover(ev){
 }
 chEl.addEventListener('mousemove',hover);
 chEl.addEventListener('mouseleave',()=>{tip.classList.remove('on');const o=document.getElementById('ov');if(o)o.innerHTML='';});
+/* ---------- price / quantity index and import share over time ---------- */
+const QG={},IG2={};
+function idxKey(){return lv==='שוק'?'__market__':`${lv}|${sel}`}
+function drawIdx(){
+ const S=D.idx[idxKey()], name= lv==='שוק'?'כלל השוק':sel;
+ document.getElementById('qttl').textContent='· '+name;
+ document.getElementById('ittl2').textContent='· '+name;
+ if(!S){['qch','ich2'].forEach(i=>document.getElementById(i).innerHTML='');
+  document.getElementById('qfoot').textContent='אין נתונים ליחידה זו.';
+  document.getElementById('ifoot2').textContent='';return;}
+ const P={t:16,r:22,b:32,l:56}, W=940, iw=W-P.l-P.r;
+ const xs=i=>P.l+iw*i/(M.length-1);
+ const yearTicks=(y0,ih)=>M.map((m,i)=>m.slice(5)==='01'
+   ?`<text x="${xs(i)}" y="${y0+ih+17}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`:'').join('');
+ // --- panel 1: price + quantity index
+ {const ih=300-P.t-P.b, y0=P.t;
+  const q=ma(S.q), p=ma(S.p);
+  const vals=q.slice(START).concat(p.slice(START));
+  let lo=Math.min(...vals,100), hi=Math.max(...vals,100);
+  const pd=(hi-lo)*0.12||2; lo-=pd; hi+=pd;
+  const y=v=>y0+ih*(1-(v-lo)/(hi-lo));
+  Object.assign(QG,{y,xs,W,P,iw,ih,q,p,raw:S,m:M});
+  let g='';
+  nice(lo,hi,5).forEach(v=>{const b=Math.abs(v-100)<1e-9;
+   g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="${b?'var(--ink3)':'var(--grid)'}" stroke-width="${b?1.3:1}"/>`;
+   g+=`<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${v.toFixed(0)}</text>`;});
+  const path=a=>a.map((v,i)=>v===null?'':`${i===START?'M':'L'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
+  g+=`<path d="${path(q)}" fill="none" stroke="var(--acc2)" stroke-width="2.1"/>`;
+  g+=`<path d="${path(p)}" fill="none" stroke="var(--acc)" stroke-width="2.1"/>`;
+  g+=yearTicks(y0,ih);
+  document.getElementById('qch').innerHTML=g+'<g id="qov"></g>';
+  const q1=q.at(-1),p1=p.at(-1);
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const q12=mean(S.q.slice(-12)), p12=mean(S.p.slice(-12));
+  const q12b=mean(S.q.slice(0,12)), p12b=mean(S.p.slice(0,12));
+  document.getElementById('qfoot').innerHTML=
+   `<b style="color:var(--ink)">${name}</b> · ${M.at(-1).replace('-','/')}: מחיר ${p1.toFixed(1)} · כמות ${q1.toFixed(1)} · מכר נומינלי ${(p1*q1/100).toFixed(1)}<br>`+
+   `<span style="color:var(--ink2)">12 החודשים האחרונים מול 12 הראשונים: מחיר ${p12b.toFixed(1)} ← ${p12.toFixed(1)} (${sgn(100*(p12/p12b-1),1)}%) · `+
+   `כמות ${q12b.toFixed(1)} ← ${q12.toFixed(1)} (${sgn(100*(q12/q12b-1),1)}%)</span>`;
+ }
+ // --- panel 2: import share
+ {const ih=280-P.t-P.b, y0=P.t;
+  const v0=S.imp.map(v=>v===null?null:v), im=ma(v0.map(v=>v===null?NaN:v));
+  const ok=im.map(v=>Number.isFinite(v)?v:null);
+  const vals=ok.filter(v=>v!==null);
+  if(!vals.length){document.getElementById('ich2').innerHTML='';
+   document.getElementById('ifoot2').textContent='אין סיווג יבוא ליחידה זו.';return;}
+  let lo=Math.min(...vals), hi=Math.max(...vals);
+  const pd=(hi-lo)*0.15||2; lo=Math.max(0,lo-pd); hi=Math.min(100,hi+pd);
+  const y=v=>y0+ih*(1-(v-lo)/(hi-lo));
+  Object.assign(IG2,{y,xs,W,P,iw,ih,im:ok,raw:S,m:M});
+  let g='';
+  nice(lo,hi,4).forEach(v=>{
+   g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`;
+   g+=`<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${v.toFixed(0)}%</text>`;});
+  g+=`<path d="${ok.map((v,i)=>v===null?'':`${i===START?'M':'L'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(--acc2)" stroke-width="2.2"/>`;
+  g+=`<circle cx="${xs(M.length-1)}" cy="${y(ok.at(-1))}" r="3.6" fill="var(--acc2)"/>`;
+  g+=yearTicks(y0,ih);
+  document.getElementById('ich2').innerHTML=g+'<g id="iov2"></g>';
+  const a=ok[START], b=ok.at(-1);
+  document.getElementById('ifoot2').innerHTML=
+   `<b style="color:var(--ink)">${name}</b> · ${a.toFixed(1)}% ← ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות) · `+
+   `הסיווג מכריע ${S.res.at(-1).toFixed(0)}% מהמחזור; היתר (בעיקר מותג פרטי) מחוץ לחישוב.`;
+ }
+}
+function idxHover(ev,G,svgId,ovId,tipId,kind){
+ if(!G.xs) return;
+ const el=document.getElementById(svgId), tp=document.getElementById(tipId);
+ const rc=el.getBoundingClientRect(), xv=(ev.clientX-rc.left)*(G.W/rc.width);
+ let i=Math.round((xv-G.P.l)/G.iw*(G.m.length-1)); i=Math.max(START,Math.min(G.m.length-1,i));
+ const x=G.xs(i);
+ let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
+ let body=`<b>${mlab(G.m[i])}</b>`;
+ if(kind==='q'){
+  ov+=`<circle cx="${x}" cy="${G.y(G.p[i])}" r="4.2" fill="var(--acc)" stroke="var(--surf)" stroke-width="1.6"/>`;
+  ov+=`<circle cx="${x}" cy="${G.y(G.q[i])}" r="4.2" fill="var(--acc2)" stroke="var(--surf)" stroke-width="1.6"/>`;
+  body+=`<div class="r"><span>מחיר</span><span>${G.p[i].toFixed(1)}</span></div>`+
+        `<div class="r"><span>כמות</span><span>${G.q[i].toFixed(1)}</span></div>`+
+        `<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>גולמי החודש</span><span>${G.raw.p[i].toFixed(1)} · ${G.raw.q[i].toFixed(1)}</span></div>`;
+ } else {
+  const v=G.im[i]; if(v===null) return;
+  ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4.2" fill="var(--acc2)" stroke="var(--surf)" stroke-width="1.6"/>`;
+  body+=`<div class="r"><span>נתח יבוא</span><span>${v.toFixed(1)}%</span></div>`+
+        `<div class="r"><span>גולמי החודש</span><span>${G.raw.imp[i]===null?'—':G.raw.imp[i].toFixed(1)+'%'}</span></div>`+
+        `<div class="r"><span>מוכרע</span><span>${G.raw.res[i].toFixed(0)}%</span></div>`;
+ }
+ document.getElementById(ovId).innerHTML=ov;
+ tp.innerHTML=body; tp.classList.add('on');
+ const px=x/G.W*rc.width, tw=tp.offsetWidth;
+ tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+18:px-tw-18))+'px';
+ tp.style.top='4px';
+}
+[['qch','qov','qtip',QG,'q'],['ich2','iov2','itip2',IG2,'i']].forEach(([id,ov,tip,G,kind])=>{
+ const el=document.getElementById(id);
+ el.addEventListener('mousemove',e=>idxHover(e,G,id,ov,tip,kind));
+ el.addEventListener('mouseleave',()=>{const t=document.getElementById(tip);t.classList.remove('on');
+  const o=document.getElementById(ov); if(o)o.innerHTML='';});});
+
 fill();draw();
 
 /* ================= page nav ================= */
