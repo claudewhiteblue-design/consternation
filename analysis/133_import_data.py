@@ -19,10 +19,15 @@ OUT='/home/user/consternation/analysis/import_data.json'
 
 FXF={'cat':('category_fx_exposure_v2.csv','ctg'),
      'sub':('subcategory_fx_exposure_v2.csv','sc')}
+# imp_share: brand-classified (v3, from the July-2026 brand file); replaces the old
+# manufacturer-name guess. Units with <30% of revenue resolved are dropped from it.
 RES={'runs':{},'terc':{},'ds':{},'corr':{}}
 for level in ['cat','sub']:
   f,kcol=FXF[level]
-  fx=pd.read_csv('/home/user/consternation/analysis/'+f)[[kcol,'fx_v2','imp_share']]
+  fx=pd.read_csv('/home/user/consternation/analysis/'+f)[[kcol,'fx_v2']]
+  v3=pd.read_csv(f'/home/user/consternation/analysis/import_share_v3_{level}.csv')
+  v3=v3[v3.resolved_pct>=30][[kcol,'imp_share_v3']].rename(columns={'imp_share_v3':'imp_share'})
+  fx=fx.merge(v3,on=kcol,how='inner')
   d=load(level).merge(fx,left_on='u',right_on=kcol,how='inner')
   print(f'{level}: {d.u.nunique()} יחידות עם מדד חשיפה')
   for drop in [True,False]:
