@@ -29,30 +29,41 @@ LAST=max(m for m in months if m.startswith('2026'))
 # ---------- import propensity of each supplier group, from the brand file ----------
 # The brand file is a single month (07/2026), so a group's imported share is fixed at
 # its 2026 value; what moves over time is which groups sell, not their origin mix.
-bf=c.execute(f'''SELECT "מחלקה" dep,"קטגוריה" cat,"ספק" sup,"מותג" brand,{R} rev
-   FROM '/home/user/consternation/brands_202607.parquet' WHERE {R}>0''').df()
-bf['g']=bf.sup.map(grp)
-bf['role']=[brand_role(b,p) for b,p in zip(bf.brand,bf.dep)]
+def _brandfile(path):
+    x=c.execute(f'''SELECT "מחלקה" dep,"קטגוריה" cat,"ספק" sup,"מותג" brand,{R} rev
+       FROM '{path}' WHERE {R}>0''').df()
+    x['g']=x.sup.map(grp)
+    x['role']=[brand_role(b,p) for b,p in zip(x.brand,x.dep)]
+    return x
+bf=_brandfile('/home/user/consternation/brands_202607.parquet')       # tables: current anchor
+bf22=_brandfile('/home/user/consternation/brands_202201.parquet')     # time chart: 2022 anchor
 kb=bf[bf.role.isin(['IMP','DOM'])].copy(); kb['imp']=(kb.role=='IMP').astype(float)
+kb22=bf22[bf22.role.isin(['IMP','DOM'])].copy(); kb22['imp']=(kb22.role=='IMP').astype(float)
 def _w(x): return float(np.average(x.imp,weights=x.rev))
 p_g_cat=kb.groupby(['g','cat']).apply(_w,include_groups=False)
 p_g_dep=kb.groupby(['g','dep']).apply(_w,include_groups=False)
 p_g    =kb.groupby('g').apply(_w,include_groups=False)
 res_g  =kb.groupby('g').rev.sum()/bf.groupby('g').rev.sum()
+p22_g_cat=kb22.groupby(['g','cat']).apply(_w,include_groups=False)
+p22_g_dep=kb22.groupby(['g','dep']).apply(_w,include_groups=False)
+p22_g    =kb22.groupby('g').apply(_w,include_groups=False)
 print(f'סיווג מותגים: {100*kb.rev.sum()/bf.rev.sum():.1f}% מהמכר מוכרע | {len(p_g)} קבוצות ספקים')
 
-def pimp(rows, keycol):
-    """import propensity per row: group x category, then group x department, then group"""
-    out=pd.Series(np.nan,index=rows.index)
-    if keycol=='cat':
-        out=pd.Series(p_g_cat.reindex(pd.MultiIndex.from_arrays([rows.g,rows.cat])).values,index=rows.index)
+def pimp(rows,pc,pd_,pg):
+    out=pd.Series(pc.reindex(pd.MultiIndex.from_arrays([rows.g,rows.cat])).values,index=rows.index)
     m=out.isna()
     if m.any():
-        out[m]=pd.Series(p_g_dep.reindex(pd.MultiIndex.from_arrays([rows.g,rows.dep])).values,index=rows.index)[m]
+        out[m]=pd.Series(pd_.reindex(pd.MultiIndex.from_arrays([rows.g,rows.dep])).values,index=rows.index)[m]
     m=out.isna()
-    if m.any(): out[m]=rows.g.map(p_g)[m]
+    if m.any(): out[m]=rows.g.map(pg)[m]
     return out
-raw['p_imp']=pimp(raw,'cat')
+# time chart: linear interpolation of each supplier group's mix between the two
+# anchor months (2022-01, 2026-07); a group seen in only one file stays flat.
+pA=pimp(raw,p22_g_cat,p22_g_dep,p22_g); pB=pimp(raw,p_g_cat,p_g_dep,p_g)
+pA=pA.fillna(pB); pB=pB.fillna(pA)
+mnum={m:i for i,m in enumerate(months)}
+lam=raw.month.map(mnum)/ (len(months)-1)
+raw['p_imp']=(1-lam)*pA+lam*pB
 WIN=[m[5:] for m in months if m.startswith('2026')]          # like-for-like window
 print(f'{len(months)} חודשים, 2026 עד {LAST} ({len(WIN)} חודשים)')
 

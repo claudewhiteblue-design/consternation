@@ -14,8 +14,11 @@ import duckdb, pandas as pd, numpy as np, sys
 sys.path.insert(0,'/home/user/consternation/analysis')
 from brand_roles import brand_role
 c=duckdb.connect(); c.execute("SET enable_progress_bar=false")
-d=c.execute('''SELECT "מחלקה" dep,"קטגוריה" ctg,"תת קטגוריה" sc,"ספק" sup,"יצרן" mfr,
-   "מותג" brand, "מכר כספי (מיליוני ₪)" rev FROM '/tmp/brands_202607.parquet'
+import sys as _sys
+VINTAGE=_sys.argv[1] if len(_sys.argv)>1 else '2026'
+SRC={'2026':'/tmp/brands_202607.parquet','2022':'/tmp/brands_202201.parquet'}[VINTAGE]
+d=c.execute(f'''SELECT "מחלקה" dep,"קטגוריה" ctg,"תת קטגוריה" sc,"ספק" sup,"יצרן" mfr,
+   "מותג" brand, "מכר כספי (מיליוני ₪)" rev FROM '{SRC}'
    WHERE "מכר כספי (מיליוני ₪)">0''').df()
 d['brole']=[brand_role(b,p) for b,p in zip(d.brand,d.dep)]
 tot=d.rev.sum()
@@ -43,7 +46,8 @@ def agg(keys,name):
         'rev_resolved':x.rev.sum()}),include_groups=False).reset_index()
     g2=d.groupby(keys).rev.sum().rename('rev_total').reset_index()
     g=g.merge(g2,on=keys); g['resolved_pct']=100*g.rev_resolved/g.rev_total
-    g.to_csv(f'/home/user/consternation/analysis/import_share_v3_{name}.csv',index=False)
+    suf='' if VINTAGE=='2026' else '_2022'
+    g.to_csv(f'/home/user/consternation/analysis/import_share_v3_{name}{suf}.csv',index=False)
     return g
 gc=agg(['ctg'],'cat'); gs=agg(['sc'],'sub')
 print(f'{len(gc)} קטגוריות, {len(gs)} תת-קטגוריות')

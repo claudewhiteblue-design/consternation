@@ -24,8 +24,14 @@ c=duckdb.connect(); c.execute("SET enable_progress_bar=false")
 R='"מכר כספי (מיליוני ₪)"'
 
 # ---------- 1. p_imp from the brand file ----------
-b=c.execute(f'''SELECT "מחלקה" dep,"קטגוריה" ctg,"תת קטגוריה" sc,"יצרן" mfr,"מותג" brand,{R} rev
+# origin mix anchored at the BASE YEAR (Jan-2022 brand file), with the July-2026
+# file as fallback for manufacturer-category cells absent in 2022
+b22=c.execute(f'''SELECT "מחלקה" dep,"קטגוריה" ctg,"תת קטגוריה" sc,"יצרן" mfr,"מותג" brand,{R} rev
+   FROM '/tmp/brands_202201.parquet' WHERE {R}>0''').df()
+b26=c.execute(f'''SELECT "מחלקה" dep,"קטגוריה" ctg,"תת קטגוריה" sc,"יצרן" mfr,"מותג" brand,{R} rev
    FROM '/home/user/consternation/brands_202607.parquet' WHERE {R}>0''').df()
+b26['rev']=b26.rev*0.25          # fallback weight: 2022 rows dominate where both exist
+b=pd.concat([b22,b26],ignore_index=True)
 _r=[brand_role(x,y) for x,y in zip(b.brand,b.dep)]
 b['p']=[1.0 if v=='IMP' else 0.0 if v=='DOM' else np.nan for v in _r]
 kn=b[b.p.notna()]
