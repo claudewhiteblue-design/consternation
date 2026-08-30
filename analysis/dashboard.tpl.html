@@ -147,7 +147,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
   <div class="seg" id="t_k"></div><div class="seg" id="t_fq"></div>
  </div>
  <div class="leg" id="tleg"></div>
- <div class="scroll"><div class="chwrap"><svg id="tch" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+ <div class="scroll"><div class="chwrap"><svg id="tch" viewBox="0 0 940 440" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
   <div class="tip" id="ttip"></div></div></div>
  <p class="foot" id="tfoot2"></p>
 </div>
@@ -208,7 +208,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <div class="ctl"><div class="seg" id="it_lv"></div><div class="seg" id="it_sm"></div><div class="seg" id="it_ms"></div>
   <div class="seg" id="it_k"></div><div class="seg" id="it_fq"></div></div>
  <div class="leg" id="itleg"></div>
- <div class="scroll"><div class="chwrap"><svg id="itch" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+ <div class="scroll"><div class="chwrap"><svg id="itch" viewBox="0 0 940 440" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
   <div class="tip" id="ittip"></div></div></div>
  <p class="foot" id="itfoot"></p>
 </div>
@@ -641,27 +641,17 @@ function aNote(){
 function tDraw(){
  ['t_lv','t_sm','t_ms','t_k','t_fq'].forEach(segSync);
  const t=A.terc[`${st.tlv}|${st.tfq}|${st.tsm}|${st.tms}|${st.tk}`]; if(!t) return;
- const m=t.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
- const xs=i=>P.l+iw*i/(m.length-1);
- const all=t.groups.flatMap(g=>g.path);
- let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
- const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
- TG.y=y;TG.xs=xs;TG.W=W;TG.P=P;TG.iw=iw;TG.ih=ih;TG.t=t;TG.m=m;
+ pathChart('tch','tov',t,TG,'הפער בין המרוכזות למפוזרות, בנקודות אחוז');
  const COL=['--t1','--t2','--t3'];
  document.getElementById('tk_ttl').textContent=t.k===2?'מחציות':'שלישוני';
  document.getElementById('tk_txt').textContent=t.k===2?'שתי מחציות':'שלושה שלישונים';
- let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(0)+'%',nice(lo,hi,5));
- t.groups.forEach((gr,i)=>{
-  const ci=t.k===2?i*2:i;
-  g+=`<path d="${gr.path.map((v,j)=>`${j?'L':'M'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[ci]})" stroke-width="2.2"/>`;
-  g+=`<circle cx="${xs(m.length-1)}" cy="${y(gr.path.at(-1))}" r="3.6" fill="var(${COL[ci]})"/>`;});
- m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
- document.getElementById('tch').innerHTML=g+'<g id="tov"></g>';
  document.getElementById('tleg').innerHTML=t.groups.map((gr,i)=>
   `<span><i style="background:var(${COL[t.k===2?i*2:i]})"></i>${t.k===2?'מחצית':'שלישון'} ${gr.t}${gr.t===1?' — מפוזר':gr.t===t.k?' — מרוכז':''} · ${st.tms.toUpperCase()} ${gr.v} · ${gr.n} יחידות</span>`).join('');
  const a=t.groups[0].path.at(-1), b=t.groups.at(-1).path.at(-1);
+ const gp=TG.gap; let mx=0; gp.forEach((v,i)=>{if(Math.abs(v)>Math.abs(gp[mx]))mx=i;});
  document.getElementById('tfoot2').innerHTML=
   `בסוף התקופה: מפוזר ${a>0?'+':''}${a.toFixed(1)}% · מרוכז ${b>0?'+':''}${b.toFixed(1)}% · <b style="color:var(--ink)">פער ${(b-a)>0?'+':''}${(b-a).toFixed(1)} נקודות</b>. `+
+  `הפער הקיצוני ביותר בתקופה: ${(gp[mx]>0?'+':'')+gp[mx].toFixed(1)} נק׳ ב־${mlab(TG.m[mx])}. `+
   `חלוקת המחזור בין הקבוצות: ${t.groups.map(gr=>gr.rev.toFixed(1)+'%').join(' · ')}.`;
 }
 function ahover(ev,G,svgId,ovId,tipId,mode){
@@ -683,7 +673,8 @@ function ahover(ev,G,svgId,ovId,tipId,mode){
   G.t.groups.forEach((gr,j)=>{const v=gr.path[i], cj=K===2?j*2:j;
    ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4" fill="var(${COL[cj]})" stroke="var(--surf)" stroke-width="1.6"/>`;
    body+=`<div class="r"><span>${K===2?'מחצית':'שלישון'} ${gr.t}</span><span>${(v>0?'+':'')+v.toFixed(1)}%</span></div>`;});
-  const d=G.t.groups.at(-1).path[i]-G.t.groups[0].path[i];
+  const d=G.gap?G.gap[i]:G.t.groups.at(-1).path[i]-G.t.groups[0].path[i];
+  if(G.gy) ov+=`<circle cx="${x}" cy="${G.gy(d)}" r="4" fill="var(--acc)" stroke="var(--surf)" stroke-width="1.6"/>`;
   body+=`<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>פער עליון−תחתון</span><span>${(d>0?'+':'')+d.toFixed(1)} נק׳</span></div>`;
  }
  document.getElementById(ovId).innerHTML=ov;
@@ -747,28 +738,43 @@ function iDraw(){
   `ממוצע התקופה שאחרי 2022: ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% (p=${r.avg[2].toFixed(3)}) · F: p=${r.joint_p<1e-4?r.joint_p.toExponential(1):r.joint_p.toFixed(4)}`;
  iNote();
 }
-function pathChart(svgId,ovId,t,G){
- const m=t.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
+function pathChart(svgId,ovId,t,G,gapLab){
+ // Upper panel: one price path per group. Lower panel, sharing the x axis: the gap
+ // between the top and the bottom group at each period -- the same number the summary
+ // line reports for the final period, drawn over the whole window so its build-up is
+ // visible rather than inferred from two lines that drift apart.
+ const m=t.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r;
+ const ih=236, gT=P.t+ih+52, ihG=96;          // main panel, then the gap panel
  const xs=i=>P.l+iw*i/(m.length-1);
  const all=t.groups.flatMap(g=>g.path);
  let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
- Object.assign(G,{y,xs,W,P,iw,ih,t,m});
+ const gap=t.groups.at(-1).path.map((v,i)=>v-t.groups[0].path[i]);
+ let glo=Math.min(...gap,0), ghi=Math.max(...gap,0);
+ const gpd=Math.max((ghi-glo)*0.12,0.2); glo-=gpd; ghi+=gpd;
+ const gy=v=>gT+ihG*(1-(v-glo)/(ghi-glo));
+ // the crosshair spans both panels, so G.ih covers the full drawn height
+ Object.assign(G,{y,xs,W,P,iw,ih:(gT+ihG)-P.t,t,m,gy,gap});
  const COL=['--t1','--t2','--t3'];
- document.getElementById('tk_ttl').textContent=t.k===2?'מחציות':'שלישוני';
- document.getElementById('tk_txt').textContent=t.k===2?'שתי מחציות':'שלושה שלישונים';
  let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(0)+'%',nice(lo,hi,5));
  t.groups.forEach((gr,i)=>{
   const ci=t.k===2?i*2:i;
   g+=`<path d="${gr.path.map((v,j)=>`${j?'L':'M'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[ci]})" stroke-width="2.2"/>`;
   g+=`<circle cx="${xs(m.length-1)}" cy="${y(gr.path.at(-1))}" r="3.6" fill="var(${COL[ci]})"/>`;});
- m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ // ---- gap panel
+ g+=`<text x="${P.l}" y="${gT-14}" fill="var(--ink2)" font-size="11.5" font-weight="600">${gapLab||'הפער בין הקבוצה העליונה לתחתונה'}</text>`;
+ g+=axis(P,W,gy,v=>(v>0?'+':'')+v.toFixed(1),nice(glo,ghi,3));
+ g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${gy(0)}" y2="${gy(0)}" stroke="var(--ink3)" stroke-width="1"/>`;
+ g+=`<path d="M${xs(0).toFixed(1)},${gy(0).toFixed(1)}${gap.map((v,j)=>`L${xs(j).toFixed(1)},${gy(v).toFixed(1)}`).join('')}L${xs(gap.length-1).toFixed(1)},${gy(0).toFixed(1)}Z" fill="var(--acc)" opacity=".13"/>`;
+ g+=`<path d="${gap.map((v,j)=>`${j?'L':'M'}${xs(j).toFixed(1)},${gy(v).toFixed(1)}`).join('')}" fill="none" stroke="var(--acc)" stroke-width="2.2"/>`;
+ g+=`<circle cx="${xs(m.length-1)}" cy="${gy(gap.at(-1))}" r="3.6" fill="var(--acc)"/>`;
+ m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${gT+ihG+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  document.getElementById(svgId).innerHTML=g+`<g id="${ovId}"></g>`;
 }
 function itDraw(){
  ['it_lv','it_sm','it_ms','it_k','it_fq'].forEach(segSync);
  const t=I.terc[`${st.itlv}|${st.itfq}|${st.itsm}|${st.itms}|${st.itk}`]; if(!t) return;
- pathChart('itch','itov',t,ITG);
+ pathChart('itch','itov',t,ITG,'הפער בין החשיפה הגבוהה לנמוכה, בנקודות אחוז');
  document.getElementById('itk_ttl').textContent=t.k===2?'מחציות':'שלישוני';
  document.getElementById('itk_txt').textContent=t.k===2?'מחציות':'שלישונים';
  const COL=['--t1','--t2','--t3'], nm=IM.find(x=>x[0]===st.itms)[1];
