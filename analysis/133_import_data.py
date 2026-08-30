@@ -15,39 +15,42 @@ warnings.filterwarnings('ignore')
 src=open('/home/user/consternation/analysis/132_analyses_data.py').read().split("RES={'runs'")[0]
 G={}; exec(src,G)
 load,prep,panel,terciles=G['load'],G['prep'],G['panel'],G['terciles']
+to_quarter=G['to_quarter']
 OUT='/home/user/consternation/analysis/import_data.json'
 
-FXF={'cat':('category_fx_exposure_v2.csv','ctg'),
-     'sub':('subcategory_fx_exposure_v2.csv','sc')}
+KEY={'cat':'ctg','sub':'sc'}
 # imp_share: brand-classified (v3) measured in the BASE YEAR (Jan-2022 brand file),
 # so the cross-sectional regressor is pre-determined w.r.t. the price paths.
 # Units with <30% of revenue resolved are dropped from it.
 RES={'runs':{},'terc':{},'ds':{},'corr':{}}
 for level in ['cat','sub']:
-  f,kcol=FXF[level]
-  fx=pd.read_csv('/home/user/consternation/analysis/'+f)[[kcol,'fx_v2']]
+  kcol=KEY[level]
   v3=pd.read_csv(f'/home/user/consternation/analysis/import_share_v3_{level}_2022.csv')
   v3=v3[v3.resolved_pct>=30][[kcol,'imp_share_v3']].rename(columns={'imp_share_v3':'imp_share'})
-  f3=pd.read_csv(f'/home/user/consternation/analysis/fx_exposure_v3_{level}.csv')[[kcol,'fx_v3']]
-  fx=fx.merge(v3,on=kcol,how='inner').merge(f3,on=kcol,how='inner')
+  fx=pd.read_csv(f'/home/user/consternation/analysis/fx_exposure_v3_{level}.csv')[[kcol,'fx_v3']]
+  fx=fx.merge(v3,on=kcol,how='inner')
   d=load(level).merge(fx,left_on='u',right_on=kcol,how='inner')
   print(f'{level}: {d.u.nunique()} יחידות עם מדד חשיפה')
-  for drop in [True,False]:
-      x=prep(d,drop); sk=f'{level}|'+('no_meat' if drop else 'all')
+  for freq in ['m','q']:
+    dq=d if freq=='m' else to_quarter(d)
+    for drop in [True,False]:
+      x=prep(dq,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
       u=x.groupby('u').agg(cr3=('cr3','first'),hhi=('hhi','first'),
-                           fx_v2=('fx_v2','first'),fx_v3=('fx_v3','first'),
+                           fx_v3=('fx_v3','first'),
                            imp_share=('imp_share','first'),rev=('rev','sum'))
       RES['corr'][sk]={f'{a}|{b}':round(float(u[a].corr(u[b])),3)
-                       for a in ['cr3','hhi'] for b in ['fx_v2','fx_v3','imp_share']}
-      for measure in ['fx_v2','fx_v3','imp_share']:
-          RES['terc'][f'{sk}|{measure}']=terciles(x,measure)
+                       for a in ['cr3','hhi'] for b in ['fx_v3','imp_share']}
+      for measure in ['fx_v3','imp_share']:
+          for kk in [2,3]:
+              RES['terc'][f'{sk}|{measure}|{kk}']=terciles(x,measure,kk)
           for weighted in [True,False]:
               k=f'{sk}|{measure}|{"w" if weighted else "u"}'
               RES['runs'][k]=panel(x,measure,weighted)
               a=RES['runs'][k]
-              print(f'  {k:24} n={a["n"]:4} avg={a["avg"][0]:+6.2f}% p={a["avg"][2]:.3f}  F p={a["joint_p"]:.2e}')
+              print(f'  {k:30} n={a["n"]:4} T={len(a["months"]):3} avg={a["avg"][0]:+6.2f}% p={a["avg"][2]:.3f}')
 
-      # ---------- double sort: concentration tercile x exposure tercile ----------
+      # ---------- double sort (monthly only): concentration x exposure ----------
+      if freq!='m': continue
       months=sorted(x.month.unique())
       W=x.pivot(index='u',columns='month',values='logp')[months]
       us=W.index.tolist(); meta=u.loc[us]
@@ -57,7 +60,7 @@ for level in ['cat','sub']:
           o=np.argsort(v); cw=np.cumsum(w[o])/w.sum()
           g=np.empty(len(v),dtype=int); g[o]=np.digitize(cw,[1/3,2/3]); return g
       for cm in ['cr3','hhi']:
-          for fm in ['fx_v2','fx_v3','imp_share']:
+          for fm in ['fx_v3','imp_share']:
               gc,gf=terc(meta[cm].values),terc(meta[fm].values)
               cells=[]
               for i in range(3):

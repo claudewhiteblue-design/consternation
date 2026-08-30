@@ -46,8 +46,27 @@ def prep(d,drop_meat):
     x=d[~d.dep.isin(EXDEP)] if drop_meat else d
     return x.copy()
 
+def to_quarter(x):
+    """Collapse the monthly panel to calendar quarters. Revenue and quantity are summed
+       and the price recomputed, so the quarterly price is a proper unit value rather
+       than an average of monthly prices. Incomplete quarters are dropped."""
+    q=x.copy()
+    q['q']=q.month.str[:4]+'-Q'+(((q.month.str[5:7].astype(int)-1)//3)+1).astype(str)
+    nm=q.groupby('q').month.nunique()
+    q=q[q.q.isin(nm[nm==3].index)]
+    keep=[c for c in q.columns if c not in ('month','q','rev','qty','logp')]
+    g=q.groupby(['u','q']).agg(rev=('rev','sum'),qty=('qty','sum'),
+        **{c:(c,'first') for c in keep if c!='u'}).reset_index()
+    g=g.rename(columns={'q':'month'})
+    g['logp']=np.log(g.rev*1000/g.qty)
+    return g
+
+def base_periods(months):
+    """the 2022 periods that define the base, monthly or quarterly"""
+    return [m for m in months if m[:4]=='2022']
+
 def panel(x,measure,weighted):
-    months=sorted(x.month.unique()); Y22=[m for m in months if m[:4]=='2022']
+    months=sorted(x.month.unique()); Y22=base_periods(months)
     W=x.pivot(index='u',columns='month',values='logp')[months]
     us=W.index.tolist(); meta=x.groupby('u').agg(cat=('cat','first'),v=(measure,'first'))
     meta=meta.loc[us]
@@ -86,35 +105,42 @@ def panel(x,measure,weighted):
         n=N,ncl=int(meta.cat.nunique()),
         mean_v=round(float(meta.v.mean()),1),sd_v=round(float(meta.v.std()),1))
 
-def terciles(x,measure):
+def terciles(x,measure,k=3):
+    """k equal-revenue groups (k=2 median split, k=3 terciles) and their price paths,
+       each unit indexed to its own 2022 average."""
     months=sorted(x.month.unique())
     W=x.pivot(index='u',columns='month',values='logp')[months]
     us=W.index.tolist(); meta=x.groupby('u').agg(v=(measure,'first')).loc[us]
     w=x[x.month.str[:4]=='2022'].groupby('u').rev.sum().reindex(us).fillna(0).values
     o=np.argsort(meta.v.values); cw=np.cumsum(w[o])/w.sum()
-    grp=np.empty(len(us),dtype=int); grp[o]=np.digitize(cw,[1/3,2/3])
-    L=W.values; base=L[:,:12].mean(axis=1,keepdims=True); Lr=L-base
+    cuts=[i/k for i in range(1,k)]
+    grp=np.empty(len(us),dtype=int); grp[o]=np.digitize(cw,cuts)
+    nb=len(base_periods(months))
+    L=W.values; base=L[:,:nb].mean(axis=1,keepdims=True); Lr=L-base
     out=[]
-    for t in range(3):
+    for t in range(k):
         m=grp==t
         path=np.average(Lr[m],axis=0,weights=w[m])
         out.append(dict(t=t+1,path=[round(100*float(v),2) for v in path],n=int(m.sum()),
             v=round(float(np.average(meta.v.values[m],weights=w[m])),1),
             rev=round(100*float(w[m].sum()/w.sum()),1)))
-    return dict(months=months,groups=out)
+    return dict(months=months,k=k,groups=out)
 
 RES={'runs':{},'terc':{}}
 for level in ['cat','sub']:
     d=load(level)
     print(f'{level}: {d.u.nunique()} יחידות, {d.month.nunique()} חודשים')
-    for drop in [True,False]:
-        x=prep(d,drop); sk='no_meat' if drop else 'all'
-        for measure in ['cr3','hhi']:
-            RES['terc'][f'{level}|{sk}|{measure}']=terciles(x,measure)
-            for weighted in [True,False]:
-                k=f'{level}|{sk}|{measure}|{"w" if weighted else "u"}'
-                RES['runs'][k]=panel(x,measure,weighted)
-                a=RES['runs'][k]
-                print(f'  {k:28} n={a["n"]:4} avg={a["avg"][0]:+6.2f}% p={a["avg"][2]:.3f}  F p={a["joint_p"]:.2e}')
+    for freq in ['m','q']:
+        dd=d if freq=='m' else to_quarter(d)
+        for drop in [True,False]:
+            x=prep(dd,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
+            for measure in ['cr3','hhi']:
+                for kk in [2,3]:
+                    RES['terc'][f'{sk}|{measure}|{kk}']=terciles(x,measure,kk)
+                for weighted in [True,False]:
+                    k=f'{sk}|{measure}|{"w" if weighted else "u"}'
+                    RES['runs'][k]=panel(x,measure,weighted)
+                    a=RES['runs'][k]
+                    print(f'  {k:32} n={a["n"]:4} T={len(a["months"]):3} avg={a["avg"][0]:+6.2f}% p={a["avg"][2]:.3f}')
 json.dump(RES,open(OUT,'w'),ensure_ascii=False)
 print('saved',OUT)

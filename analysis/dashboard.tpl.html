@@ -77,12 +77,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="kpi" id="kpi"></div>
 
-<div class="card">
- <h2>עשר קבוצות המזון הגדולות</h2>
- <p class="cs" id="tcs"></p>
- <div class="scroll"><table id="tb"></table></div>
- <p class="foot" id="tfoot"></p>
-</div>
+
 
 <div class="card">
  <h2>ריכוזיות לאורך זמן</h2>
@@ -92,6 +87,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
   <div class="cb" id="cb"><input id="pick" type="text" autocomplete="off" spellcheck="false">
    <ul id="opts" hidden></ul></div>
   <div class="seg" id="bk"></div>
+  <div class="seg" id="fq"></div>
  </div>
  <div class="leg"><span><i style="background:var(--acc)"></i><span id="l1"></span></span></div>
  <div class="scroll"><div class="chwrap"><svg id="ch" viewBox="0 0 940 430" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
@@ -102,7 +98,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="card">
  <h2>כמות ומחיר <span id="qttl" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
- <p class="cs" style="max-width:82ch">שני מדדים על בסיס <b>ינואר 2022 = 100</b>. המחיר הוא מכר כספי חלקי כמות סטנדרטית. כדי שמחלקות עם בסיסי מדידה מעורבים יישארו בעלות משמעות, המדד נבנה כיחס של כל קטגוריה מול עצמה ואז ממוצע משוקלל־מכר 2022 של הקטגוריות שבתוך היחידה. הקו הוא ממוצע נע של שלושה חודשים. <b>הכמות עונתית מאוד</b> — הקפיצות הן פסח, ראש השנה וסוכות. ינואר עצמו הוא חודש שפל: ממוצע 2022 גבוה ממנו בכ־12%, ולכן <b>גובה קו הכמות מוטה כלפי מעלה</b> בגלל בחירת הבסיס. המספר הנקי הוא ההשוואה בשורת הסיכום — 12 חודשים אחרונים מול 12 הראשונים.</p>
+ <p class="cs" style="max-width:82ch">שני מדדים על בסיס <b><span id="qbase">ינואר 2022</span> = 100</b>. המחיר הוא מכר כספי חלקי כמות סטנדרטית. כדי שמחלקות עם בסיסי מדידה מעורבים יישארו בעלות משמעות, המדד נבנה כיחס של כל קטגוריה מול עצמה ואז ממוצע משוקלל־מכר 2022 של הקטגוריות שבתוך היחידה. הקו הוא ממוצע נע של שלושה חודשים. <b>הכמות עונתית מאוד</b> — הקפיצות הן פסח, ראש השנה וסוכות. ינואר עצמו הוא חודש שפל: ממוצע 2022 גבוה ממנו בכ־12%, ולכן <b>גובה קו הכמות מוטה כלפי מעלה</b> בגלל בחירת הבסיס. המספר הנקי הוא ההשוואה בשורת הסיכום — 12 חודשים אחרונים מול 12 הראשונים.</p>
  <div class="leg"><span><i style="background:var(--acc)"></i>מחיר</span><span><i style="background:var(--acc2)"></i>כמות</span></div>
  <div class="scroll"><div class="chwrap"><svg id="qch" viewBox="0 0 940 300" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
   <div class="tip" id="qtip"></div></div></div>
@@ -116,6 +112,12 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
   <div class="tip" id="itip2"></div></div></div>
  <p class="foot" id="ifoot2"></p>
 </div>
+<div class="card">
+ <h2>עשר קבוצות המזון הגדולות</h2>
+ <p class="cs" id="tcs"></p>
+ <div class="scroll"><table id="tb"></table></div>
+ <p class="foot" id="tfoot"></p>
+</div>
 </div><!-- /p0 -->
 
 <div class="page" id="p1" hidden>
@@ -128,7 +130,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <p class="cs" style="max-width:82ch">אמידת אירוע: <span dir="ltr">log P<sub>it</sub> = a<sub>i</sub> + d<sub>t</sub> + Σ γ<sub>t</sub>·(z<sub>i</sub>×חודש) </span>. z הוא הריכוזיות של היחידה ב־2022 כולה, מתוקנן. המקדם γ<sub>t</sub> נקרא: <b>בכמה אחוזים התרחק המחיר מהממוצע שלו ב־2022, לכל סטיית תקן של ריכוזיות</b>. אפקטים קבועים ליחידה ולחודש; שגיאות תקן מקובצות ברמת הקטגוריה.</p>
  <div class="ctl">
   <div class="seg" id="a_lv"></div><div class="seg" id="a_sm"></div>
-  <div class="seg" id="a_ms"></div><div class="seg" id="a_wt"></div>
+  <div class="seg" id="a_ms"></div><div class="seg" id="a_wt"></div><div class="seg" id="a_fq"></div>
  </div>
  <div class="leg"><span><i style="background:var(--acc)"></i>מקדם γ</span>
   <span><i style="background:var(--acc);opacity:.22;height:9px"></i>רווח בר־סמך 95%</span></div>
@@ -138,10 +140,11 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 </div>
 
 <div class="card">
- <h2>שלישוני ריכוזיות — התפתחות המחירים</h2>
- <p class="cs" style="max-width:82ch">היחידות מחולקות לשלושה שלישונים <b>שווי־מכר</b> לפי הריכוזיות שלהן ב־2022 — כך שבכל שלישון אותו סך מחזור, לא אותו מספר יחידות. הקו הוא ממוצע משוקלל־מכר של השינוי במחיר מול ממוצע 2022 של אותה יחידה.</p>
+ <h2><span id="tk_ttl">שלישוני</span> ריכוזיות — התפתחות המחירים</h2>
+ <p class="cs" style="max-width:82ch">היחידות מחולקות ל<span id="tk_txt">שלושה שלישונים</span> <b>שווי־מכר</b> לפי הריכוזיות שלהן ב־2022 — כך שבכל קבוצה אותו סך מחזור, לא אותו מספר יחידות. הקו הוא ממוצע משוקלל־מכר של השינוי במחיר מול ממוצע 2022 של אותה יחידה.</p>
  <div class="ctl">
   <div class="seg" id="t_lv"></div><div class="seg" id="t_sm"></div><div class="seg" id="t_ms"></div>
+  <div class="seg" id="t_k"></div><div class="seg" id="t_fq"></div>
  </div>
  <div class="leg" id="tleg"></div>
  <div class="scroll"><div class="chwrap"><svg id="tch" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
@@ -159,7 +162,8 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <h2>השפעת חשיפה לייבוא על מחירים</h2>
  <p class="cs" style="max-width:82ch">שלושה מדדים. <b>חשיפת מט״ח</b> — החלק ממחיר המדף שזז אחד־לאחד עם שער החליפין, כולל חומרי גלם מיובאים של יצרן מקומי. <b>v2</b> מפצל מקומי/מיובא לפי התאמת שם היצרן; <b>v3</b> מחליף את הפיצול הזה בהסתברות רציפה שנגזרת מסיווג המותגים, ומשאיר את מודל העלות זהה.  <b>נתח יבוא</b> — אחוז המחזור במוצרים שמיוצרים בחו״ל, מסווג <b>ברמת המותג</b> מתוך קובצי המותגים (ינואר 2022 ויולי 2026): 700+ מותגים סווגו ידנית (מותג גלובלי שמיוצר בארץ ברישיון, כמו קוקה קולה או דוריטוס, נספר מקומי; מותג מיובא של יצרן מקומי, כמו טייסטר צ׳ויס, נספר יבוא), והיתר לפי תמהיל היצרן. <b>הרגרסור נמדד בקובץ ינואר 2022</b> — שנת הבסיס — כך שהוא קודם למסלולי המחירים. מותג פרטי נשאר בלתי־מוכרע ומחוץ לחישוב; יחידות שפחות מ־30% מהמכר שלהן הוכרע הושמטו מהמדד. המקדם נקרא כמו קודם: אחוז סטייה מממוצע 2022 של אותה קטגוריה, לכל סטיית תקן של חשיפה.</p>
  <div class="ctl">
-  <div class="seg" id="i_lv"></div><div class="seg" id="i_sm"></div><div class="seg" id="i_ms"></div><div class="seg" id="i_wt"></div>
+  <div class="seg" id="i_lv"></div><div class="seg" id="i_sm"></div><div class="seg" id="i_ms"></div>
+  <div class="seg" id="i_wt"></div><div class="seg" id="i_fq"></div>
  </div>
  <div class="leg"><span><i style="background:var(--acc2)"></i>מקדם γ</span>
   <span><i style="background:var(--acc2);opacity:.22;height:9px"></i>רווח בר־סמך 95%</span></div>
@@ -169,9 +173,10 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 </div>
 
 <div class="card">
- <h2>שלישוני חשיפה — התפתחות המחירים</h2>
- <p class="cs" style="max-width:82ch">שלישונים שווי־מכר לפי החשיפה ב־2022, בסיס ממוצע 2022 של כל קטגוריה.</p>
- <div class="ctl"><div class="seg" id="it_lv"></div><div class="seg" id="it_sm"></div><div class="seg" id="it_ms"></div></div>
+ <h2><span id="itk_ttl">שלישוני</span> חשיפה — התפתחות המחירים</h2>
+ <p class="cs" style="max-width:82ch"><span id="itk_txt">שלישונים</span> שווי־מכר לפי החשיפה ב־2022, בסיס ממוצע 2022 של כל יחידה.</p>
+ <div class="ctl"><div class="seg" id="it_lv"></div><div class="seg" id="it_sm"></div><div class="seg" id="it_ms"></div>
+  <div class="seg" id="it_k"></div><div class="seg" id="it_fq"></div></div>
  <div class="leg" id="itleg"></div>
  <div class="scroll"><div class="chwrap"><svg id="itch" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
   <div class="tip" id="ittip"></div></div></div>
@@ -201,7 +206,10 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 const D=__DATA__;
 const A=__ADATA__;
 const I=__IDATA__;
-const M=D.months, T=D.table;
+let M=D.months; const T=D.table;
+let FQ='m';
+const SER=()=>FQ==='m'?D.series:D.seriesq;
+const IDX=()=>FQ==='m'?D.idx:D.idxq;
 const fmt=n=>n.toLocaleString('en-US');
 const sgn=(v,d=2)=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(d);
 const cls=v=>v>0.02?'up':v<-0.02?'dn':'';
@@ -211,6 +219,7 @@ document.getElementById('hdr').textContent=
  `${fmt(T.tot26)} מ׳ ₪ ב־${T.ncat} קטגוריות, ${fmt(T.nsup)} קבוצות ספקים.`;
 
 const BK=['כולל מאגדים','ללא מאגדים'];
+const FQL=[['m','חודשי'],['q','רבעוני']];
 document.getElementById('kpi').innerHTML=[
  ['נתח עשר הגדולות',T.top10_share.toFixed(1)+'%',`2022: ${T.top10_share22.toFixed(1)}% · ${sgn(T.top10_share-T.top10_share22,1)}`],
  ['נתח מאגדים',T.bucket_share.toFixed(1)+'%',`2022: ${T.bucket_share22.toFixed(1)}% · ${sgn(T.bucket_share-T.bucket_share22,1)}`],
@@ -248,8 +257,9 @@ const BANDS=[{lo:0,hi:1500,lab:'שוק לא מרוכז',bg:'--b1',tx:'--b1t'},
 const band=v=>BANDS.find(b=>v>=b.lo&&v<b.hi);
 const GEO={};
 /* 3-month trailing moving average; the first two months have no full window */
-const MAW=3, START=MAW-1;
-const ma=a=>a.map((_,i)=>i<START?null:a.slice(i-START,i+1).reduce((x,y)=>x+y,0)/MAW);
+const MAW=3;
+let START=MAW-1;
+const ma=a=>FQ==='q'?a.slice():a.map((_,i)=>i<MAW-1?null:a.slice(i-MAW+1,i+1).reduce((x,y)=>x+y,0)/MAW);
 const UNIT={'ק"ג':'טון','ליטר':'אלפי ליטרים',"יח' באריזה":"אלפי יח׳ באריזה",'מחזור':'מחזור'};
 const unit=b=>!b?'—':b.startsWith('מעורב')?b.replace('מעורב: ','מעורב — ').split('+').map(x=>UNIT[x]||x).join(' + '):(UNIT[b]||b);
 
@@ -260,6 +270,9 @@ const lvEl=document.getElementById('lv'), bkEl=document.getElementById('bk'),
       pk=document.getElementById('pick'), cb=document.getElementById('cb'), ul=document.getElementById('opts');
 LV.forEach(([k,lab])=>{const b=document.createElement('button');b.textContent=lab;b.onclick=()=>{lv=k;sel=null;fill();draw()};lvEl.appendChild(b)});
 BK.forEach(k=>{const b=document.createElement('button');b.textContent=k;b.onclick=()=>{bk=k;draw()};bkEl.appendChild(b)});
+const fqEl=document.getElementById('fq');
+FQL.forEach(([v,l])=>{const b=document.createElement('button');b.textContent=l;
+ b.onclick=()=>{FQ=v;M=(v==='m'?D.months:D.quarters);draw()};fqEl.appendChild(b)});
 let OPTS=[], hi=0;
 function fill(){
  if(lv==='שוק'){cb.style.display='none';OPTS=[];return}
@@ -309,9 +322,12 @@ document.addEventListener('click',e=>{if(!cb.contains(e.target)){closeList();
  if(OPTS.length){const o=OPTS.find(x=>x.v===sel); if(o) pk.value=o.t;}}});
 function key(){return lv==='שוק'?'__market__':`${lv}|${sel}`}
 function draw(){
+ START=(FQ==='m'?MAW-1:0);
  [...lvEl.children].forEach((b,i)=>b.classList.toggle('on',LV[i][0]===lv));
  [...bkEl.children].forEach(b=>b.classList.toggle('on',b.textContent===bk));
- const S=D.series[bk], raw=S[key()];
+ [...fqEl.children].forEach((b,i)=>b.classList.toggle('on',FQL[i][0]===FQ));
+ const S=SER()[bk], raw=S[key()];
+ if(!raw){document.getElementById('ch').innerHTML='';document.getElementById('cfoot').textContent='אין נתונים ליחידה זו בתדירות הנבחרת.';drawSup();drawIdx();return;}
  const s={cr3:ma(raw.cr3),hhi:ma(raw.hhi),n:raw.n,rev:raw.rev};
  GEO.raw=raw; GEO.s=s; GEO.panels=[];
  const name= lv==='שוק'?'כלל השוק': sel;
@@ -344,7 +360,7 @@ function draw(){
   g+=`<path d="${path(s[k])}" fill="none" stroke="var(--acc)" stroke-width="2.1" stroke-linejoin="round"/>`;
   GEO.panels.push({k,y,y0,f});
   g+=`<circle cx="${xs(M.length-1)}" cy="${y(s[k].at(-1))}" r="3.6" fill="var(--acc)"/>`;
-  M.forEach((m,i)=>{if(m.slice(5)==='01') g+=`<text x="${xs(i)}" y="${y0+ph+17}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`;});
+  M.forEach((m,i)=>{if(m.slice(5)==='01'||m.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${y0+ph+17}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`;});
  });
  document.getElementById('ch').innerHTML=g+'<g id="ov"></g>';
  drawSup();
@@ -379,7 +395,7 @@ function drawSup(){
 /* ---------- hover ---------- */
 const chEl=document.getElementById('ch'), tip=document.getElementById('tip');
 const HE=['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
-const mlab=m=>`${HE[+m.slice(5)-1]} ${m.slice(0,4)}`;
+const mlab=m=>m.includes('Q')?`רבעון ${m.slice(6)} ${m.slice(0,4)}`:`${HE[+m.slice(5)-1]} ${m.slice(0,4)}`;
 function hover(ev){
  if(!GEO.xs) return;
  const r=chEl.getBoundingClientRect(), xv=(ev.clientX-r.left)*(GEO.W/r.width);
@@ -393,8 +409,8 @@ function hover(ev){
  tip.innerHTML=`<b>${mlab(M[i])}</b><div style="color:var(--ink3);font-size:11.5px;margin-bottom:4px">ממוצע נע 3 חודשים</div>`+
   `<div class="r"><span>CR3</span><span>${GEO.s.cr3[i].toFixed(1)}%</span></div>`+
   `<div class="r"><span>HHI</span><span>${fmt(Math.round(GEO.s.hhi[i]))}</span></div>`+
-  `<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>החודש עצמו</span><span>${GEO.raw.cr3[i].toFixed(1)}% · ${fmt(GEO.raw.hhi[i])}</span></div>`+
-  `<div class="r"><span>מכר בחודש</span><span>${GEO.raw.rev[i].toFixed(1)} מ׳ ₪</span></div>`;
+  (FQ==='m'?`<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>החודש עצמו</span><span>${GEO.raw.cr3[i].toFixed(1)}% · ${fmt(GEO.raw.hhi[i])}</span></div>`:'')+
+  `<div class="r"><span>מכר בתקופה</span><span>${GEO.raw.rev[i].toFixed(1)} מ׳ ₪</span></div>`;
  tip.classList.add('on');
  const px=x/GEO.W*r.width, tw=tip.offsetWidth;
  const want= px<r.width/2 ? px+18 : px-tw-18;
@@ -407,8 +423,10 @@ chEl.addEventListener('mouseleave',()=>{tip.classList.remove('on');const o=docum
 const QG={},IG2={};
 function idxKey(){return lv==='שוק'?'__market__':`${lv}|${sel}`}
 function drawIdx(){
- const S=D.idx[idxKey()], name= lv==='שוק'?'כלל השוק':sel;
+ START=(FQ==='m'?MAW-1:0);
+ const S=IDX()[idxKey()], name= lv==='שוק'?'כלל השוק':sel;
  document.getElementById('qttl').textContent='· '+name;
+ const qb=document.getElementById('qbase'); if(qb) qb.textContent= FQ==='m'?'ינואר 2022':'רבעון 1 2022';
  document.getElementById('ittl2').textContent='· '+name;
  if(!S){['qch','ich2'].forEach(i=>document.getElementById(i).innerHTML='');
   document.getElementById('qfoot').textContent='אין נתונים ליחידה זו.';
@@ -416,7 +434,7 @@ function drawIdx(){
  const P={t:16,r:22,b:32,l:56}, W=940, iw=W-P.l-P.r;
  const xs=i=>P.l+iw*i/(M.length-1);
  const yearTicks=(y0,ih)=>M.map((m,i)=>m.slice(5)==='01'
-   ?`<text x="${xs(i)}" y="${y0+ih+17}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`:'').join('');
+   ||m.slice(5)==='Q1'?`<text x="${xs(i)}" y="${y0+ih+17}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`:'').join('');
  // --- panel 1: price + quantity index
  {const ih=300-P.t-P.b, y0=P.t;
   const q=ma(S.q), p=ma(S.p);
@@ -436,11 +454,12 @@ function drawIdx(){
   document.getElementById('qch').innerHTML=g+'<g id="qov"></g>';
   const q1=q.at(-1),p1=p.at(-1);
   const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
-  const q12=mean(S.q.slice(-12)), p12=mean(S.p.slice(-12));
-  const q12b=mean(S.q.slice(0,12)), p12b=mean(S.p.slice(0,12));
+  const NP=FQ==='m'?12:4;
+  const q12=mean(S.q.slice(-NP)), p12=mean(S.p.slice(-NP));
+  const q12b=mean(S.q.slice(0,NP)), p12b=mean(S.p.slice(0,NP));
   document.getElementById('qfoot').innerHTML=
-   `<b style="color:var(--ink)">${name}</b> · ${M.at(-1).replace('-','/')}: מחיר ${p1.toFixed(1)} · כמות ${q1.toFixed(1)} · מכר נומינלי ${(p1*q1/100).toFixed(1)}<br>`+
-   `<span style="color:var(--ink2)">12 החודשים האחרונים מול 12 הראשונים: מחיר ${p12b.toFixed(1)} ← ${p12.toFixed(1)} (${sgn(100*(p12/p12b-1),1)}%) · `+
+   `<b style="color:var(--ink)">${name}</b> · ${mlab(M.at(-1))}: מחיר ${p1.toFixed(1)} · כמות ${q1.toFixed(1)} · מכר נומינלי ${(p1*q1/100).toFixed(1)}<br>`+
+   `<span style="color:var(--ink2)">${FQ==='m'?'12 החודשים':'4 הרבעונים'} האחרונים מול ${FQ==='m'?'12 הראשונים':'4 הראשונים'}: מחיר ${p12b.toFixed(1)} ← ${p12.toFixed(1)} (${sgn(100*(p12/p12b-1),1)}%) · `+
    `כמות ${q12b.toFixed(1)} ← ${q12.toFixed(1)} (${sgn(100*(q12/q12b-1),1)}%)</span>`;
  }
  // --- panel 2: import share
@@ -517,7 +536,10 @@ const AL=[['cat','קטגוריה'],['sub','תת-קטגוריה']];
 const AS=[['no_meat','ללא בשר ועוף'],['all','כולל בשר ועוף']];
 const AM=[['cr3','CR3'],['hhi','HHI']];
 const AW=[['w','משוקלל מכר'],['u','משקל שווה']];
-const st={lv:'cat',sm:'no_meat',ms:'cr3',wt:'w',tlv:'cat',tsm:'no_meat',tms:'cr3'};
+const AF=[['m','חודשי'],['q','רבעוני']];
+const AK=[['3','שלישונים'],['2','חציון']];
+const st={lv:'cat',sm:'no_meat',ms:'cr3',wt:'w',fq:'m',
+          tlv:'cat',tsm:'no_meat',tms:'cr3',tk:'3',tfq:'m'};
 function seg(id,opts,key,cb){
  const el=document.getElementById(id);
  opts.forEach(([v,l])=>{const b=document.createElement('button');b.textContent=l;
@@ -527,8 +549,9 @@ function seg(id,opts,key,cb){
 function segSync(id){const el=document.getElementById(id);const vals=el.dataset.vals.split(',');
  [...el.children].forEach((b,i)=>b.classList.toggle('on',vals[i]===st[el.dataset.key]));}
 seg('a_lv',AL,'lv',()=>aDraw()); seg('a_sm',AS,'sm',()=>aDraw());
-seg('a_ms',AM,'ms',()=>aDraw()); seg('a_wt',AW,'wt',()=>aDraw());
+seg('a_ms',AM,'ms',()=>aDraw()); seg('a_wt',AW,'wt',()=>aDraw()); seg('a_fq',AF,'fq',()=>aDraw());
 seg('t_lv',AL,'tlv',()=>tDraw()); seg('t_sm',AS,'tsm',()=>tDraw()); seg('t_ms',AM,'tms',()=>tDraw());
+seg('t_k',AK,'tk',()=>tDraw()); seg('t_fq',AF,'tfq',()=>tDraw());
 
 const AG={},TG={};
 function axis(P,W,y,f,ticks){
@@ -543,8 +566,8 @@ function nice(lo,hi,n){const raw=(hi-lo)/n,mag=Math.pow(10,Math.floor(Math.log10
  for(let v=Math.ceil(lo/st)*st;v<=hi+1e-9;v+=st) out.push(+v.toFixed(6)); return out;}
 
 function aDraw(){
- ['a_lv','a_sm','a_ms','a_wt'].forEach(segSync);
- const k=`${st.lv}|${st.sm}|${st.ms}|${st.wt}`, r=A.runs[k]; if(!r) return;
+ ['a_lv','a_sm','a_ms','a_wt','a_fq'].forEach(segSync);
+ const k=`${st.lv}|${st.fq}|${st.sm}|${st.ms}|${st.wt}`, r=A.runs[k]; if(!r) return;
  const m=r.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
  const xs=i=>P.l+iw*i/(m.length-1);
  const up=r.est.map((v,i)=>v+1.96*r.se[i]), dn=r.est.map((v,i)=>v-1.96*r.se[i]);
@@ -556,21 +579,22 @@ function aDraw(){
     `${dn.map((v,i)=>`L${xs(dn.length-1-i).toFixed(1)},${y(dn[dn.length-1-i]).toFixed(1)}`).join('')}Z" fill="var(--acc)" opacity=".16"/>`;
  g+=`<path d="${r.est.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(--acc)" stroke-width="2.1"/>`;
  // shade the 2022 base window
- g+=`<rect x="${P.l}" y="${P.t}" width="${xs(11)-P.l}" height="${ih}" fill="var(--ink3)" opacity=".05"/>`;
- g+=`<text x="${(P.l+xs(11))/2}" y="${P.t+13}" text-anchor="middle" fill="var(--ink3)" font-size="10.5">בסיס 2022</text>`;
- m.forEach((mm,i)=>{if(mm.slice(5)==='01') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ const nb=m.filter(x=>x.slice(0,4)==='2022').length-1;
+ g+=`<rect x="${P.l}" y="${P.t}" width="${xs(nb)-P.l}" height="${ih}" fill="var(--ink3)" opacity=".05"/>`;
+ g+=`<text x="${(P.l+xs(nb))/2}" y="${P.t+13}" text-anchor="middle" fill="var(--ink3)" font-size="10.5">בסיס 2022</text>`;
+ m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  document.getElementById('ach').innerHTML=g+'<g id="aov"></g>';
  const last=r.est.at(-1), lp=r.p.at(-1);
  document.getElementById('afoot').innerHTML=
   `${r.n} יחידות · ${r.ncl} אשכולות · ${st.ms.toUpperCase()} ממוצע ${r.mean_v} (ס״ת ${r.sd_v}) · `+
-  `<b style="color:var(--ink)">${m.at(-1).replace('-','/')}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${lp<0.001?'<0.001':lp.toFixed(3)}) · `+
+  `<b style="color:var(--ink)">${mlab(m.at(-1))}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${lp<0.001?'<0.001':lp.toFixed(3)}) · `+
   `ממוצע כל התקופה שאחרי 2022: ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% (p=${r.avg[2]<0.001?'<0.001':r.avg[2].toFixed(3)}) · `+
   `מבחן F משותף: p=${r.joint_p<1e-4?r.joint_p.toExponential(1):r.joint_p.toFixed(4)}`;
  aNote();
 }
 function aNote(){
- const k=`${st.lv}|${st.sm}|${st.ms}|${st.wt}`, r=A.runs[k];
- const other=A.runs[`${st.lv}|${st.sm}|${st.ms}|${st.wt==='w'?'u':'w'}`];
+ const k=`${st.lv}|${st.fq}|${st.sm}|${st.ms}|${st.wt}`, r=A.runs[k];
+ const other=A.runs[`${st.lv}|${st.fq}|${st.sm}|${st.ms}|${st.wt==='w'?'u':'w'}`];
  document.getElementById('anote').innerHTML=
   `<p class="note"><b>מבחן F מובהק מאוד, מקדם ממוצע לא מובהק — וזה לא סתירה.</b> ה־F שואל האם <em>איזשהו</em> חודש חורג מהבסיס, וכמעט תמיד התשובה כן. המקדם הממוצע שואל האם יש <em>פער מתמשך</em> לכיוון אחד, ועל זה אין כאן תשובה חיובית: ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% עם p=${r.avg[2].toFixed(2)}. השאלה הכלכלית היא השנייה.</p>`+
   `<p class="note" style="margin-top:14px"><b>המשקל הופך את הסימן.</b> באותו מפרט בדיוק, ${st.wt==='w'?'משוקלל':'משקל שווה'} נותן ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% ו${st.wt==='w'?'משקל שווה':'משוקלל'} נותן ${(other.avg[0]>0?'+':'')+other.avg[0].toFixed(2)}%. הסימן תלוי בשאלה אם מודדים "הקטגוריה הממוצעת" או "השקל הממוצע" — ההבדל אמיתי, אבל הוא אומר שהמסקנה רגישה למפרט ולא יציבה.</p>`+
@@ -578,8 +602,8 @@ function aNote(){
   `<p class="note" style="margin-top:14px"><b>שיטה:</b> אפקטים קבועים ליחידה נספגים בניכוי ממוצע היחידה (Frisch–Waugh); אימתתי מול רגרסיה עם דמי־יחידה מלאים ברמת הקטגוריה — האומדנים זהים עד שלוש ספרות אחרי הנקודה, ושגיאות התקן נבדלות בכ־1% בגלל תיקון דרגות חופש.</p>`;
 }
 function tDraw(){
- ['t_lv','t_sm','t_ms'].forEach(segSync);
- const t=A.terc[`${st.tlv}|${st.tsm}|${st.tms}`]; if(!t) return;
+ ['t_lv','t_sm','t_ms','t_k','t_fq'].forEach(segSync);
+ const t=A.terc[`${st.tlv}|${st.tfq}|${st.tsm}|${st.tms}|${st.tk}`]; if(!t) return;
  const m=t.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
  const xs=i=>P.l+iw*i/(m.length-1);
  const all=t.groups.flatMap(g=>g.path);
@@ -587,18 +611,21 @@ function tDraw(){
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
  TG.y=y;TG.xs=xs;TG.W=W;TG.P=P;TG.iw=iw;TG.ih=ih;TG.t=t;TG.m=m;
  const COL=['--t1','--t2','--t3'];
+ document.getElementById('tk_ttl').textContent=t.k===2?'מחציות':'שלישוני';
+ document.getElementById('tk_txt').textContent=t.k===2?'שתי מחציות':'שלושה שלישונים';
  let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(0)+'%',nice(lo,hi,5));
  t.groups.forEach((gr,i)=>{
-  g+=`<path d="${gr.path.map((v,j)=>`${j?'L':'M'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[i]})" stroke-width="2.2"/>`;
-  g+=`<circle cx="${xs(m.length-1)}" cy="${y(gr.path.at(-1))}" r="3.6" fill="var(${COL[i]})"/>`;});
- m.forEach((mm,i)=>{if(mm.slice(5)==='01') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+  const ci=t.k===2?i*2:i;
+  g+=`<path d="${gr.path.map((v,j)=>`${j?'L':'M'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[ci]})" stroke-width="2.2"/>`;
+  g+=`<circle cx="${xs(m.length-1)}" cy="${y(gr.path.at(-1))}" r="3.6" fill="var(${COL[ci]})"/>`;});
+ m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  document.getElementById('tch').innerHTML=g+'<g id="tov"></g>';
  document.getElementById('tleg').innerHTML=t.groups.map((gr,i)=>
-  `<span><i style="background:var(${COL[i]})"></i>שלישון ${gr.t}${gr.t===1?' — מפוזר':gr.t===3?' — מרוכז':''} · ${st.tms.toUpperCase()} ${gr.v} · ${gr.n} יחידות</span>`).join('');
- const a=t.groups[0].path.at(-1), b=t.groups[2].path.at(-1);
+  `<span><i style="background:var(${COL[t.k===2?i*2:i]})"></i>${t.k===2?'מחצית':'שלישון'} ${gr.t}${gr.t===1?' — מפוזר':gr.t===t.k?' — מרוכז':''} · ${st.tms.toUpperCase()} ${gr.v} · ${gr.n} יחידות</span>`).join('');
+ const a=t.groups[0].path.at(-1), b=t.groups.at(-1).path.at(-1);
  document.getElementById('tfoot2').innerHTML=
   `בסוף התקופה: מפוזר ${a>0?'+':''}${a.toFixed(1)}% · מרוכז ${b>0?'+':''}${b.toFixed(1)}% · <b style="color:var(--ink)">פער ${(b-a)>0?'+':''}${(b-a).toFixed(1)} נקודות</b>. `+
-  `חלוקת המחזור בין השלישונים: ${t.groups.map(gr=>gr.rev.toFixed(1)+'%').join(' · ')}.`;
+  `חלוקת המחזור בין הקבוצות: ${t.groups.map(gr=>gr.rev.toFixed(1)+'%').join(' · ')}.`;
 }
 function ahover(ev,G,svgId,ovId,tipId,mode){
  if(!G.xs) return;
@@ -615,12 +642,12 @@ function ahover(ev,G,svgId,ovId,tipId,mode){
         `<div class="r"><span>רווח 95%</span><span>${(v-1.96*s).toFixed(2)} — ${(v+1.96*s).toFixed(2)}</span></div>`+
         `<div class="r"><span>p</span><span>${G.r.p[i]<0.001?'<0.001':G.r.p[i].toFixed(3)}</span></div>`;
  } else {
-  const COL=['--t1','--t2','--t3'];
-  G.t.groups.forEach((gr,j)=>{const v=gr.path[i];
-   ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4" fill="var(${COL[j]})" stroke="var(--surf)" stroke-width="1.6"/>`;
-   body+=`<div class="r"><span>שלישון ${gr.t}</span><span>${(v>0?'+':'')+v.toFixed(1)}%</span></div>`;});
-  const d=G.t.groups[2].path[i]-G.t.groups[0].path[i];
-  body+=`<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>פער 3−1</span><span>${(d>0?'+':'')+d.toFixed(1)} נק׳</span></div>`;
+  const COL=['--t1','--t2','--t3'], K=G.t.k||3;
+  G.t.groups.forEach((gr,j)=>{const v=gr.path[i], cj=K===2?j*2:j;
+   ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4" fill="var(${COL[cj]})" stroke="var(--surf)" stroke-width="1.6"/>`;
+   body+=`<div class="r"><span>${K===2?'מחצית':'שלישון'} ${gr.t}</span><span>${(v>0?'+':'')+v.toFixed(1)}%</span></div>`;});
+  const d=G.t.groups.at(-1).path[i]-G.t.groups[0].path[i];
+  body+=`<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>פער עליון−תחתון</span><span>${(d>0?'+':'')+d.toFixed(1)} נק׳</span></div>`;
  }
  document.getElementById(ovId).innerHTML=ov;
  tp.innerHTML=body; tp.classList.add('on');
@@ -645,13 +672,14 @@ SUB.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;
 sub1.children[0].classList.add('on');
 
 /* ================= imports ================= */
-const IM=[['fx_v2','חשיפת מט״ח v2'],['fx_v3','חשיפת מט״ח v3'],['imp_share','נתח יבוא']];
+const IM=[['fx_v3','חשיפת מט״ח'],['imp_share','נתח יבוא']];
 const CM=[['cr3','CR3'],['hhi','HHI']];
-Object.assign(st,{ilv:'cat',ism:'no_meat',ims:'fx_v2',iwt:'w',
-                  itlv:'cat',itsm:'no_meat',itms:'fx_v2',
-                  dlv:'cat',dsm:'no_meat',dcm:'cr3',dfm:'fx_v2'});
-seg('i_lv',AL,'ilv',()=>iDraw()); seg('i_sm',AS,'ism',()=>iDraw()); seg('i_ms',IM,'ims',()=>iDraw()); seg('i_wt',AW,'iwt',()=>iDraw());
+Object.assign(st,{ilv:'cat',ism:'no_meat',ims:'fx_v3',iwt:'w',ifq:'m',
+                  itlv:'cat',itsm:'no_meat',itms:'fx_v3',itk:'3',itfq:'m',
+                  dlv:'cat',dsm:'no_meat',dcm:'cr3',dfm:'fx_v3'});
+seg('i_lv',AL,'ilv',()=>iDraw()); seg('i_sm',AS,'ism',()=>iDraw()); seg('i_ms',IM,'ims',()=>iDraw()); seg('i_wt',AW,'iwt',()=>iDraw()); seg('i_fq',AF,'ifq',()=>iDraw());
 seg('it_lv',AL,'itlv',()=>itDraw()); seg('it_sm',AS,'itsm',()=>itDraw()); seg('it_ms',IM,'itms',()=>itDraw());
+seg('it_k',AK,'itk',()=>itDraw()); seg('it_fq',AF,'itfq',()=>itDraw());
 seg('d_lv',AL,'dlv',()=>dsDraw()); seg('d_sm',AS,'dsm',()=>dsDraw()); seg('d_cm',CM,'dcm',()=>dsDraw()); seg('d_fm',IM,'dfm',()=>dsDraw());
 const IG={},ITG={};
 
@@ -668,17 +696,17 @@ function evChart(svgId,ovId,r,col,G){
  g+=`<path d="${r.est.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${col})" stroke-width="2.1"/>`;
  g+=`<rect x="${P.l}" y="${P.t}" width="${xs(11)-P.l}" height="${ih}" fill="var(--ink3)" opacity=".05"/>`;
  g+=`<text x="${(P.l+xs(11))/2}" y="${P.t+13}" text-anchor="middle" fill="var(--ink3)" font-size="10.5">בסיס 2022</text>`;
- m.forEach((mm,i)=>{if(mm.slice(5)==='01') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  document.getElementById(svgId).innerHTML=g+`<g id="${ovId}"></g>`;
 }
 function iDraw(){
- ['i_lv','i_sm','i_ms','i_wt'].forEach(segSync);
- const r=I.runs[`${st.ilv}|${st.ism}|${st.ims}|${st.iwt}`]; if(!r) return;
+ ['i_lv','i_sm','i_ms','i_wt','i_fq'].forEach(segSync);
+ const r=I.runs[`${st.ilv}|${st.ifq}|${st.ism}|${st.ims}|${st.iwt}`]; if(!r) return;
  evChart('ich','iov',r,'--acc2',IG);
  const last=r.est.at(-1);
  document.getElementById('ifoot').innerHTML=
   `${r.n} ${st.ilv==='cat'?'קטגוריות':'תת-קטגוריות'} · מדד ${IM.find(x=>x[0]===st.ims)[1]} ממוצע ${r.mean_v} (ס״ת ${r.sd_v}) · `+
-  `<b style="color:var(--ink)">${r.months.at(-1).replace('-','/')}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${r.p.at(-1)<0.001?'<0.001':r.p.at(-1).toFixed(3)}) · `+
+  `<b style="color:var(--ink)">${mlab(r.months.at(-1))}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${r.p.at(-1)<0.001?'<0.001':r.p.at(-1).toFixed(3)}) · `+
   `ממוצע התקופה שאחרי 2022: ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% (p=${r.avg[2].toFixed(3)}) · F: p=${r.joint_p<1e-4?r.joint_p.toExponential(1):r.joint_p.toFixed(4)}`;
  iNote();
 }
@@ -690,21 +718,26 @@ function pathChart(svgId,ovId,t,G){
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
  Object.assign(G,{y,xs,W,P,iw,ih,t,m});
  const COL=['--t1','--t2','--t3'];
+ document.getElementById('tk_ttl').textContent=t.k===2?'מחציות':'שלישוני';
+ document.getElementById('tk_txt').textContent=t.k===2?'שתי מחציות':'שלושה שלישונים';
  let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(0)+'%',nice(lo,hi,5));
  t.groups.forEach((gr,i)=>{
-  g+=`<path d="${gr.path.map((v,j)=>`${j?'L':'M'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[i]})" stroke-width="2.2"/>`;
-  g+=`<circle cx="${xs(m.length-1)}" cy="${y(gr.path.at(-1))}" r="3.6" fill="var(${COL[i]})"/>`;});
- m.forEach((mm,i)=>{if(mm.slice(5)==='01') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+  const ci=t.k===2?i*2:i;
+  g+=`<path d="${gr.path.map((v,j)=>`${j?'L':'M'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[ci]})" stroke-width="2.2"/>`;
+  g+=`<circle cx="${xs(m.length-1)}" cy="${y(gr.path.at(-1))}" r="3.6" fill="var(${COL[ci]})"/>`;});
+ m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  document.getElementById(svgId).innerHTML=g+`<g id="${ovId}"></g>`;
 }
 function itDraw(){
- ['it_lv','it_sm','it_ms'].forEach(segSync);
- const t=I.terc[`${st.itlv}|${st.itsm}|${st.itms}`]; if(!t) return;
+ ['it_lv','it_sm','it_ms','it_k','it_fq'].forEach(segSync);
+ const t=I.terc[`${st.itlv}|${st.itfq}|${st.itsm}|${st.itms}|${st.itk}`]; if(!t) return;
  pathChart('itch','itov',t,ITG);
+ document.getElementById('itk_ttl').textContent=t.k===2?'מחציות':'שלישוני';
+ document.getElementById('itk_txt').textContent=t.k===2?'מחציות':'שלישונים';
  const COL=['--t1','--t2','--t3'], nm=IM.find(x=>x[0]===st.itms)[1];
  document.getElementById('itleg').innerHTML=t.groups.map((gr,i)=>
-  `<span><i style="background:var(${COL[i]})"></i>שלישון ${gr.t}${gr.t===1?' — חשיפה נמוכה':gr.t===3?' — חשיפה גבוהה':''} · ${nm} ${gr.v} · ${gr.n} ${st.itlv==='cat'?'קט׳':'תת-קט׳'}</span>`).join('');
- const a=t.groups[0].path.at(-1), b=t.groups[2].path.at(-1);
+  `<span><i style="background:var(${COL[t.k===2?i*2:i]})"></i>${t.k===2?'מחצית':'שלישון'} ${gr.t}${gr.t===1?' — חשיפה נמוכה':gr.t===t.k?' — חשיפה גבוהה':''} · ${nm} ${gr.v} · ${gr.n} ${st.itlv==='cat'?'קט׳':'תת-קט׳'}</span>`).join('');
+ const a=t.groups[0].path.at(-1), b=t.groups.at(-1).path.at(-1);
  document.getElementById('itfoot').innerHTML=
   `בסוף התקופה: חשיפה נמוכה ${a>0?'+':''}${a.toFixed(1)}% · חשיפה גבוהה ${b>0?'+':''}${b.toFixed(1)}% · `+
   `<b style="color:var(--ink)">פער ${(b-a)>0?'+':''}${(b-a).toFixed(1)} נקודות</b>.`;
@@ -712,7 +745,7 @@ function itDraw(){
 const RL=['ריכוזיות נמוכה','ריכוזיות בינונית','ריכוזיות גבוהה'];
 function dsDraw(){
  ['d_lv','d_sm','d_cm','d_fm'].forEach(segSync);
- const d=I.ds[`${st.dlv}|${st.dsm}|${st.dcm}|${st.dfm}`]; if(!d) return;
+ const d=I.ds[`${st.dlv}|m|${st.dsm}|${st.dcm}|${st.dfm}`]; if(!d) return;
  const nm=IM.find(x=>x[0]===st.dfm)[1];
  const CL=[`${nm} נמוך`,`${nm} בינוני`,`${nm} גבוה`];
  document.getElementById('dstb').innerHTML=
@@ -753,9 +786,9 @@ function dsDraw(){
   `${(d.cells[2][0].idx-d.cells[0][0].idx).toFixed(1)} נקודות.`;
 }
 function iNote(){
- const u=I.runs[`${st.ilv}|${st.ism}|${st.ims}|u`];
- const d=I.ds[`${st.ilv}|${st.ism}|cr3|${st.ims}`];
- const hh=I.runs[`${st.ilv}|no_meat|fx_v2|w`];
+ const u=I.runs[`${st.ilv}|${st.ifq}|${st.ism}|${st.ims}|u`];
+ const d=I.ds[`${st.ilv}|m|${st.ism}|cr3|${st.ims}`];
+ const hh=I.runs[`${st.ilv}|${st.ifq}|no_meat|fx_v3|w`];
  document.getElementById('inote').innerHTML=
   `<p class="note"><b>זה הממצא החזק ביותר בכל הניתוח — וגם הוא לא עובר את הרף.</b> חשיפת מט״ח, משוקלל, ללא בשר ועוף, ברמת ${st.ilv==='cat'?'קטגוריה':'תת-קטגוריה'}: ${hh.avg[0].toFixed(2)}% לכל ס״ת עם p=${hh.avg[2].toFixed(3)}. הסימן הוא הצפוי: השקל התחזק בתקופה, וקטגוריות חשופות יותר לייבוא התייקרו פחות. המקדם של החודש האחרון כן מובהק (${hh.est.at(-1).toFixed(2)}%, p=${hh.p.at(-1).toFixed(3)}), אבל הממוצע על פני כל התקופה אינו, והמפרט הלא־משוקלל מאפס את זה לגמרי (${(u.avg[0]>0?'+':'')+u.avg[0].toFixed(2)}%).</p>`+
   `<p class="note" style="margin-top:14px"><b>שלישוני החשיפה הם החתך היחיד שנשאר מונוטוני</b> בכל דגימה ובכל מדד — בניגוד לשלישוני הריכוזיות, שמתהפכים. זו הסיבה שאני נוטה יותר אמון בכיוון של הייבוא מאשר בזה של הריכוזיות, גם אם אף אחד מהם לא מגיע למובהקות.</p>`+

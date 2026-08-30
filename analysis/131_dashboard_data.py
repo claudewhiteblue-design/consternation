@@ -116,6 +116,13 @@ def conc(d,keys):
     n=s.groupby(keys).g.nunique()
     return pd.DataFrame(dict(hhi=hhi,cr3=cr3,n=n,rev=tot)).reset_index()
 
+raw['q']=raw.month.str[:4]+'-Q'+(((raw.month.str[5:7].astype(int)-1)//3)+1).astype(str)
+_nm=raw.groupby('q').month.nunique()
+QOK=sorted(_nm[_nm==3].index)          # drop the incomplete trailing quarter
+rawq=raw[raw.q.isin(QOK)].copy()
+rawq['month']=rawq.q
+print(f'רבעונים מלאים: {len(QOK)} ({QOK[0]}–{QOK[-1]})')
+
 series={}
 for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.bucket])]:
     S={}
@@ -138,6 +145,24 @@ for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.buc
                 'rev':[round(float(x),1) for x in gsub.rev]}
     series[tag]=S
     print(f'{tag}: {len(S)} סדרות')
+
+# --- the same, on quarters (shares recomputed on quarterly revenue, not averaged) ---
+seriesq={}
+for tag,dd in [('כולל מאגדים',rawq),('ללא מאגדים',rawq[~rawq.bucket])]:
+    S={}
+    m=conc(dd,['month']).set_index('month').reindex(QOK)
+    S['__market__']={'hhi':[round(float(x)) for x in m.hhi],'cr3':[round(float(x),1) for x in m.cr3],
+                     'n':[int(x) for x in m.n],'rev':[round(float(x),1) for x in m.rev]}
+    for lvl,key in [('dep','dep'),('cat','cat')]:
+        z=conc(dd,['month',key])
+        for name,gsub in z.groupby(key):
+            gsub=gsub.set_index('month').reindex(QOK)
+            if gsub.rev.notna().sum()<len(QOK): continue
+            S[f'{lvl}|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
+                'cr3':[round(float(x),1) for x in gsub.cr3],'n':[int(x) for x in gsub.n],
+                'rev':[round(float(x),1) for x in gsub.rev]}
+    seriesq[tag]=S
+    print(f'{tag} (רבעוני): {len(S)} סדרות')
 
 
 # ---------- (C) top suppliers inside each department / category ----------
@@ -210,12 +235,37 @@ for cat,sub in cm.groupby('cat'):
     if sub.month.nunique()==len(months): idx['cat|'+cat]=idx_block(sub)
 print(f'מדדי כמות/מחיר/יבוא: {len(idx)} סדרות (בסיס {BASE})')
 
+# --- quarterly index: quantities summed inside the quarter, price re-derived ---
+cq=rawq.groupby(['cat','month']).apply(lambda x: pd.Series({
+    'rev':x.rev.sum(),'qty':x.qty.sum(),
+    'impnum':(x.rev*x.p_imp).sum(),'impden':x.rev[x.p_imp.notna()].sum()}),
+    include_groups=False).reset_index()
+cq['price']=cq.rev/cq.qty
+q0=cq[cq.month==QOK[0]].set_index('cat')
+cq['qrel']=cq.qty/cq.cat.map(q0.qty); cq['prel']=cq.price/cq.cat.map(q0.price)
+cq['w22']=cq.cat.map(raw[raw.month.str[:4]=='2022'].groupby('cat').rev.sum())
+cq=cq[np.isfinite(cq.qrel)&np.isfinite(cq.prel)&cq.w22.notna()]
+cq['dep']=cq.cat.map(c2d)
+def idx_blockq(sub):
+    g=sub.groupby('month').apply(lambda x: pd.Series({
+        'q':100*np.average(x.qrel,weights=x.w22),'p':100*np.average(x.prel,weights=x.w22),
+        'imp':100*x.impnum.sum()/x.impden.sum() if x.impden.sum()>0 else np.nan,
+        'res':100*x.impden.sum()/x.rev.sum()}),include_groups=False).reindex(QOK)
+    return {'q':[round(float(v),1) for v in g.q],'p':[round(float(v),1) for v in g.p],
+            'imp':[None if not np.isfinite(v) else round(float(v),1) for v in g.imp],
+            'res':[round(float(v),0) for v in g.res]}
+idxq={'__market__':idx_blockq(cq)}
+for dep,sub in cq.groupby('dep'): idxq['dep|'+dep]=idx_blockq(sub)
+for cat,sub in cq.groupby('cat'):
+    if sub.month.nunique()==len(QOK): idxq['cat|'+cat]=idx_blockq(sub)
+print(f'מדדים רבעוניים: {len(idxq)} סדרות (בסיס {QOK[0]})')
+
 deps=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('dep|')})
 cats=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('cat|')})
 cat2dep=raw.groupby('cat').dep.agg(lambda s:s.mode().iat[0]).to_dict()
 rev26=raw[raw.month.str[:4]=='2026'].groupby('cat').rev.sum().to_dict()
 json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,tops=tops,
-    idx=idx,base=BASE,
+    idx=idx,base=BASE,seriesq=seriesq,idxq=idxq,quarters=QOK,baseq=QOK[0],
     cat2dep={k:v for k,v in cat2dep.items() if k in cats},
     catrev={k:round(float(v),1) for k,v in rev26.items() if k in cats}),
     open('/home/user/consternation/analysis/dash_data.json','w'),ensure_ascii=False)
