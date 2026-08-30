@@ -17,10 +17,16 @@ c=duckdb.connect(); c.execute("SET enable_progress_bar=false")
 OUT='/home/user/consternation/analysis/analyses_data.json'
 EXDEP=['עוף/הודו טרי ארוז','קצביה עוף טרי','קצביה בשרית טרי','בשר ועוף קפוא',
        'קצביה הודו/בעלי כנף טרי','קצביה בשרית מופשר']
-# Disposable tableware is excluded from every regression, at both resolutions: its
-# unit value is dominated by pack-size mix rather than price, and it is the only
-# category in its department, so dropping the category drops it cleanly at both levels.
-EXCAT=['כלים חד פעמים']
+# Categories excluded from EVERY regression, at both resolutions (they remain in the
+# descriptive overview page). Excluding by CATEGORY name also removes all of that
+# category's sub-categories, so nothing leaks back in through an aggregate.
+#   - disposable tableware: unit value is driven by pack-size mix, not price
+#   - soft drinks: unit value is driven by pack format (bottle/can/multipack) mix
+# "משקה קולה" was matched to "משקה קולה רגיל" and "תה קר ונקטר" to the two separate
+# categories "תה קר" and "נקטר" -- those are the names that exist in the data.
+EXCAT=['כלים חד פעמים',
+       'מים מועשרים','מיץ טבעי סחוט מקורר','משקאות מוגזים טעמי פירות','משקאות קלים',
+       'משקה מוגז עדין בטעמים','משקה קולה רגיל','משקה קולה דיאט','תה קר','נקטר']
 R='"מכר כספי (מיליוני ₪)"'; SQ='"כמות סטנדרטית"'
 SRC={'cat':("'/home/user/consternation/retail_sales_2022_2026.parquet'",'"קטגוריה"'),
      'sub':("'/tmp/subcat_std.parquet'",'"תת קטגוריה"')}
