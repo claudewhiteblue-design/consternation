@@ -152,6 +152,20 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <p class="foot" id="tfoot2"></p>
 </div>
 
+<div class="card">
+ <h2>אינטראקציה: ריכוזיות × חשיפה לייבוא</h2>
+ <p class="cs" style="max-width:82ch">אותה אמידה, עם שלושה רגרסורים חוצי־חתך במקום אחד: ריכוזיות, חשיפה לייבוא, <b>והמכפלה שלהם</b> — כולם מוכפלים בכל תקופה. שני הקווים הם <b>אותו מקדם ריכוזיות בשתי נקודות</b> על ציר החשיפה: ביחידות עם חשיפה נמוכה (סטיית תקן אחת מתחת לממוצע) וגבוהה (אחת מעל). המרחק ביניהם הוא בדיוק פי שניים מהמקדם על המכפלה, θ, והוא הנבדק בפועל.</p>
+ <div class="ctl">
+  <div class="seg" id="x_lv"></div><div class="seg" id="x_sm"></div><div class="seg" id="x_cm"></div>
+  <div class="seg" id="x_fm"></div><div class="seg" id="x_wt"></div><div class="seg" id="x_fq"></div>
+ </div>
+ <div class="leg"><span><i style="background:var(--t1)"></i>ריכוזיות בחשיפת ייבוא נמוכה</span>
+  <span><i style="background:var(--t3)"></i>ריכוזיות בחשיפת ייבוא גבוהה</span></div>
+ <div class="scroll"><div class="chwrap"><svg id="xch" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="xtip"></div></div></div>
+ <p class="foot" id="xfoot"></p>
+</div>
+
 <div class="card"><h2>איך לקרוא את זה</h2><div id="anote"></div></div>
 </div><!-- /s0 -->
 
@@ -206,6 +220,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 <script>
 const D=__DATA__;
 const A=__ADATA__;
+const XI=__XDATA__;
 const I=__IDATA__;
 let M=D.months; const T=D.table;
 let FQ='m';
@@ -600,6 +615,7 @@ function aNote(){
   `<p class="note"><b>מבחן F מובהק מאוד, מקדם ממוצע לא מובהק — וזה לא סתירה.</b> ה־F שואל האם <em>איזשהו</em> חודש חורג מהבסיס, וכמעט תמיד התשובה כן. המקדם הממוצע שואל האם יש <em>פער מתמשך</em> לכיוון אחד, ועל זה אין כאן תשובה חיובית: ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% עם p=${r.avg[2].toFixed(2)}. השאלה הכלכלית היא השנייה.</p>`+
   `<p class="note" style="margin-top:14px"><b>המשקל הופך את הסימן.</b> באותו מפרט בדיוק, ${st.wt==='w'?'משוקלל':'משקל שווה'} נותן ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% ו${st.wt==='w'?'משקל שווה':'משוקלל'} נותן ${(other.avg[0]>0?'+':'')+other.avg[0].toFixed(2)}%. הסימן תלוי בשאלה אם מודדים "הקטגוריה הממוצעת" או "השקל הממוצע" — ההבדל אמיתי, אבל הוא אומר שהמסקנה רגישה למפרט ולא יציבה.</p>`+
   `<p class="note" style="margin-top:14px">החלף בין CR3 ל־HHI, בין הרמות ובין הדגימות: <b>הסימן מתהפך על פני חתכים</b>. זה הממצא המרכזי כאן — לא "ריכוזיות מייקרת" ולא "לא מייקרת", אלא שהאמידה אינה חזקה מספיק כדי להכריע.</p>`+
+  `<p class="note" style="margin-top:14px"><b>ובכל זאת יש כאן דבר אחד יציב — האינטראקציה.</b> המקדם על המכפלה ריכוזיות×ייבוא יצא <b>חיובי ב־64 מתוך 64 המפרטים</b> שהרצתי, ובגרסה המשוקללת הוא עובר p&lt;0.10 ב־28 מתוך 32. זה בניגוד גמור לאפקט הריכוזיות לבדו, שמתהפך בסימן. הקריאה: הריכוזיות כשלעצמה לא מייקרת, אבל ביחידות החשופות לייבוא היא <em>חוסמת את ההוזלה</em> שהייסוף היה אמור להביא.</p>`+
   `<p class="note" style="margin-top:14px"><b>שיטה:</b> אפקטים קבועים ליחידה נספגים בניכוי ממוצע היחידה (Frisch–Waugh); אימתתי מול רגרסיה עם דמי־יחידה מלאים ברמת הקטגוריה — האומדנים זהים עד שלוש ספרות אחרי הנקודה, ושגיאות התקן נבדלות בכ־1% בגלל תיקון דרגות חופש.</p>`;
 }
 function tDraw(){
@@ -800,5 +816,67 @@ function iNote(){
  el.addEventListener('mousemove',e=>ahover(e,k?ITG:IG,id,k?'itov':'iov',k?'ittip':'itip',k?'t':'a'));
  el.addEventListener('mouseleave',()=>{const tp=document.getElementById(k?'ittip':'itip');tp.classList.remove('on');
   const o=document.getElementById(k?'itov':'iov'); if(o)o.innerHTML='';});});
+
+/* ================= concentration x import interaction ================= */
+Object.assign(st,{xlv:'cat',xsm:'no_meat',xcm:'cr3',xfm:'fx_v3',xwt:'w',xfq:'m'});
+seg('x_lv',AL,'xlv',()=>xDraw()); seg('x_sm',AS,'xsm',()=>xDraw());
+seg('x_cm',AM,'xcm',()=>xDraw()); seg('x_fm',IM,'xfm',()=>xDraw());
+seg('x_wt',AW,'xwt',()=>xDraw()); seg('x_fq',AF,'xfq',()=>xDraw());
+const XG={};
+function xDraw(){
+ ['x_lv','x_sm','x_cm','x_fm','x_wt','x_fq'].forEach(segSync);
+ const r=XI[`${st.xlv}|${st.xfq}|${st.xsm}|${st.xcm}|${st.xfm}|${st.xwt}`]; if(!r) return;
+ const m=r.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
+ const xs=i=>P.l+iw*i/(m.length-1);
+ const bands=['lo','hi'].map(k=>({k,e:r[k].est,s:r[k].se}));
+ const all=bands.flatMap(b=>b.e.map((v,i)=>[v-1.96*b.s[i],v+1.96*b.s[i]]).flat());
+ let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
+ const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
+ Object.assign(XG,{y,xs,W,P,iw,ih,r,m});
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
+ const COL={lo:'--t1',hi:'--t3'};
+ bands.forEach(b=>{
+  const up=b.e.map((v,i)=>v+1.96*b.s[i]), dn=b.e.map((v,i)=>v-1.96*b.s[i]);
+  g+=`<path d="${up.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}`+
+     `${dn.map((v,i)=>`L${xs(dn.length-1-i).toFixed(1)},${y(dn[dn.length-1-i]).toFixed(1)}`).join('')}Z" fill="var(${COL[b.k]})" opacity=".14"/>`;});
+ bands.forEach(b=>{
+  g+=`<path d="${b.e.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[b.k]})" stroke-width="2.2"/>`;});
+ const nb=m.filter(x=>x.slice(0,4)==='2022').length-1;
+ g+=`<rect x="${P.l}" y="${P.t}" width="${xs(nb)-P.l}" height="${ih}" fill="var(--ink3)" opacity=".05"/>`;
+ g+=`<text x="${(P.l+xs(nb))/2}" y="${P.t+13}" text-anchor="middle" fill="var(--ink3)" font-size="10.5">בסיס 2022</text>`;
+ m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ document.getElementById('xch').innerHTML=g+'<g id="xov"></g>';
+ const L=r.lo.avg, H=r.hi.avg, TH=r.int.avg;
+ const pf2=p=>p<0.001?'<0.001':p.toFixed(3);
+ document.getElementById('xfoot').innerHTML=
+  `${r.n} יחידות · מתאם ${st.xcm.toUpperCase()}–${IM.find(x=>x[0]===st.xfm)[1]}: ${r.corr>0?'+':''}${r.corr} · ממוצע כל התקופה שאחרי 2022:<br>`+
+  `<span style="color:var(--ink2)">מקדם הריכוזיות בחשיפה נמוכה <b style="color:var(--ink)">${(L[0]>0?'+':'')+L[0].toFixed(2)}%</b> (p=${pf2(L[2])}) · `+
+  `בחשיפה גבוהה <b style="color:var(--ink)">${(H[0]>0?'+':'')+H[0].toFixed(2)}%</b> (p=${pf2(H[2])}) · `+
+  `<b style="color:var(--ink)">θ = ${(TH[0]>0?'+':'')+TH[0].toFixed(2)}%</b> לכל ס״ת של חשיפה (p=${pf2(TH[2])}, F: p=${r.int.joint_p<1e-4?r.int.joint_p.toExponential(1):r.int.joint_p.toFixed(4)})</span>`;
+}
+document.getElementById('xch').addEventListener('mousemove',e=>{
+ const G=XG; if(!G.xs) return;
+ const el=document.getElementById('xch'), tp=document.getElementById('xtip');
+ const rc=el.getBoundingClientRect(), xv=(e.clientX-rc.left)*(G.W/rc.width);
+ let i=Math.round((xv-G.P.l)/G.iw*(G.m.length-1)); i=Math.max(0,Math.min(G.m.length-1,i));
+ const x=G.xs(i);
+ let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
+ ov+=`<circle cx="${x}" cy="${G.y(G.r.lo.est[i])}" r="4.2" fill="var(--t1)" stroke="var(--surf)" stroke-width="1.6"/>`;
+ ov+=`<circle cx="${x}" cy="${G.y(G.r.hi.est[i])}" r="4.2" fill="var(--t3)" stroke="var(--surf)" stroke-width="1.6"/>`;
+ document.getElementById('xov').innerHTML=ov;
+ const th=G.r.int.est[i], tp2=G.r.int.p[i];
+ tp.innerHTML=`<b>${mlab(G.m[i])}</b>`+
+  `<div class="r"><span>חשיפה נמוכה</span><span>${(G.r.lo.est[i]>0?'+':'')+G.r.lo.est[i].toFixed(2)}%</span></div>`+
+  `<div class="r"><span>חשיפה גבוהה</span><span>${(G.r.hi.est[i]>0?'+':'')+G.r.hi.est[i].toFixed(2)}%</span></div>`+
+  `<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>θ</span><span>${(th>0?'+':'')+th.toFixed(2)}% (p=${tp2<0.001?'<0.001':tp2.toFixed(3)})</span></div>`;
+ tp.classList.add('on');
+ const px=x/G.W*rc.width, tw=tp.offsetWidth;
+ tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+18:px-tw-18))+'px';
+ tp.style.top='4px';
+});
+document.getElementById('xch').addEventListener('mouseleave',()=>{
+ document.getElementById('xtip').classList.remove('on');
+ const o=document.getElementById('xov'); if(o)o.innerHTML='';});
+xDraw();
 
 </script>
