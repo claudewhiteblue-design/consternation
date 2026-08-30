@@ -56,25 +56,25 @@ for level in ['cat','sub']:
       us=W.index.tolist(); meta=u.loc[us]
       w=x[x.month.str[:4]=='2022'].groupby('u').rev.sum().reindex(us).fillna(0).values
       L=W.values; Lr=L-L[:,:12].mean(axis=1,keepdims=True)
-      def terc(v):
+      def terc(v,K):
           o=np.argsort(v); cw=np.cumsum(w[o])/w.sum()
-          g=np.empty(len(v),dtype=int); g[o]=np.digitize(cw,[1/3,2/3]); return g
+          g=np.empty(len(v),dtype=int); g[o]=np.digitize(cw,[i/K for i in range(1,K)]); return g
       for cm in ['cr3','hhi']:
           for fm in ['fx_v3','imp_share']:
-              gc,gf=terc(meta[cm].values),terc(meta[fm].values)
+            for K in [2,3]:
+              gc,gf=terc(meta[cm].values,K),terc(meta[fm].values,K)
               cells=[]
-              for i in range(3):
+              for i in range(K):
                   row=[]
-                  for j in range(3):
+                  for j in range(K):
                       m=(gc==i)&(gf==j); rv=float(w[m].sum())
                       row.append(dict(rev=round(rv,1),n=int(m.sum()),
-                          idx=round(100*float(np.exp(np.average(Lr[m][:,-1],weights=w[m]))),1) if m.sum() else None,
-                          path=[round(100*float(np.exp(np.average(Lr[m][:,t],weights=w[m]))),1) for t in range(len(months))] if m.sum() else None))
+                          idx=round(100*float(np.exp(np.average(Lr[m][:,-1],weights=w[m]))),1) if m.sum() else None))
                   cells.append(row)
-              RES['ds'][f'{sk}|{cm}|{fm}']=dict(months=months,cells=cells,
-                  rowtot=[round(float(w[gc==i].sum()),1) for i in range(3)],
-                  cmean=[round(float(np.average(meta[cm].values[gc==i],weights=w[gc==i])),1) for i in range(3)],
-                  fmean=[round(float(np.average(meta[fm].values[gf==j],weights=w[gf==j])),1) for j in range(3)],
+              RES['ds'][f'{sk}|{cm}|{fm}|{K}']=dict(months=months,k=K,cells=cells,
+                  rowtot=[round(float(w[gc==i].sum()),1) for i in range(K)],
+                  cmean=[round(float(np.average(meta[cm].values[gc==i],weights=w[gc==i])),1) for i in range(K)],
+                  fmean=[round(float(np.average(meta[fm].values[gf==j],weights=w[gf==j])),1) for j in range(K)],
                   corr=round(float(np.corrcoef(meta[cm].values,meta[fm].values)[0,1]),3))
 json.dump(RES,open(OUT,'w'),ensure_ascii=False)
 print('saved',OUT)

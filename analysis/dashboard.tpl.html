@@ -185,15 +185,16 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="card">
  <h2>קודם כל: השניים חופפים מבנית</h2>
- <p class="cs" style="max-width:82ch">התפלגות שלישוני החשיפה בתוך כל שלישון ריכוזיות, באחוזי מכר 2022. המתאם הרציף ביניהם חלש — אבל בקצוות החפיפה חזקה מאוד, ולכן אי אפשר לקרוא כל אחד מהם כאילו השני אינו קיים.</p>
- <div class="ctl"><div class="seg" id="d_lv"></div><div class="seg" id="d_sm"></div><div class="seg" id="d_cm"></div><div class="seg" id="d_fm"></div></div>
+ <p class="cs" style="max-width:82ch">התפלגות קבוצות החשיפה בתוך כל קבוצת ריכוזיות, באחוזי מכר 2022. המתאם הרציף ביניהם חלש — אבל בקצוות החפיפה חזקה מאוד, ולכן אי אפשר לקרוא כל אחד מהם כאילו השני אינו קיים.</p>
+ <div class="ctl"><div class="seg" id="d_lv"></div><div class="seg" id="d_sm"></div><div class="seg" id="d_cm"></div>
+  <div class="seg" id="d_fm"></div><div class="seg" id="d_k"></div></div>
  <div class="scroll"><table id="dstb"></table></div>
  <p class="foot" id="dsfoot"></p>
 </div>
 
 <div class="card">
  <h2 id="dshttl"></h2>
- <p class="cs">כל תא הוא ההצטלבות של שלישון ריכוזיות ושלישון חשיפה. אדום = התייקרות גבוהה, כחול = נמוכה. בסיס 2022 = 100.</p>
+ <p class="cs">כל תא הוא ההצטלבות של קבוצת ריכוזיות וקבוצת חשיפה. אדום = התייקרות גבוהה, כחול = נמוכה. בסיס 2022 = 100.</p>
  <div class="scroll"><div id="dsheat"></div></div>
  <p class="foot" id="dsh2"></p>
 </div>
@@ -676,11 +677,11 @@ const IM=[['fx_v3','חשיפת מט״ח'],['imp_share','נתח יבוא']];
 const CM=[['cr3','CR3'],['hhi','HHI']];
 Object.assign(st,{ilv:'cat',ism:'no_meat',ims:'fx_v3',iwt:'w',ifq:'m',
                   itlv:'cat',itsm:'no_meat',itms:'fx_v3',itk:'3',itfq:'m',
-                  dlv:'cat',dsm:'no_meat',dcm:'cr3',dfm:'fx_v3'});
+                  dlv:'cat',dsm:'no_meat',dcm:'cr3',dfm:'fx_v3',dk:'3'});
 seg('i_lv',AL,'ilv',()=>iDraw()); seg('i_sm',AS,'ism',()=>iDraw()); seg('i_ms',IM,'ims',()=>iDraw()); seg('i_wt',AW,'iwt',()=>iDraw()); seg('i_fq',AF,'ifq',()=>iDraw());
 seg('it_lv',AL,'itlv',()=>itDraw()); seg('it_sm',AS,'itsm',()=>itDraw()); seg('it_ms',IM,'itms',()=>itDraw());
 seg('it_k',AK,'itk',()=>itDraw()); seg('it_fq',AF,'itfq',()=>itDraw());
-seg('d_lv',AL,'dlv',()=>dsDraw()); seg('d_sm',AS,'dsm',()=>dsDraw()); seg('d_cm',CM,'dcm',()=>dsDraw()); seg('d_fm',IM,'dfm',()=>dsDraw());
+seg('d_lv',AL,'dlv',()=>dsDraw()); seg('d_sm',AS,'dsm',()=>dsDraw()); seg('d_cm',CM,'dcm',()=>dsDraw()); seg('d_fm',IM,'dfm',()=>dsDraw()); seg('d_k',AK,'dk',()=>dsDraw());
 const IG={},ITG={};
 
 function evChart(svgId,ovId,r,col,G){
@@ -744,23 +745,24 @@ function itDraw(){
 }
 const RL=['ריכוזיות נמוכה','ריכוזיות בינונית','ריכוזיות גבוהה'];
 function dsDraw(){
- ['d_lv','d_sm','d_cm','d_fm'].forEach(segSync);
- const d=I.ds[`${st.dlv}|m|${st.dsm}|${st.dcm}|${st.dfm}`]; if(!d) return;
- const nm=IM.find(x=>x[0]===st.dfm)[1];
- const CL=[`${nm} נמוך`,`${nm} בינוני`,`${nm} גבוה`];
+ ['d_lv','d_sm','d_cm','d_fm','d_k'].forEach(segSync);
+ const d=I.ds[`${st.dlv}|m|${st.dsm}|${st.dcm}|${st.dfm}|${st.dk}`]; if(!d) return;
+ const nm=IM.find(x=>x[0]===st.dfm)[1], K=d.k;
+ const CL= K===2?[`${nm} נמוך`,`${nm} גבוה`]:[`${nm} נמוך`,`${nm} בינוני`,`${nm} גבוה`];
+ const RLk= K===2?['ריכוזיות נמוכה','ריכוזיות גבוהה']:RL;
  document.getElementById('dstb').innerHTML=
   '<thead><tr><th></th>'+CL.map(c=>`<th>${c}</th>`).join('')+'<th>סה״כ</th></tr></thead><tbody>'+
   d.cells.map((row,i)=>{const tot=d.rowtot[i];
-   return `<tr><td class="nm">${RL[i]} <span style="color:var(--ink3);font-weight:400">${st.dcm.toUpperCase()} ${d.cmean[i]}</span></td>`+
+   return `<tr><td class="nm">${RLk[i]} <span style="color:var(--ink3);font-weight:400">${st.dcm.toUpperCase()} ${d.cmean[i]}</span></td>`+
     row.map(c=>`<td>${(100*c.rev/tot).toFixed(1)}%<span style="color:var(--ink3)"> · ${c.n}</span></td>`).join('')+
     `<td style="color:var(--ink3)">${fmt(Math.round(tot))} מ׳ ₪</td></tr>`}).join('')+'</tbody>';
- const c0=d.cells[0][2], c2=d.cells[2][0];
+ const c0=d.cells[0].at(-1), c2=d.cells.at(-1)[0];
  document.getElementById('dsfoot').innerHTML=
   `מתאם רציף ${st.dcm.toUpperCase()}–${nm}: <b style="color:var(--ink)">${d.corr>0?'+':''}${d.corr}</b> — חלש. `+
-  `אבל היחידות המפוזרות ברובן חשופות (${(100*c0.rev/d.rowtot[0]).toFixed(1)}% מהן בשלישון החשיפה הגבוה), `+
-  `והמרוכזות ברובן מוגנות (${(100*c2.rev/d.rowtot[2]).toFixed(1)}% בשלישון הנמוך). שני "האפקטים" נמדדים על אותן ${st.dlv==='cat'?'קטגוריות':'תת-קטגוריות'} מכיוונים הפוכים.`;
+  `אבל היחידות המפוזרות ברובן חשופות (${(100*c0.rev/d.rowtot[0]).toFixed(1)}% מהן בקבוצת החשיפה הגבוהה), `+
+  `והמרוכזות ברובן מוגנות (${(100*c2.rev/d.rowtot.at(-1)).toFixed(1)}% בקבוצה הנמוכה). שני "האפקטים" נמדדים על אותן ${st.dlv==='cat'?'קטגוריות':'תת-קטגוריות'} מכיוונים הפוכים.`;
  const last=d.months.at(-1);
- document.getElementById('dshttl').textContent=`מדד המחיר ב־${last.replace('-','/')}, בתשעת התאים`;
+ document.getElementById('dshttl').textContent=`מדד המחיר ב־${last.replace('-','/')}, ב־${K*K} התאים`;
  const vals=d.cells.flat().map(c=>c.idx).filter(v=>v!==null);
  const lo=Math.min(...vals), hi=Math.max(...vals), mid=(lo+hi)/2;
  const col=v=>{const t=(v-mid)/((hi-lo)/2||1);
@@ -768,22 +770,22 @@ function dsDraw(){
              :`rgba(42,120,214,${(0.12+0.62*Math.min(1,-t)).toFixed(3)})`;};
  document.getElementById('dsheat').innerHTML=
   '<table style="min-width:560px"><thead><tr><th></th>'+CL.map(c=>`<th>${c}</th>`).join('')+'</tr></thead><tbody>'+
-  d.cells.map((row,i)=>`<tr><td class="nm">${RL[i]}</td>`+row.map(c=>c.idx===null?'<td>—</td>':
+  d.cells.map((row,i)=>`<tr><td class="nm">${RLk[i]}</td>`+row.map(c=>c.idx===null?'<td>—</td>':
    `<td style="padding:4px"><div style="background:${col(c.idx)};border-radius:7px;padding:12px 8px;text-align:center;font-weight:600;font-size:14px">${c.idx.toFixed(1)}</div></td>`).join('')+'</tr>').join('')+
   '</tbody></table>';
  const colAvg=j=>{const v=d.cells.map(r=>r[j]).filter(c=>c.rev>0);
   return v.reduce((a,c)=>a+c.idx*c.rev,0)/v.reduce((a,c)=>a+c.rev,0)};
  const rowAvg=i=>{const v=d.cells[i].filter(c=>c.rev>0);
   return v.reduce((a,c)=>a+c.idx*c.rev,0)/v.reduce((a,c)=>a+c.rev,0)};
- const cg=colAvg(0)-colAvg(2), rg=rowAvg(2)-rowAvg(0);
+ const cg=colAvg(0)-colAvg(K-1), rg=rowAvg(K-1)-rowAvg(0);
  document.getElementById('dsh2').innerHTML=
-  `שני השוליים נעים, ולא רק אחד. לפי שלישון חשיפה: ${[0,1,2].map(j=>colAvg(j).toFixed(1)).join(' · ')} — `+
+  `שני השוליים נעים, ולא רק אחד. לפי קבוצת חשיפה: ${[...Array(K).keys()].map(j=>colAvg(j).toFixed(1)).join(' · ')} — `+
   `<b style="color:var(--ink)">${cg.toFixed(1)} נקודות</b>, יורד ככל שהחשיפה עולה. `+
-  `לפי שלישון ריכוזיות: ${[0,1,2].map(i=>rowAvg(i).toFixed(1)).join(' · ')} — <b style="color:var(--ink)">${rg.toFixed(1)} נקודות</b>, עולה עם הריכוזיות. `+
+  `לפי קבוצת ריכוזיות: ${[...Array(K).keys()].map(i=>rowAvg(i).toFixed(1)).join(' · ')} — <b style="color:var(--ink)">${rg.toFixed(1)} נקודות</b>, עולה עם הריכוזיות. `+
   `<b style="color:var(--ink)">שני השוליים האלה אינם נקיים זה מזה</b>: בגלל החפיפה בטבלה למעלה, חלק מכל אחד מהם הוא בעצם השני. `+
   `ההשוואה הנקייה היא בתוך שורה או בתוך עמודה — למשל בשורת הריכוזיות הנמוכה הפער בין חשיפה נמוכה לגבוהה הוא `+
-  `${(d.cells[0][0].idx-d.cells[0][2].idx).toFixed(1)} נקודות, ובעמודת החשיפה הנמוכה הפער בין ריכוזיות נמוכה לגבוהה הוא `+
-  `${(d.cells[2][0].idx-d.cells[0][0].idx).toFixed(1)} נקודות.`;
+  `${(d.cells[0][0].idx-d.cells[0].at(-1).idx).toFixed(1)} נקודות, ובעמודת החשיפה הנמוכה הפער בין ריכוזיות נמוכה לגבוהה הוא `+
+  `${(d.cells.at(-1)[0].idx-d.cells[0][0].idx).toFixed(1)} נקודות.`;
 }
 function iNote(){
  const u=I.runs[`${st.ilv}|${st.ifq}|${st.ism}|${st.ims}|u`];
