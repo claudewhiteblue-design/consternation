@@ -17,6 +17,10 @@ c=duckdb.connect(); c.execute("SET enable_progress_bar=false")
 OUT='/home/user/consternation/analysis/analyses_data.json'
 EXDEP=['עוף/הודו טרי ארוז','קצביה עוף טרי','קצביה בשרית טרי','בשר ועוף קפוא',
        'קצביה הודו/בעלי כנף טרי','קצביה בשרית מופשר']
+# Disposable tableware is excluded from every regression, at both resolutions: its
+# unit value is dominated by pack-size mix rather than price, and it is the only
+# category in its department, so dropping the category drops it cleanly at both levels.
+EXCAT=['כלים חד פעמים']
 R='"מכר כספי (מיליוני ₪)"'; SQ='"כמות סטנדרטית"'
 SRC={'cat':("'/home/user/consternation/retail_sales_2022_2026.parquet'",'"קטגוריה"'),
      'sub':("'/tmp/subcat_std.parquet'",'"תת קטגוריה"')}
@@ -43,7 +47,8 @@ def load(level):
     return d
 
 def prep(d,drop_meat):
-    x=d[~d.dep.isin(EXDEP)] if drop_meat else d
+    x=d[~d.cat.isin(EXCAT)]                      # always dropped
+    if drop_meat: x=x[~x.dep.isin(EXDEP)]
     return x.copy()
 
 def to_quarter(x):
