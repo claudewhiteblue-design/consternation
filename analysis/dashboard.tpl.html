@@ -112,7 +112,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
   <div class="tip" id="itip2"></div></div></div>
  <p class="foot" id="ifoot2"></p>
 </div>
-<div class="card">
+<div class="card" id="t10">
  <h2>עשר קבוצות המזון הגדולות</h2>
  <p class="cs" id="tcs"></p>
  <div class="scroll"><table id="tb"></table></div>
@@ -355,6 +355,9 @@ document.addEventListener('click',e=>{if(!cb.contains(e.target)){closeList();
  if(OPTS.length){const o=OPTS.find(x=>x.v===sel); if(o) pk.value=o.t;}}});
 function key(){return lv==='שוק'?'__market__':`${lv}|${sel}`}
 function draw(){
+ // the top-10 table is market-wide; inside a department or category the per-unit
+ // supplier table under the concentration chart already covers it
+ document.getElementById('t10').hidden = (lv!=='שוק');
  START=(FQ==='m'?MAW-1:0);
  [...lvEl.children].forEach((b,i)=>b.classList.toggle('on',LV[i][0]===lv));
  [...bkEl.children].forEach(b=>b.classList.toggle('on',b.textContent===bk));
