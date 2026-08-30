@@ -62,6 +62,9 @@ def panel3(x,cmeas,fmeas,weighted):
     out=dict(months=months,n=N,ncl=int(meta.cat.nunique()),
              corr=round(float(np.corrcoef(z,f)[0,1]),3))
     # concentration effect at f = -1 sd and +1 sd, and the interaction itself
+    # the concentration coefficient at MEAN import exposure -- this is the plain
+    # "concentration, controlling for import" number, and the one that is usually meant
+    out['mid']=contrast(lambda m: e('z',m))
     out['lo'] =contrast(lambda m: e('z',m)-e('x',m))
     out['hi'] =contrast(lambda m: e('z',m)+e('x',m))
     out['int']=contrast(lambda m: e('x',m))
@@ -86,7 +89,7 @@ for level in ['cat','sub']:
                         k=f'{sk}|{cm}|{fm}|{"w" if wt else "u"}'
                         RES[k]=panel3(x,cm,fm,wt)
                         a=RES[k]
-                        print(f'  {k:38} lo={a["lo"]["avg"][0]:+6.2f} hi={a["hi"]["avg"][0]:+6.2f} '
+                        print(f'  {k:38} mid={a["mid"]["avg"][0]:+6.2f}(p={a["mid"]["avg"][2]:.2f}) lo={a["lo"]["avg"][0]:+6.2f} hi={a["hi"]["avg"][0]:+6.2f} '
                               f'θ={a["int"]["avg"][0]:+6.2f} (p={a["int"]["avg"][2]:.3f})')
 json.dump(RES,open(OUT,'w'),ensure_ascii=False)
 print('saved',OUT)
