@@ -22,6 +22,11 @@ EXDEP=['עוף/הודו טרי ארוז','קצביה עוף טרי','קצביה 
 # category's sub-categories, so nothing leaks back in through an aggregate.
 #   - disposable tableware: unit value is driven by pack-size mix, not price
 #   - soft drinks: unit value is driven by pack format (bottle/can/multipack) mix
+# EXDEP_ALL is the same idea one level up: a whole department dropped from every
+# regression, in both samples (unlike EXDEP, which only goes when meat is dropped).
+#   - fresh leaves & herbs: sold by the bunch, so "standard quantity" is a weight
+#     estimate rather than a measurement, and the unit value swings with bunch size.
+EXDEP_ALL=['עלים ותבלינים טריים']
 # "משקה קולה" was matched to "משקה קולה רגיל" and "תה קר ונקטר" to the two separate
 # categories "תה קר" and "נקטר" -- those are the names that exist in the data.
 EXCAT=['כלים חד פעמים',
@@ -54,7 +59,7 @@ def load(level):
     return d
 
 def prep(d,drop_meat):
-    x=d[~d.cat.isin(EXCAT)]                      # always dropped
+    x=d[~d.cat.isin(EXCAT)&~d.dep.isin(EXDEP_ALL)]   # always dropped
     if drop_meat: x=x[~x.dep.isin(EXDEP)]
     return x.copy()
 
