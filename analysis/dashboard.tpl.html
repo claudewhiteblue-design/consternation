@@ -182,6 +182,22 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <p class="foot" id="vfoot"></p>
 </div>
 
+<div class="card">
+ <h2>נוכחות חמש הגדולות</h2>
+ <p class="cs" style="max-width:82ch">בהינתן שתי יחידות באותה רמת ריכוזיות — האם נוכחות של אחת מחמש הקבוצות הגדולות (<b>תנובה, שטראוס, אסם, החברה המרכזית למשקאות, דיפלומט</b>) מייצרת התנהגות מחירים אחרת? נוכחות = נתח 2022 של לפחות אחת מהן מעל הסף הנבחר. הקו הכתום הוא פער המחיר של יחידות עם נוכחות מול כל היתר <b>בבקרה על רמת הריכוזיות</b>; המקווקו — אותו פער בלי הבקרה; הכהה — מקדם הריכוזיות במודל המשותף.</p>
+ <div class="ctl">
+  <div class="seg" id="b_lv"></div><div class="seg" id="b_sm"></div>
+  <div class="seg" id="b_ms"></div><div class="seg" id="b_wt"></div>
+  <div class="seg" id="b_fq"></div><div class="seg" id="b_th"></div>
+ </div>
+ <div class="leg"><span><i style="background:var(--acc2)"></i>פער הנוכחות (בבקרה על ריכוזיות)</span>
+  <span><i style="background:var(--ink3)"></i>פער הנוכחות ללא בקרה</span>
+  <span><i style="background:var(--t3)"></i>מקדם הריכוזיות במודל המשותף</span></div>
+ <div class="scroll"><div class="chwrap"><svg id="bch" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="btip"></div></div></div>
+ <p class="foot" id="bfoot"></p>
+</div>
+
 <div class="card"><h2>איך לקרוא את זה</h2><div id="anote"></div></div>
 </div><!-- /s0 -->
 
@@ -238,6 +254,7 @@ const D=__DATA__;
 const A=__ADATA__;
 const XI=__XDATA__;
 const CC=__CDATA__;
+const B5=__BDATA__;
 const I=__IDATA__;
 let M=D.months; const T=D.table;
 let FQ='m';
@@ -968,5 +985,68 @@ document.getElementById('vch').addEventListener('mouseleave',()=>{
  document.getElementById('vtip').classList.remove('on');
  const o=document.getElementById('vov'); if(o)o.innerHTML='';});
 vDraw();
+
+/* ============ big-five presence ============ */
+const BT=[['10','סף 10%'],['20','סף 20%']];
+Object.assign(st,{blv:'cat',bsm:'no_meat',bms:'cr3',bwt:'w',bfq:'m',bth:'20'});
+seg('b_lv',AL,'blv',()=>bDraw()); seg('b_sm',AS,'bsm',()=>bDraw());
+seg('b_ms',AM,'bms',()=>bDraw()); seg('b_wt',AW,'bwt',()=>bDraw());
+seg('b_fq',AF,'bfq',()=>bDraw()); seg('b_th',BT,'bth',()=>bDraw());
+const BG={};
+function bDraw(){
+ ['b_lv','b_sm','b_ms','b_wt','b_fq','b_th'].forEach(segSync);
+ const r=B5[`${st.blv}|${st.bfq}|${st.bsm}|${st.bms}|${st.bwt}|${st.bth}`]; if(!r) return;
+ const m=r.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
+ const xs=i=>P.l+iw*i/(m.length-1);
+ const B=[{k:'big',c:'--acc2',ci:1},{k:'lvl',c:'--t3',ci:1},{k:'big_only',c:'--ink3',ci:0}];
+ const all=B.filter(b=>b.ci).flatMap(b=>r[b.k].est.map((v,i)=>[v-1.96*r[b.k].se[i],v+1.96*r[b.k].se[i]]).flat())
+   .concat(r.big_only.est);
+ let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
+ const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
+ Object.assign(BG,{y,xs,W,P,iw,ih,r,m});
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
+ B.filter(b=>b.ci).forEach(b=>{const e=r[b.k].est,s2=r[b.k].se;
+  const up=e.map((v,i)=>v+1.96*s2[i]), dn=e.map((v,i)=>v-1.96*s2[i]);
+  g+=`<path d="${up.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}`+
+     `${dn.map((v,i)=>`L${xs(dn.length-1-i).toFixed(1)},${y(dn[dn.length-1-i]).toFixed(1)}`).join('')}Z" fill="var(${b.c})" opacity=".13"/>`;});
+ B.forEach(b=>{
+  g+=`<path d="${r[b.k].est.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${b.c})" stroke-width="${b.ci?2.2:1.8}" ${b.ci?'':'stroke-dasharray="5 3"'}/>`;});
+ const nb=m.filter(x=>x.slice(0,4)==='2022').length-1;
+ g+=`<rect x="${P.l}" y="${P.t}" width="${xs(nb)-P.l}" height="${ih}" fill="var(--ink3)" opacity=".05"/>`;
+ g+=`<text x="${(P.l+xs(nb))/2}" y="${P.t+13}" text-anchor="middle" fill="var(--ink3)" font-size="10.5">בסיס 2022</text>`;
+ m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ document.getElementById('bch').innerHTML=g+'<g id="bov"></g>';
+ const pf2=p=>p<0.001?'<0.001':p.toFixed(3);
+ const A0=r.big_only.avg, A=r.big.avg, Cz=r.lvl.avg;
+ document.getElementById('bfoot').innerHTML=
+  `${r.n} יחידות, נוכחות ב־${r.nbig} (${r.revbig}% מהמכר) · מתאם נוכחות–ריכוזיות ${r.corr>0?'+':''}${r.corr} · ממוצעי כל התקופה שאחרי 2022:<br>`+
+  `<span style="color:var(--ink2)">פער ללא בקרה ${(A0[0]>0?'+':'')+A0[0].toFixed(2)}% (p=${pf2(A0[2])}) · `+
+  `<b style="color:var(--ink)">פער בבקרה על ריכוזיות ${(A[0]>0?'+':'')+A[0].toFixed(2)}% (p=${pf2(A[2])})</b> · `+
+  `מקדם הריכוזיות ${(Cz[0]>0?'+':'')+Cz[0].toFixed(2)}% (p=${pf2(Cz[2])})</span>`;
+}
+document.getElementById('bch').addEventListener('mousemove',e=>{
+ const G=BG; if(!G.xs) return;
+ const el=document.getElementById('bch'), tp=document.getElementById('btip');
+ const rc=el.getBoundingClientRect(), xv=(e.clientX-rc.left)*(G.W/rc.width);
+ let i=Math.round((xv-G.P.l)/G.iw*(G.m.length-1)); i=Math.max(0,Math.min(G.m.length-1,i));
+ const x=G.xs(i);
+ let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
+ ov+=`<circle cx="${x}" cy="${G.y(G.r.big.est[i])}" r="4.2" fill="var(--acc2)" stroke="var(--surf)" stroke-width="1.6"/>`;
+ ov+=`<circle cx="${x}" cy="${G.y(G.r.lvl.est[i])}" r="4.2" fill="var(--t3)" stroke="var(--surf)" stroke-width="1.6"/>`;
+ document.getElementById('bov').innerHTML=ov;
+ const pf3=p=>p<0.001?'<0.001':p.toFixed(3);
+ tp.innerHTML=`<b>${mlab(G.m[i])}</b>`+
+  `<div class="r"><span>פער הנוכחות (בבקרה)</span><span>${(G.r.big.est[i]>0?'+':'')+G.r.big.est[i].toFixed(2)}% (p=${pf3(G.r.big.p[i])})</span></div>`+
+  `<div class="r"><span>מקדם הריכוזיות</span><span>${(G.r.lvl.est[i]>0?'+':'')+G.r.lvl.est[i].toFixed(2)}%</span></div>`+
+  `<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>פער ללא בקרה</span><span>${(G.r.big_only.est[i]>0?'+':'')+G.r.big_only.est[i].toFixed(2)}%</span></div>`;
+ tp.classList.add('on');
+ const px=x/G.W*rc.width, tw=tp.offsetWidth;
+ tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+18:px-tw-18))+'px';
+ tp.style.top='4px';
+});
+document.getElementById('bch').addEventListener('mouseleave',()=>{
+ document.getElementById('btip').classList.remove('on');
+ const o=document.getElementById('bov'); if(o)o.innerHTML='';});
+bDraw();
 
 </script>
