@@ -107,7 +107,7 @@ for level in ['cat','sub']:
     d0=load(level)
     b5=big5_share(level)
     d0=d0.merge(b5,left_on='u',right_index=True,how='left'); d0['b5']=d0.b5.fillna(0)
-    for thr in [10,20]:
+    for thr in [10,20,30,40]:
         d=d0.copy(); d['big']=d.b5>=thr
         u=d.groupby('u').agg(big=('big','first'))
         print(f'{level} thr={thr}%: נוכחות ב-{int(u.big.sum())}/{len(u)} יחידות')

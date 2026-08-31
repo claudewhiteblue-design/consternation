@@ -188,7 +188,8 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <div class="ctl">
   <div class="seg" id="b_lv"></div><div class="seg" id="b_sm"></div>
   <div class="seg" id="b_ms"></div><div class="seg" id="b_wt"></div>
-  <div class="seg" id="b_fq"></div><div class="seg" id="b_th"></div>
+  <div class="seg" id="b_fq"></div>
+  <span style="font-size:13px;color:var(--ink3)">סף נוכחות:</span><div class="seg" id="b_th"></div>
  </div>
  <div class="leg"><span><i style="background:var(--acc2)"></i>פער הנוכחות (בבקרה על ריכוזיות)</span>
   <span><i style="background:var(--ink3)"></i>פער הנוכחות ללא בקרה</span>
@@ -987,7 +988,7 @@ document.getElementById('vch').addEventListener('mouseleave',()=>{
 vDraw();
 
 /* ============ big-five presence ============ */
-const BT=[['10','סף 10%'],['20','סף 20%']];
+const BT=[['10','10%'],['20','20%'],['30','30%'],['40','40%']];
 Object.assign(st,{blv:'cat',bsm:'no_meat',bms:'cr3',bwt:'w',bfq:'m',bth:'20'});
 seg('b_lv',AL,'blv',()=>bDraw()); seg('b_sm',AS,'bsm',()=>bDraw());
 seg('b_ms',AM,'bms',()=>bDraw()); seg('b_wt',AW,'bwt',()=>bDraw());
