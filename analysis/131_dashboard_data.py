@@ -40,16 +40,32 @@ bf22=_brandfile('/home/user/consternation/brands_202201.parquet')     # time cha
 kb=bf[bf.role.isin(['IMP','DOM'])].copy(); kb['imp']=(kb.role=='IMP').astype(float)
 kb22=bf22[bf22.role.isin(['IMP','DOM'])].copy(); kb22['imp']=(kb22.role=='IMP').astype(float)
 def _w(x): return float(np.average(x.imp,weights=x.rev))
-p_g_cat=kb.groupby(['g','cat']).apply(_w,include_groups=False)
-p_g_dep=kb.groupby(['g','dep']).apply(_w,include_groups=False)
-p_g    =kb.groupby('g').apply(_w,include_groups=False)
+# A group's origin mix is only trusted where enough of its revenue at that level is
+# actually classified. Without this floor a supplier whose classified base is a
+# rounding error gets a fully confident propensity: "ספק מותג פרטי" carried 296 מ' ₪
+# of private label (BUCKET, unclassifiable by construction) plus a single 3,637 ₪ row
+# of a detergent brand, which made it 100% importer and injected phantom imports into
+# every category it appears in -- tahini among them. Levels below the floor fall
+# through; a group that clears none stays NaN and is excluded from both the numerator
+# and the denominator, exactly like an unknown brand.
+MINRES=0.20
+# and a unit whose own revenue is mostly unresolved gets no number at all, rather than
+# one computed off a small and probably unrepresentative corner of it
+MINUNIT=0.40
+def _lvl(k,keys,tbl):
+    """revenue-weighted import fraction by `keys`, blanked where coverage < MINRES"""
+    est=k.groupby(keys).apply(_w,include_groups=False)
+    cov=k.groupby(keys).rev.sum()/tbl.groupby(keys).rev.sum()
+    return est.where(cov.reindex(est.index)>=MINRES)
+p_g_cat=_lvl(kb,['g','cat'],bf); p_g_dep=_lvl(kb,['g','dep'],bf); p_g=_lvl(kb,'g',bf)
 res_g  =kb.groupby('g').rev.sum()/bf.groupby('g').rev.sum()
-p22_g_cat=kb22.groupby(['g','cat']).apply(_w,include_groups=False)
-p22_g_dep=kb22.groupby(['g','dep']).apply(_w,include_groups=False)
-p22_g    =kb22.groupby('g').apply(_w,include_groups=False)
+p22_g_cat=_lvl(kb22,['g','cat'],bf22); p22_g_dep=_lvl(kb22,['g','dep'],bf22)
+p22_g    =_lvl(kb22,'g',bf22)
 print(f'סיווג מותגים: {100*kb.rev.sum()/bf.rev.sum():.1f}% מהמכר מוכרע | {len(p_g)} קבוצות ספקים')
 
 def pimp(rows,pc,pd_,pg):
+    """category mix, else department mix, else the group overall -- skipping any level
+       blanked by the MINRES coverage floor, and NaN when none of them qualifies."""
     out=pd.Series(pc.reindex(pd.MultiIndex.from_arrays([rows.g,rows.cat])).values,index=rows.index)
     m=out.isna()
     if m.any():
@@ -224,7 +240,8 @@ def idx_block(sub):
     g=sub.groupby('month').apply(lambda x: pd.Series({
         'q':100*np.average(x.qrel,weights=x.w22),
         'p':100*np.average(x.prel,weights=x.w22),
-        'imp':100*x.impnum.sum()/x.impden.sum() if x.impden.sum()>0 else np.nan,
+        'imp':100*x.impnum.sum()/x.impden.sum()
+              if x.impden.sum()>0 and x.impden.sum()/x.rev.sum()>=MINUNIT else np.nan,
         'res':100*x.impden.sum()/x.rev.sum()}),include_groups=False).reindex(months)
     return {'q':[round(float(v),1) for v in g.q],'p':[round(float(v),1) for v in g.p],
             'imp':[None if not np.isfinite(v) else round(float(v),1) for v in g.imp],
@@ -249,7 +266,8 @@ cq['dep']=cq.cat.map(c2d)
 def idx_blockq(sub):
     g=sub.groupby('month').apply(lambda x: pd.Series({
         'q':100*np.average(x.qrel,weights=x.w22),'p':100*np.average(x.prel,weights=x.w22),
-        'imp':100*x.impnum.sum()/x.impden.sum() if x.impden.sum()>0 else np.nan,
+        'imp':100*x.impnum.sum()/x.impden.sum()
+              if x.impden.sum()>0 and x.impden.sum()/x.rev.sum()>=MINUNIT else np.nan,
         'res':100*x.impden.sum()/x.rev.sum()}),include_groups=False).reindex(QOK)
     return {'q':[round(float(v),1) for v in g.q],'p':[round(float(v),1) for v in g.p],
             'imp':[None if not np.isfinite(v) else round(float(v),1) for v in g.imp],

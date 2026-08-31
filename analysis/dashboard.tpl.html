@@ -522,7 +522,8 @@ function drawIdx(){
   const ok=im.map(v=>Number.isFinite(v)?v:null);
   const vals=ok.filter(v=>v!==null);
   if(!vals.length){document.getElementById('ich2').innerHTML='';
-   document.getElementById('ifoot2').textContent='אין סיווג יבוא ליחידה זו.';return;}
+   document.getElementById('ifoot2').textContent=
+    'אין נתון יבוא ליחידה זו: פחות מ-40% מהמחזור שלה ניתן לשיוך מקור, ולכן כל אומדן היה נשען על פינה קטנה ולא מייצגת ממנה.';return;}
   let lo=Math.min(...vals), hi=Math.max(...vals);
   const pd=(hi-lo)*0.15||2; lo=Math.max(0,lo-pd); hi=Math.min(100,hi+pd);
   const y=v=>y0+ih*(1-(v-lo)/(hi-lo));
@@ -538,7 +539,8 @@ function drawIdx(){
   const a=ok[START], b=ok.at(-1);
   document.getElementById('ifoot2').innerHTML=
    `<b style="color:var(--ink)">${name}</b> · ${a.toFixed(1)}% ← ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות) · `+
-   `הסיווג מכריע ${S.res.at(-1).toFixed(0)}% מהמחזור; היתר (בעיקר מותג פרטי) מחוץ לחישוב.`;
+   `הסיווג מכריע ${S.res.at(-1).toFixed(0)}% מהמחזור; היתר (בעיקר מותג פרטי) מחוץ לחישוב.`+
+   (S.res.at(-1)<70?` <b style="color:var(--acc2)">כיסוי נמוך — יש לקרוא בזהירות.</b>`:'');
  }
 }
 function idxHover(ev,G,svgId,ovId,tipId,kind){
