@@ -106,7 +106,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 </div>
 
 <div class="card">
- <h2>נתח היבוא לאורך זמן <span id="ittl2" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
+ <h2>נתח הייבואנים לאורך זמן <span id="ittl2" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
  <p class="cs" style="max-width:82ch">אחוז המחזור שמקורו במוצרים המיוצרים בחו״ל. תמהיל היבוא של כל ספק נמדד בשתי נקודות עיגון — ינואר 2022 ויולי 2026 — ומתערך ליניארית ביניהן, כך שהגרף משקף גם שינוי בהרכב הספקים וגם שינוי בתמהיל של ספק נתון בין שתי הנקודות.</p>
  <div class="scroll"><div class="chwrap"><svg id="ich2" viewBox="0 0 940 280" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
   <div class="tip" id="itip2"></div></div></div>
@@ -207,7 +207,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="card">
  <h2>השפעת חשיפה לייבוא על מחירים</h2>
- <p class="cs" style="max-width:82ch">שלושה מדדים. <b>חשיפת מט״ח</b> — החלק ממחיר המדף שזז אחד־לאחד עם שער החליפין, כולל חומרי גלם מיובאים של יצרן מקומי. <b>v2</b> מפצל מקומי/מיובא לפי התאמת שם היצרן; <b>v3</b> מחליף את הפיצול הזה בהסתברות רציפה שנגזרת מסיווג המותגים, ומשאיר את מודל העלות זהה.  <b>נתח יבוא</b> — אחוז המחזור במוצרים שמיוצרים בחו״ל, מסווג <b>ברמת המותג</b> מתוך קובצי המותגים (ינואר 2022 ויולי 2026): 700+ מותגים סווגו ידנית (מותג גלובלי שמיוצר בארץ ברישיון, כמו קוקה קולה או דוריטוס, נספר מקומי; מותג מיובא של יצרן מקומי, כמו טייסטר צ׳ויס, נספר יבוא), והיתר לפי תמהיל היצרן. <b>הרגרסור נמדד בקובץ ינואר 2022</b> — שנת הבסיס — כך שהוא קודם למסלולי המחירים. מותג פרטי נשאר בלתי־מוכרע ומחוץ לחישוב; יחידות שפחות מ־30% מהמכר שלהן הוכרע הושמטו מהמדד. המקדם נקרא כמו קודם: אחוז סטייה מממוצע 2022 של אותה קטגוריה, לכל סטיית תקן של חשיפה.</p>
+ <p class="cs" style="max-width:82ch">שלושה מדדים. <b>חשיפת מט״ח (מוערך)</b> — החלק ממחיר המדף שזז אחד־לאחד עם שער החליפין, כולל חומרי גלם מיובאים של יצרן מקומי. <b>v2</b> מפצל מקומי/מיובא לפי התאמת שם היצרן; <b>v3</b> מחליף את הפיצול הזה בהסתברות רציפה שנגזרת מסיווג המותגים, ומשאיר את מודל העלות זהה.  <b>נתח הייבואנים</b> — אחוז המחזור במוצרים שמיוצרים בחו״ל, מסווג <b>ברמת המותג</b> מתוך קובצי המותגים (ינואר 2022 ויולי 2026): 700+ מותגים סווגו ידנית (מותג גלובלי שמיוצר בארץ ברישיון, כמו קוקה קולה או דוריטוס, נספר מקומי; מותג מיובא של יצרן מקומי, כמו טייסטר צ׳ויס, נספר יבוא), והיתר לפי תמהיל היצרן. <b>הרגרסור נמדד בקובץ ינואר 2022</b> — שנת הבסיס — כך שהוא קודם למסלולי המחירים. מותג פרטי נשאר בלתי־מוכרע ומחוץ לחישוב; יחידות שפחות מ־30% מהמכר שלהן הוכרע הושמטו מהמדד. המקדם נקרא כמו קודם: אחוז סטייה מממוצע 2022 של אותה קטגוריה, לכל סטיית תקן של חשיפה.</p>
  <div class="ctl">
   <div class="seg" id="i_lv"></div><div class="seg" id="i_sm"></div><div class="seg" id="i_ms"></div>
   <div class="seg" id="i_wt"></div><div class="seg" id="i_fq"></div>
@@ -560,7 +560,7 @@ function idxHover(ev,G,svgId,ovId,tipId,kind){
  } else {
   const v=G.im[i]; if(v===null) return;
   ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4.2" fill="var(--acc2)" stroke="var(--surf)" stroke-width="1.6"/>`;
-  body+=`<div class="r"><span>נתח יבוא</span><span>${v.toFixed(1)}%</span></div>`+
+  body+=`<div class="r"><span>נתח ייבואנים</span><span>${v.toFixed(1)}%</span></div>`+
         `<div class="r"><span>גולמי החודש</span><span>${G.raw.imp[i]===null?'—':G.raw.imp[i].toFixed(1)+'%'}</span></div>`+
         `<div class="r"><span>מוכרע</span><span>${G.raw.res[i].toFixed(0)}%</span></div>`;
  }
@@ -720,7 +720,9 @@ SUB.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;
 sub1.children[0].classList.add('on');
 
 /* ================= imports ================= */
-const IM=[['fx_v3','חשיפת מט״ח'],['imp_share','נתח יבוא']];
+// [key, full label for controls and prose, short label for composed labels such as
+// "<measure> נמוך" in a table header, where the "(מוערך)" qualifier only gets in the way]
+const IM=[['fx_v3','חשיפת מט״ח (מוערך)','חשיפת מט״ח'],['imp_share','נתח ייבואנים','נתח ייבואנים']];
 const CM=[['cr3','CR3'],['hhi','HHI']];
 Object.assign(st,{ilv:'cat',ism:'no_meat',ims:'fx_v3',iwt:'w',ifq:'m',
                   itlv:'cat',itsm:'no_meat',itms:'fx_v3',itk:'3',itfq:'m',
@@ -797,7 +799,7 @@ function itDraw(){
  pathChart('itch','itov',t,ITG,'הפער בין החשיפה הגבוהה לנמוכה, בנקודות אחוז');
  document.getElementById('itk_ttl').textContent=t.k===2?'מחציות':'שלישוני';
  document.getElementById('itk_txt').textContent=t.k===2?'מחציות':'שלישונים';
- const COL=['--t1','--t2','--t3'], nm=IM.find(x=>x[0]===st.itms)[1];
+ const COL=['--t1','--t2','--t3'], nm=IM.find(x=>x[0]===st.itms)[2];
  document.getElementById('itleg').innerHTML=t.groups.map((gr,i)=>
   `<span><i style="background:var(${COL[t.k===2?i*2:i]})"></i>${t.k===2?'מחצית':'שלישון'} ${gr.t}${gr.t===1?' — חשיפה נמוכה':gr.t===t.k?' — חשיפה גבוהה':''} · ${nm} ${gr.v} · ${gr.n} ${st.itlv==='cat'?'קט׳':'תת-קט׳'}</span>`).join('');
  const a=t.groups[0].path.at(-1), b=t.groups.at(-1).path.at(-1);
@@ -809,7 +811,7 @@ const RL=['ריכוזיות נמוכה','ריכוזיות בינונית','רי�
 function dsDraw(){
  ['d_lv','d_sm','d_cm','d_fm','d_k'].forEach(segSync);
  const d=I.ds[`${st.dlv}|m|${st.dsm}|${st.dcm}|${st.dfm}|${st.dk}`]; if(!d) return;
- const nm=IM.find(x=>x[0]===st.dfm)[1], K=d.k;
+ const nm=IM.find(x=>x[0]===st.dfm)[2], K=d.k;
  const CL= K===2?[`${nm} נמוך`,`${nm} גבוה`]:[`${nm} נמוך`,`${nm} בינוני`,`${nm} גבוה`];
  const RLk= K===2?['ריכוזיות נמוכה','ריכוזיות גבוהה']:RL;
  document.getElementById('dstb').innerHTML=
@@ -854,7 +856,7 @@ function iNote(){
  const d=I.ds[`${st.ilv}|m|${st.ism}|cr3|${st.ims}`];
  const hh=I.runs[`${st.ilv}|${st.ifq}|no_meat|fx_v3|w`];
  document.getElementById('inote').innerHTML=
-  `<p class="note"><b>זה הממצא החזק ביותר בכל הניתוח — וגם הוא לא עובר את הרף.</b> חשיפת מט״ח, משוקלל, ללא בשר ועוף, ברמת ${st.ilv==='cat'?'קטגוריה':'תת-קטגוריה'}: ${hh.avg[0].toFixed(2)}% לכל ס״ת עם p=${hh.avg[2].toFixed(3)}. הסימן הוא הצפוי: השקל התחזק בתקופה, וקטגוריות חשופות יותר לייבוא התייקרו פחות. המקדם של החודש האחרון כן מובהק (${hh.est.at(-1).toFixed(2)}%, p=${hh.p.at(-1).toFixed(3)}), אבל הממוצע על פני כל התקופה אינו, והמפרט הלא־משוקלל מאפס את זה לגמרי (${(u.avg[0]>0?'+':'')+u.avg[0].toFixed(2)}%).</p>`+
+  `<p class="note"><b>זה הממצא החזק ביותר בכל הניתוח — וגם הוא לא עובר את הרף.</b> חשיפת מט״ח (מוערך), משוקלל, ללא בשר ועוף, ברמת ${st.ilv==='cat'?'קטגוריה':'תת-קטגוריה'}: ${hh.avg[0].toFixed(2)}% לכל ס״ת עם p=${hh.avg[2].toFixed(3)}. הסימן הוא הצפוי: השקל התחזק בתקופה, וקטגוריות חשופות יותר לייבוא התייקרו פחות. המקדם של החודש האחרון כן מובהק (${hh.est.at(-1).toFixed(2)}%, p=${hh.p.at(-1).toFixed(3)}), אבל הממוצע על פני כל התקופה אינו, והמפרט הלא־משוקלל מאפס את זה לגמרי (${(u.avg[0]>0?'+':'')+u.avg[0].toFixed(2)}%).</p>`+
   `<p class="note" style="margin-top:14px"><b>שלישוני החשיפה הם החתך היחיד שנשאר מונוטוני</b> בכל דגימה ובכל מדד — בניגוד לשלישוני הריכוזיות, שמתהפכים. זו הסיבה שאני נוטה יותר אמון בכיוון של הייבוא מאשר בזה של הריכוזיות, גם אם אף אחד מהם לא מגיע למובהקות.</p>`+
   `<p class="note" style="margin-top:14px"><b>והחפיפה המבנית היא הסיבה להיזהר משניהם.</b> המתאם הרציף בין ${IM.find(x=>x[0]===st.ims)[1]} ל־CR3 הוא ${d?d.corr:'—'} בלבד, אבל בקצוות הם כמעט מתלכדים. מי שמריץ רגרסיית ריכוזיות בלי בקרת ייבוא מודד חלק מאפקט הייבוא, ולהפך.</p>`;
 }
