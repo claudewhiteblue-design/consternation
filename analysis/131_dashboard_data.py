@@ -215,7 +215,27 @@ def toplist(keys,name_of):
             basis=('+'.join(bl) if len(bl)<=1 else 'מעורב: '+'+'.join(bl)))
     return out
 tops={}; tops.update(toplist(['dep'],'dep')); tops.update(toplist(['cat'],'cat'))
-print(f'רשימות ספקים: {len(tops)} יחידות')
+
+# Each listed supplier's share of the unit over time, so the table rows can be opened
+# into a chart. Only the ten already in the table -- everyone else is aggregated away.
+def sharepaths(key,name_of,src,periods):
+    z=src.groupby([key,'month','g']).rev.sum().rename('rev').reset_index()
+    tot=z.groupby([key,'month']).rev.sum().rename('tot')
+    z=z.join(tot,on=[key,'month']); z['sh']=100*z.rev/z.tot
+    w=z.pivot_table(index=[key,'g'],columns='month',values='sh').reindex(columns=periods)
+    for uk,d in tops.items():
+        lv,nm=uk.split('|',1)
+        if lv!=name_of: continue
+        for r in d['rows']:
+            if (nm,r['g']) not in w.index: continue
+            v=w.loc[(nm,r['g'])]
+            r['path' if periods is months else 'pathq']=[
+                None if pd.isna(x) else round(float(x),1) for x in v]
+for nm_of,key in [('dep','dep'),('cat','cat')]:
+    sharepaths(key,nm_of,raw,months)
+    sharepaths(key,nm_of,rawq.assign(month=rawq.q),QOK)
+_np=sum(1 for d in tops.values() for r in d['rows'] if 'path' in r)
+print(f'רשימות ספקים: {len(tops)} יחידות | {_np} סדרות נתח לספק')
 
 # ---------- (D) price & quantity index, and import share over time ----------
 # Unit relatives (each category against its own Jan-2022 level) aggregated with
