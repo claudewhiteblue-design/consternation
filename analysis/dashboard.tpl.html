@@ -106,11 +106,22 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="card">
  <h2>כמות ומחיר <span id="qttl" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
+ <p class="cs" id="qunit" style="max-width:82ch;font-weight:600;color:var(--ink2);margin-bottom:2px"></p>
  <p class="cs" style="max-width:82ch">שני מדדים על בסיס <b><span id="qbase">ינואר 2022</span> = 100</b>. המחיר הוא מכר כספי חלקי כמות סטנדרטית. כדי שמחלקות עם בסיסי מדידה מעורבים יישארו בעלות משמעות, המדד נבנה כיחס של כל קטגוריה מול עצמה ואז ממוצע משוקלל־מכר 2022 של הקטגוריות שבתוך היחידה. הקו הוא ממוצע נע של שלושה חודשים. <b>הכמות עונתית מאוד</b> — הקפיצות הן פסח, ראש השנה וסוכות. ינואר עצמו הוא חודש שפל: ממוצע 2022 גבוה ממנו בכ־12%, ולכן <b>גובה קו הכמות מוטה כלפי מעלה</b> בגלל בחירת הבסיס. המספר הנקי הוא ההשוואה בשורת הסיכום — 12 חודשים אחרונים מול 12 הראשונים.</p>
  <div class="leg"><span><i style="background:var(--acc)"></i>מחיר</span><span><i style="background:var(--acc2)"></i>כמות</span></div>
  <div class="scroll"><div class="chwrap"><svg id="qch" viewBox="0 0 940 300" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
   <div class="tip" id="qtip"></div></div></div>
  <p class="foot" id="qfoot"></p>
+</div>
+
+<div class="card" id="pcard">
+ <h2>מחיר חמשת הספקים הגדולים <span id="pttl" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
+ <p class="cs" id="punit" style="max-width:82ch;font-weight:600;color:var(--ink2);margin-bottom:2px"></p>
+ <p class="cs" style="max-width:82ch">מחיר בפועל, לא מדד: המכר הכספי של הספק חלקי הכמות הסטנדרטית שלו, באותה יחידת מדידה שבה נמדדת היחידה הנבחרת. חמשת הגדולים לפי מכר 2026 — חמש השורות הראשונות בטבלה למטה. הקו גולמי וללא החלקה, כך שמבצעים וחגים נראים בו.</p>
+ <div class="leg" id="pleg"></div>
+ <div class="scroll"><div class="chwrap"><svg id="pch" viewBox="0 0 940 320" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="ptip"></div></div></div>
+ <p class="foot" id="pfoot"></p>
 </div>
 
 <div class="card">
@@ -392,7 +403,7 @@ function draw(){
  [...fqEl.children].forEach((b,i)=>b.classList.toggle('on',FQL[i][0]===FQ));
  const S=SER()[bk], raw=S[key()];
  if(!raw){document.getElementById('ch').innerHTML='';document.getElementById('cfoot').textContent='אין נתונים ליחידה זו בתדירות הנבחרת.';drawSup();drawIdx();return;}
- const s={cr3:ma(raw.cr3),hhi:ma(raw.hhi),n:raw.n,rev:raw.rev};
+ const s={cr3:ma(raw.cr3),hhi:ma(raw.hhi),rev:raw.rev};
  GEO.raw=raw; GEO.s=s; GEO.panels=[];
  const name= lv==='שוק'?'כלל השוק': sel;
  document.getElementById('l1').textContent=name;
@@ -432,7 +443,7 @@ function draw(){
  const c0=s.cr3[START],c1=s.cr3.at(-1),h0=Math.round(s.hhi[START]),h1=Math.round(s.hhi.at(-1));
  const bd=band(h1), bd0=band(h0);
  document.getElementById('cfoot').innerHTML=
-  `<b style="color:var(--ink)">${name}</b> · ${bk} · ${s.n.at(-1)} קבוצות ספקים בחודש האחרון · `+
+  `<b style="color:var(--ink)">${name}</b> · ${bk} · ${raw.nlast} קבוצות ספקים ב${FQ==='m'?'חודש':'רבעון'} האחרון · `+
   `CR3 ${c0.toFixed(1)}% ← ${c1.toFixed(1)}% (${sgn(c1-c0,1)}) · HHI ${fmt(h0)} ← ${fmt(h1)} (${sgn(h1-h0,0)}) `+
   `<span class="pill" style="background:var(${bd.bg});color:var(${bd.tx})">${bd.lab}</span>`+
   (bd.lab!==bd0.lab?` <span style="color:var(--ink3)">(בתחילת 2022: ${bd0.lab})</span>`:'')+
@@ -532,6 +543,106 @@ function drawSupPanel(){
   document.getElementById('spov').innerHTML='';});
 }
 const SERALL=()=>FQ==='m'?D.series:D.seriesq;
+
+/* ---------- what the quantity and the price are actually counted in ---------- */
+/* `basis` is the measurement basis the panel reports for the unit: ליטר, ק"ג or
+   יח' באריזה. Quantity is counted in thousands of it (tons for ק"ג), which is what the
+   supplier table's quantity column shows; the price is shekels for ONE of it. A unit
+   that mixes bases has no single answer, so it says so instead of naming one. */
+const QBULK={'ק"ג':'טון','ליטר':'אלפי ליטרים',"יח' באריזה":"אלפי יחידות באריזה"};
+// the basis reads naturally after "per" only once: ל־ק"ג, ל־ליטר, ל־יחידה באריזה
+const PUNIT={'ק"ג':'ק״ג','ליטר':'ליטר',"יח' באריזה":'יחידה אחת באריזה'};
+const punit=b=>PUNIT[b]||b;
+function basisOf(){ return (D.basis||{})[`${lv}|${sel}`]||''; }
+function unitNote(name){
+ const el=document.getElementById('qunit'); if(!el) return;
+ const b=basisOf();
+ if(lv==='שוק'||!b){
+  el.innerHTML='כלל השוק מערבב את כל בסיסי המדידה, ולכן שני הקווים הם מדדים בלבד — '+
+   'אין להם יחידה משותפת בליטרים, בק״ג או ביחידות.'; return;}
+ if(b.startsWith('מעורב')){
+  el.innerHTML=`ב${name} נמדדות קטגוריות ב<b>יותר מבסיס אחד</b> (${b.replace('מעורב: ','')}), `+
+   'ולכן שני הקווים הם מדדים בלבד: כל קטגוריה מושווית לעצמה ואז ממוצעת. אין כאן מחיר בשקלים ליחידה.'; return;}
+ el.innerHTML=`<b>הכמות</b> נמדדת ב${QBULK[b]||b} · <b>המחיר</b> הוא ₪ ל${punit(b)} `+
+  '(מכר כספי חלקי כמות סטנדרטית). שני הקווים כאן הם מדדים ביחס לבסיס; המחיר בשקלים עצמו מופיע בגרף הבא.';
+}
+
+/* ---------- price of the five largest suppliers ---------- */
+const PG={};
+function drawPrice(name){
+ const card=document.getElementById('pcard'); if(!card) return;
+ const t=D.tops[`${lv}|${sel}`], b=basisOf();
+ document.getElementById('pttl').textContent='· '+name;
+ const bad=m=>{card.querySelector('#pch').innerHTML='';document.getElementById('pleg').innerHTML='';
+   document.getElementById('punit').innerHTML='';document.getElementById('pfoot').innerHTML=m;};
+ if(lv==='שוק') return bad('הגרף הזה מוצג ברמת מחלקה, קטגוריה או תת-קטגוריה — מחיר ממוצע לכלל השוק אין לו יחידת מדידה משותפת.');
+ if(!t) return bad('אין נתוני ספקים ליחידה זו.');
+ if(!b||b.startsWith('מעורב')) return bad(
+   `ב${name} נמדדות קטגוריות ביותר מבסיס אחד${b?` (${b.replace('מעורב: ','')})`:''}, ולכן אין מחיר בשקלים ליחידה. `+
+   'בחירת קטגוריה או תת-קטגוריה בודדת תציג אותו.');
+ document.getElementById('punit').innerHTML=`<b>המחיר</b> הוא ₪ ל${punit(b)}.`;
+ const rows=t.rows.filter(r=>r.pp).slice(0,5);
+ if(!rows.length) return bad('אין כמות סטנדרטית לספקים ביחידה זו, ולכן אין מחיר.');
+ // monthly rows aggregate to quarters by summing revenue and quantity, not by
+ // averaging the monthly prices -- so the quarterly point is a true unit value
+ const per=M, series=rows.map(r=>{
+  let v=r.pp;
+  if(FQ==='q'&&r.pp.length===D.months.length){
+   const o=[];
+   for(let i=0;i<D.quarters.length;i++){ let rv=0,qt=0,any=false;
+    for(let j=0;j<3;j++){const k=i*3+j, pr=r.pp[k], rev=r.rv?r.rv[k]:null;
+     if(pr!==null&&pr!==undefined&&rev!==null&&rev!==undefined&&pr>0){rv+=rev;qt+=rev*1000/pr;any=true;}}
+    o.push(any&&qt>0?rv*1000/qt:null);}
+   v=o;}
+  return {g:r.g,v};});
+ const all=series.flatMap(x=>x.v).filter(v=>v!==null&&v>0);
+ if(!all.length) return bad('אין מחיר לספקים ביחידה זו בתדירות הנבחרת.');
+ const W=940,P={t:16,r:22,b:32,l:60},ih=320-P.t-P.b,iw=W-P.l-P.r;
+ const xs=i=>P.l+iw*i/(per.length-1);
+ let lo=Math.min(...all), hi=Math.max(...all);
+ const pd=(hi-lo)*0.1||Math.max(hi*0.05,0.1); lo=Math.max(0,lo-pd); hi+=pd;
+ const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
+ const COL=['--acc','--acc2','--t3','--t2','--ink3'];
+ let g='';
+ nice(lo,hi,5).forEach(v=>{
+  g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`+
+     `<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${fmtp(v)}</text>`;});
+ series.forEach((sr,i)=>{
+  const fi=sr.v.findIndex(v=>v!==null), li=sr.v.length-1-[...sr.v].reverse().findIndex(v=>v!==null);
+  if(fi<0) return;
+  g+=`<path d="${sr.v.map((v,j)=>v===null?'':`${j===fi?'M':'L'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[i]})" stroke-width="2"/>`;
+  g+=`<circle cx="${xs(li)}" cy="${y(sr.v[li])}" r="3.4" fill="var(${COL[i]})"/>`;});
+ per.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1')
+  g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ document.getElementById('pch').innerHTML=g+'<g id="pov"></g>';
+ document.getElementById('pleg').innerHTML=series.map((sr,i)=>
+  `<span><i style="background:var(${COL[i]})"></i>${sr.g}</span>`).join('');
+ document.getElementById('pfoot').innerHTML=series.map(sr=>{
+   const f=sr.v.find(v=>v!==null), l=[...sr.v].reverse().find(v=>v!==null);
+   return `<b style="color:var(--ink)">${sr.g}</b> ${fmtp(f)} ← ${fmtp(l)} (${sgn(100*(l/f-1),1)}%)`;
+  }).join(' · ')+` — ₪ ל${punit(b)}.`;
+ Object.assign(PG,{series,y,xs,W,P,iw,ih,per,COL,b});
+}
+const fmtp=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed(3);
+{const el=document.getElementById('pch'), tp=document.getElementById('ptip');
+ el.addEventListener('mousemove',e=>{
+  const G=PG; if(!G.xs) return;
+  const rc=el.getBoundingClientRect(), xv=(e.clientX-rc.left)*(G.W/rc.width);
+  let i=Math.round((xv-G.P.l)/G.iw*(G.per.length-1)); i=Math.max(0,Math.min(G.per.length-1,i));
+  const x=G.xs(i);
+  let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
+  let body=`<b>${mlab(G.per[i])}</b>`, any=false;
+  G.series.forEach((sr,k)=>{const v=sr.v[i]; if(v===null||v===undefined) return; any=true;
+   ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4" fill="var(${G.COL[k]})" stroke="var(--surf)" stroke-width="1.6"/>`;
+   body+=`<div class="r"><span>${sr.g}</span><span>${fmtp(v)}</span></div>`;});
+  if(!any){tp.classList.remove('on');document.getElementById('pov').innerHTML='';return}
+  document.getElementById('pov').innerHTML=ov;
+  tp.innerHTML=body; tp.classList.add('on');
+  const px=x/G.W*rc.width, tw=tp.offsetWidth;
+  tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+18:px-tw-18))+'px';
+  tp.style.top='4px';});
+ el.addEventListener('mouseleave',()=>{tp.classList.remove('on');
+  const o=document.getElementById('pov'); if(o)o.innerHTML='';});}
 /* ---------- hover ---------- */
 const chEl=document.getElementById('ch'), tip=document.getElementById('tip');
 const HE=['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
@@ -566,8 +677,10 @@ function drawIdx(){
  START=(FQ==='m'?MAW-1:0);
  const S=IDX()[idxKey()], name= lv==='שוק'?'כלל השוק':sel;
  document.getElementById('qttl').textContent='· '+name;
+ unitNote(name);
  const qb=document.getElementById('qbase'); if(qb) qb.textContent= FQ==='m'?'ינואר 2022':'רבעון 1 2022';
  document.getElementById('ittl2').textContent='· '+name;
+ drawPrice(name);
  if(!S){['qch','ich2'].forEach(i=>document.getElementById(i).innerHTML='');
   document.getElementById('qfoot').textContent='אין נתונים ליחידה זו.';
   document.getElementById('ifoot2').textContent='';return;}

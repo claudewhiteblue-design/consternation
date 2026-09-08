@@ -172,7 +172,7 @@ for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.buc
     S={}
     m=conc(dd,['month']).set_index('month').reindex(months)
     S['__market__']={'hhi':[round(float(x)) for x in m.hhi],'cr3':[round(float(x),1) for x in m.cr3],
-                     'n':[int(x) for x in m.n],'rev':[round(float(x),1) for x in m.rev]}
+                     'nlast':int(m.n.iloc[-1]),'rev':[round(float(x),1) for x in m.rev]}
     for lvl,key in [('dep','dep'),('cat','cat')]:
         z=conc(dd,['month',key])
         # revenue-weighted average across units, per month -> the like-for-like benchmark
@@ -180,12 +180,12 @@ for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.buc
             'hhi':np.average(x.hhi,weights=x.rev),'cr3':np.average(x.cr3,weights=x.rev),
             'n':np.average(x.n,weights=x.rev),'rev':x.rev.sum()})).reindex(months)
         S[f'__{lvl}avg__']={'hhi':[round(float(x)) for x in av.hhi],'cr3':[round(float(x),1) for x in av.cr3],
-                            'n':[int(round(x)) for x in av.n],'rev':[round(float(x),1) for x in av.rev]}
+                            'nlast':int(round(av.n.iloc[-1])),'rev':[round(float(x),1) for x in av.rev]}
         for name,gsub in z.groupby(key):
             gsub=gsub.set_index('month').reindex(months)
             if gsub.rev.notna().sum()<len(months): continue
             S[f'{lvl}|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
-                'cr3':[round(float(x),1) for x in gsub.cr3],'n':[int(x) for x in gsub.n],
+                'cr3':[round(float(x),1) for x in gsub.cr3],'nlast':int(gsub.n.iloc[-1]),
                 'rev':[round(float(x),1) for x in gsub.rev]}
     ds=rawS if tag=='כולל מאגדים' else rawS[~rawS.bucket]
     z=conc(ds,['month','sc'])
@@ -193,7 +193,7 @@ for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.buc
         gsub=gsub.set_index('month').reindex(months)
         if gsub.rev.notna().sum()<len(months): continue
         S[f'sub|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
-            'cr3':[round(float(x),1) for x in gsub.cr3],'n':[int(x) for x in gsub.n],
+            'cr3':[round(float(x),1) for x in gsub.cr3],'nlast':int(gsub.n.iloc[-1]),
             'rev':[round(float(x),2) for x in gsub.rev]}
     series[tag]=S
     print(f'{tag}: {len(S)} סדרות')
@@ -204,14 +204,14 @@ for tag,dd in [('כולל מאגדים',rawq),('ללא מאגדים',rawq[~rawq.
     S={}
     m=conc(dd,['month']).set_index('month').reindex(QOK)
     S['__market__']={'hhi':[round(float(x)) for x in m.hhi],'cr3':[round(float(x),1) for x in m.cr3],
-                     'n':[int(x) for x in m.n],'rev':[round(float(x),1) for x in m.rev]}
+                     'nlast':int(m.n.iloc[-1]),'rev':[round(float(x),1) for x in m.rev]}
     for lvl,key in [('dep','dep'),('cat','cat')]:
         z=conc(dd,['month',key])
         for name,gsub in z.groupby(key):
             gsub=gsub.set_index('month').reindex(QOK)
             if gsub.rev.notna().sum()<len(QOK): continue
             S[f'{lvl}|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
-                'cr3':[round(float(x),1) for x in gsub.cr3],'n':[int(x) for x in gsub.n],
+                'cr3':[round(float(x),1) for x in gsub.cr3],'nlast':int(gsub.n.iloc[-1]),
                 'rev':[round(float(x),1) for x in gsub.rev]}
     ds=rawSq if tag=='כולל מאגדים' else rawSq[~rawSq.bucket]
     z=conc(ds,['month','sc'])
@@ -219,7 +219,7 @@ for tag,dd in [('כולל מאגדים',rawq),('ללא מאגדים',rawq[~rawq.
         gsub=gsub.set_index('month').reindex(QOK)
         if gsub.rev.notna().sum()<len(QOK): continue
         S[f'sub|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
-            'cr3':[round(float(x),1) for x in gsub.cr3],'n':[int(x) for x in gsub.n],
+            'cr3':[round(float(x),1) for x in gsub.cr3],'nlast':int(gsub.n.iloc[-1]),
             'rev':[round(float(x),2) for x in gsub.rev]}
     seriesq[tag]=S
     print(f'{tag} (רבעוני): {len(S)} סדרות')
@@ -274,18 +274,27 @@ def _sig(x,n=3):
     return round(float(x),-int(math.floor(math.log10(abs(x))))+(n-1))
 
 def sharepaths(key,name_of,src,periods=None):
-    """Monthly revenue for each listed supplier. The page divides it by the unit total
-       already carried in `series` to get the share, at either frequency -- so the
-       quarterly drill-down is summed from the months, not approximated from them."""
+    """Monthly revenue for each listed supplier, plus the unit value (revenue over
+       standard quantity) of the five largest. The page divides the revenue by the unit
+       total already carried in `series` to get the share, at either frequency -- so the
+       quarterly views are summed from the months, not approximated from them."""
     periods=months if periods is None else periods
-    z=src.groupby([key,'month','g']).rev.sum().rename('rev').reset_index()
+    z=src.groupby([key,'month','g']).agg(rev=('rev','sum'),qty=('qty','sum')).reset_index()
+    z['pr']=np.where(z.qty>0,z.rev*1000/z.qty,np.nan)
     WR=z.pivot_table(index=[key,'g'],columns='month',values='rev').reindex(columns=periods)
+    WP=z.pivot_table(index=[key,'g'],columns='month',values='pr').reindex(columns=periods)
     for uk,d in tops.items():
         lv,nm=uk.split('|',1)
         if lv!=name_of: continue
         for r in d['rows']:
             if (nm,r['g']) not in WR.index: continue
             r['rv']=[None if not np.isfinite(x) else _sig(x) for x in WR.loc[(nm,r['g'])].values]
+            # only the five largest: the price chart shows five lines, and carrying it
+            # for all ten would not fit in the page
+            if d['rows'].index(r)<5 and (nm,r['g']) in WP.index:
+                pv=WP.loc[(nm,r['g'])].values
+                if np.isfinite(pv).any():
+                    r['pp']=[None if not np.isfinite(x) else _sig(x) for x in pv]
 for nm_of,key,src in [('dep','dep',raw),('cat','cat',raw),('sub','sc',rawS)]:
     sharepaths(key,nm_of,src)
 _np=sum(1 for d in tops.values() for r in d['rows'] if 'rv' in r)
@@ -319,7 +328,7 @@ def idx_block(sub):
         'res':100*x.impden.sum()/x.rev.sum()}),include_groups=False).reindex(months)
     return {'q':[round(float(v),1) for v in g.q],'p':[round(float(v),1) for v in g.p],
             'imp':[None if not np.isfinite(v) else round(float(v),1) for v in g.imp],
-            'res':[round(float(v),0) for v in g.res]}
+            'res':[int(round(v)) for v in g.res]}
 idx={'__market__':idx_block(cm)}
 for dep,sub in cm.groupby('dep'): idx['dep|'+dep]=idx_block(sub)
 for cat,sub in cm.groupby('cat'):
@@ -357,7 +366,7 @@ def idx_blockq(sub):
         'res':100*x.impden.sum()/x.rev.sum()}),include_groups=False).reindex(QOK)
     return {'q':[round(float(v),1) for v in g.q],'p':[round(float(v),1) for v in g.p],
             'imp':[None if not np.isfinite(v) else round(float(v),1) for v in g.imp],
-            'res':[round(float(v),0) for v in g.res]}
+            'res':[int(round(v)) for v in g.res]}
 idxq={'__market__':idx_blockq(cq)}
 for dep,sub in cq.groupby('dep'): idxq['dep|'+dep]=idx_blockq(sub)
 for cat,sub in cq.groupby('cat'):
@@ -382,7 +391,10 @@ cat2dep=raw.groupby('cat').dep.agg(lambda s:s.mode().iat[0]).to_dict()
 sub2cat=rawS.groupby('sc').cat.agg(lambda t:t.mode().iat[0]).to_dict()
 rev26=raw[raw.month.str[:4]=='2026'].groupby('cat').rev.sum().to_dict()
 srev26=rawS[rawS.month.str[:4]=='2026'].groupby('sc').rev.sum().to_dict()
+# what each unit's quantity is counted in, for the axis labels
+basis={k:v.get('basis','') for k,v in tops.items()}
 json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
+    basis=basis,
     idx=idx,base=BASE,seriesq=seriesq,idxq=idxq,quarters=QOK,baseq=QOK[0],
     cat2dep={k:v for k,v in cat2dep.items() if k in cats},
     sub2cat={k:v for k,v in sub2cat.items() if k in subs},
