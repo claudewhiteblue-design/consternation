@@ -323,7 +323,7 @@ const UNIT={'ק"ג':'טון','ליטר':'אלפי ליטרים',"יח' בארי�
 const unit=b=>!b?'—':b.startsWith('מעורב')?b.replace('מעורב: ','מעורב — ').split('+').map(x=>UNIT[x]||x).join(' + '):(UNIT[b]||b);
 
 /* ---------- time series ---------- */
-const LV=[['שוק','כלל השוק'],['dep','מחלקה'],['cat','קטגוריה']];
+const LV=[['שוק','כלל השוק'],['dep','מחלקה'],['cat','קטגוריה'],['sub','תת-קטגוריה']];
 let lv='שוק', bk=BK[0], sel=null;
 const lvEl=document.getElementById('lv'), bkEl=document.getElementById('bk'),
       pk=document.getElementById('pick'), cb=document.getElementById('cb'), ul=document.getElementById('opts');
@@ -337,10 +337,12 @@ function fill(){
  if(lv==='שוק'){cb.style.display='none';OPTS=[];return}
  cb.style.display='';
  OPTS= lv==='dep' ? D.deps.slice().sort((a,b)=>(DEPREV[b]||0)-(DEPREV[a]||0)).map(d=>({v:d,t:d,s:`${Math.round(DEPREV[d]||0)} מ׳ ₪`}))
-   : D.cats.slice().sort((a,b)=>(D.catrev[b]||0)-(D.catrev[a]||0))
-       .map(cc=>({v:cc,t:cc,s:`${D.cat2dep[cc]||''} · ${Math.round(D.catrev[cc]||0)} מ׳ ₪`}));
+   : lv==='cat' ? D.cats.slice().sort((a,b)=>(D.catrev[b]||0)-(D.catrev[a]||0))
+       .map(cc=>({v:cc,t:cc,s:`${D.cat2dep[cc]||''} · ${Math.round(D.catrev[cc]||0)} מ׳ ₪`}))
+   : (D.subs||[]).slice().sort((a,b)=>(D.subrev[b]||0)-(D.subrev[a]||0))
+       .map(x=>({v:x,t:x,s:`${D.sub2cat[x]||''} · ${(D.subrev[x]||0).toFixed(1)} מ׳ ₪`}));
  sel=OPTS[0].v; pk.value=OPTS[0].t;
- pk.placeholder= lv==='dep'?`חיפוש מתוך ${OPTS.length} מחלקות…`:`חיפוש מתוך ${OPTS.length} קטגוריות…`;
+ pk.placeholder=`חיפוש מתוך ${OPTS.length} ${lv==='dep'?'מחלקות':lv==='cat'?'קטגוריות':'תת-קטגוריות'}…`;
  closeList();
 }
 const DEPREV={};
@@ -458,7 +460,12 @@ function drawSup(){
   tr.onclick=()=>{ SUPSEL = (SUPSEL===t.rows[i].g ? null : t.rows[i].g); drawSupPanel(); };});
  drawSupPanel();
 }
-/* ---------- one supplier's share of the selected unit over time ---------- */
+/* ---------- one supplier inside the selected unit, over time ---------- */
+/* The payload carries the supplier's own revenue and standard quantity per period.
+   Share is that revenue against the unit total (which `series` already holds, buckets
+   included, matching the table); the price is revenue over quantity -- the same unit
+   value the regressions use. Sub-category rows are stored on quarters, so the panel
+   pins itself to quarters there whatever the page toggle says. */
 let SUPSEL=null;
 function drawSupPanel(){
  const box=document.getElementById('spanel'); if(!box) return;
@@ -469,49 +476,93 @@ function drawSupPanel(){
    tr.classList.toggle('on', !!t && t.rows[i].g===SUPSEL));
  if(!SUPSEL||!t){box.innerHTML='';return}
  const r=t.rows.find(x=>x.g===SUPSEL);
- const p=r&&(FQ==='m'?r.path:r.pathq);
- if(!p){box.innerHTML=`<div class="spanel"><span class="x" onclick="SUPSEL=null;drawSupPanel()">×</span>`+
-   `<h4>${SUPSEL}</h4><p class="cs">אין סדרת נתח לספק זה בתדירות הנבחרת.</p></div>`;return}
- const W=940,P={t:16,r:22,b:30,l:46},ih=190-P.t-P.b,iw=W-P.l-P.r;
- const xs=i=>P.l+iw*i/(M.length-1);
- const vals=p.filter(v=>v!==null);
- let lo=Math.min(...vals), hi=Math.max(...vals);
- const pd=Math.max((hi-lo)*0.15,0.5); lo=Math.max(0,lo-pd); hi=hi+pd;
- const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
+ const qOnly = t.freq==='q';
+ const per   = qOnly ? D.quarters : (FQ==='m'?D.months:D.quarters);
+ const shut  = v=>`<div class="spanel"><span class="x" onclick="SUPSEL=null;drawSupPanel()">×</span>`+
+                  `<h4>${SUPSEL}</h4><p class="cs">${v}</p></div>`;
+ if(!r||!r.rv){box.innerHTML=shut('אין סדרה לספק זה ביחידה הנבחרת.');return}
+ // unit totals for the same periods, from the bucket-inclusive series
+ const US=(qOnly||FQ==='q'?D.seriesq:D.series)['כולל מאגדים'][`${lv}|${sel}`];
+ if(!US){box.innerHTML=shut('אין סדרת מכר ליחידה זו בתדירות הנבחרת.');return}
+ // monthly rows aggregate up to quarters when the page is on quarters
+ let rv=r.rv, qt=r.qt||null;
+ if(!qOnly && FQ==='q'){
+  const agg=a=>{ if(!a) return null; const o=[];
+   for(let i=0;i<D.quarters.length;i++){ let sum=null;
+    for(let j=0;j<3;j++){ const v=a[i*3+j]; if(v!==null&&v!==undefined){sum=(sum||0)+v;} }
+    o.push(sum);} return o;};
+  rv=agg(rv); qt=agg(qt);
+ }
+ const sh=rv.map((v,i)=>(v===null||!US.rev[i])?null:100*v/US.rev[i]);
+ const pr=qt?rv.map((v,i)=>(v===null||!qt[i])?null:v*1000/qt[i]):null;
+ const shown=sh.filter(v=>v!==null);
+ if(!shown.length){box.innerHTML=shut('אין סדרה לספק זה בתדירות הנבחרת.');return}
+ const uniform = t.basis && !t.basis.startsWith('מעורב');
+ const W=940,P={t:16,r:22,b:26,l:52},iw=W-P.l-P.r;
+ const rows=[{k:'sh',v:sh,c:'--acc',ttl:'נתח מהמכר',f:v=>v.toFixed(1)+'%'}];
+ if(pr&&pr.some(v=>v!==null)) rows.push({k:'pr',v:pr,c:'--acc2',
+   ttl: uniform?`מחיר ממוצע — ₪ ל${t.basis}`:'מחיר ממוצע (מדד, ראשון=100)',
+   f:v=>uniform?fmtp(v):v.toFixed(1)});
+ // a mixed-basis unit has no common price unit, so its price is shown as an index
+ if(rows[1]&&!uniform){const b0=pr.find(v=>v!==null); rows[1].v=pr.map(v=>v===null?null:100*v/b0);}
+ const H=P.t+rows.length*128+P.b;
+ const xs=i=>P.l+iw*i/(per.length-1);
  let g='';
- nice(lo,hi,4).forEach(v=>{
-  g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`+
-     `<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${v.toFixed(1)}%</text>`;});
- g+=`<path d="${p.map((v,i)=>v===null?'':`${i===p.findIndex(z=>z!==null)?'M':'L'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(--acc)" stroke-width="2.2"/>`;
- const li=p.length-1-[...p].reverse().findIndex(v=>v!==null);
- g+=`<circle cx="${xs(li)}" cy="${y(p[li])}" r="3.6" fill="var(--acc)"/>`;
- M.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1')
-   g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
- const fi=p.findIndex(v=>v!==null), a=p[fi], b=p[li];
+ rows.forEach((row,ri)=>{
+  const y0=P.t+ri*128, ih=100;
+  const fin=row.v.filter(v=>v!==null);
+  let lo=Math.min(...fin), hi=Math.max(...fin);
+  const pd=Math.max((hi-lo)*0.15,Math.abs(hi)*0.01||0.5); lo=Math.max(0,lo-pd); hi=hi+pd;
+  const y=v=>y0+ih*(1-(v-lo)/(hi-lo));
+  row.y=y; row.y0=y0; row.ih=ih;
+  g+=`<text x="${P.l}" y="${y0-4}" fill="var(--ink2)" font-size="11.5" font-weight="600">${row.ttl}</text>`;
+  nice(lo,hi,3).forEach(v=>{
+   g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`+
+      `<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${row.f(v)}</text>`;});
+  const fi=row.v.findIndex(v=>v!==null), li=row.v.length-1-[...row.v].reverse().findIndex(v=>v!==null);
+  g+=`<path d="${row.v.map((v,i)=>v===null?'':`${i===fi?'M':'L'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${row.c})" stroke-width="2.2"/>`;
+  g+=`<circle cx="${xs(li)}" cy="${y(row.v[li])}" r="3.6" fill="var(${row.c})"/>`;
+  row.fi=fi; row.li=li;
+ });
+ per.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1')
+   g+=`<text x="${xs(i)}" y="${H-8}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ const R0=rows[0], a=R0.v[R0.fi], b=R0.v[R0.li];
+ let cap=`נתח מהמכר הכספי של היחידה, ${qOnly?'רבעוני':(FQ==='m'?'חודשי':'רבעוני')} וללא החלקה. `+
+   `${mlab(per[R0.fi])}: ${a.toFixed(1)}% ← ${mlab(per[R0.li])}: ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות). `+
+   `שיא ${Math.max(...shown).toFixed(1)}% · שפל ${Math.min(...shown).toFixed(1)}%.`;
+ if(rows[1]){const q=pr.filter(v=>v!==null), p0=q[0], p1=q.at(-1);
+  cap+= uniform ? ` המחיר: ${fmtp(p0)} ← ${fmtp(p1)} ₪ ל${t.basis} (${sgn(100*(p1/p0-1),1)}%).`
+                : ` המחיר: ${sgn(100*(p1/p0-1),1)}% מהתקופה הראשונה — היחידה מודדת בכמה בסיסים, ולכן כמדד ולא בשקלים.`;}
+ else cap+=' אין כמות סטנדרטית לספק זה, ולכן אין קו מחיר.';
+ if(qOnly && FQ==='m') cap+=' <b>ברמת תת-קטגוריה הסדרה נשמרת רבעונית</b> — יש כאן פי 18 יחידות מאשר ברמת קטגוריה, וסדרה חודשית לכולן לא נכנסת בעמוד.';
  box.innerHTML=`<div class="spanel"><span class="x" onclick="SUPSEL=null;drawSupPanel()">×</span>`+
-  `<h4>${SUPSEL} — נתח מ־${sel} לאורך זמן</h4>`+
-  `<p class="cs" style="margin:2px 0 6px">נתח מהמכר הכספי של היחידה, ${FQ==='m'?'חודשי':'רבעוני'} וללא החלקה. `+
-  `${mlab(M[fi])}: ${a.toFixed(1)}% ← ${mlab(M[li])}: ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות). `+
-  `שיא ${Math.max(...vals).toFixed(1)}% · שפל ${Math.min(...vals).toFixed(1)}%.</p>`+
-  `<div class="scroll"><div class="chwrap"><svg viewBox="0 0 940 190" id="spch" style="width:100%;min-width:660px;height:auto;direction:ltr">${g}<g id="spov"></g></svg>`+
+  `<h4>${SUPSEL} — ב־${sel} לאורך זמן</h4>`+
+  `<p class="cs" style="margin:2px 0 8px">${cap}</p>`+
+  `<div class="scroll"><div class="chwrap"><svg viewBox="0 0 940 ${H}" id="spch" style="width:100%;min-width:660px;height:auto;direction:ltr">${g}<g id="spov"></g></svg>`+
   `<div class="tip" id="sptip"></div></div></div></div>`;
+ SPG={rows,xs,W,P,per,H};
  const el2=document.getElementById('spch'), tp=document.getElementById('sptip');
  el2.addEventListener('mousemove',e=>{
-  const rc=el2.getBoundingClientRect(), xv=(e.clientX-rc.left)*(W/rc.width);
-  let i=Math.round((xv-P.l)/iw*(M.length-1)); i=Math.max(0,Math.min(M.length-1,i));
-  if(p[i]===null){tp.classList.remove('on');document.getElementById('spov').innerHTML='';return}
-  const x=xs(i);
-  document.getElementById('spov').innerHTML=
-   `<line x1="${x}" x2="${x}" y1="${P.t}" y2="${P.t+ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`+
-   `<circle cx="${x}" cy="${y(p[i])}" r="4.2" fill="var(--acc)" stroke="var(--surf)" stroke-width="1.6"/>`;
-  tp.innerHTML=`<b>${mlab(M[i])}</b><div class="r"><span>נתח</span><span>${p[i].toFixed(1)}%</span></div>`;
-  tp.classList.add('on');
-  const px=x/W*rc.width, tw=tp.offsetWidth;
+  const G=SPG, rc=el2.getBoundingClientRect(), xv=(e.clientX-rc.left)*(G.W/rc.width);
+  let i=Math.round((xv-G.P.l)/(G.W-G.P.l-G.P.r)*(G.per.length-1));
+  i=Math.max(0,Math.min(G.per.length-1,i));
+  if(G.rows[0].v[i]===null){tp.classList.remove('on');document.getElementById('spov').innerHTML='';return}
+  const x=G.xs(i);
+  let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.rows.at(-1).y0+G.rows.at(-1).ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
+  let body=`<b>${mlab(G.per[i])}</b>`;
+  G.rows.forEach(row=>{const v=row.v[i]; if(v===null) return;
+   ov+=`<circle cx="${x}" cy="${row.y(v)}" r="4.2" fill="var(${row.c})" stroke="var(--surf)" stroke-width="1.6"/>`;
+   body+=`<div class="r"><span>${row.ttl.split(' — ')[0].split(' (')[0]}</span><span>${row.f(v)}</span></div>`;});
+  document.getElementById('spov').innerHTML=ov;
+  tp.innerHTML=body; tp.classList.add('on');
+  const px=x/G.W*rc.width, tw=tp.offsetWidth;
   tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+18:px-tw-18))+'px';
   tp.style.top='4px';});
  el2.addEventListener('mouseleave',()=>{tp.classList.remove('on');
   document.getElementById('spov').innerHTML='';});
 }
+let SPG={};
+const fmtp=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed(3);
 /* ---------- hover ---------- */
 const chEl=document.getElementById('ch'), tip=document.getElementById('tip');
 const HE=['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];

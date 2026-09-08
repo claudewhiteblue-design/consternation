@@ -2,7 +2,7 @@
 """Data build for the concentration dashboard.
    (A) top supplier groups, 2026 YTD vs like-for-like 2022 window
    (B) monthly HHI / CR3 at market, department and category level, with and without buckets"""
-import duckdb, pandas as pd, numpy as np, json
+import duckdb, pandas as pd, numpy as np, json, math
 c=duckdb.connect(); c.execute("SET enable_progress_bar=false")
 P="'/home/user/consternation/retail_sales_2022_2026.parquet'"
 R='"מכר כספי (מיליוני ₪)"'
@@ -132,11 +132,30 @@ def conc(d,keys):
     n=s.groupby(keys).g.nunique()
     return pd.DataFrame(dict(hhi=hhi,cr3=cr3,n=n,rev=tot)).reset_index()
 
+# Sub-category resolution comes from a separate extract that keeps the sub-category
+# column. It is built and filtered exactly like `raw`, and kept in its own frame so
+# every existing department / category number stays byte-identical.
+SUBP="'/tmp/subcat_std.parquet'"
+rawS=c.execute(f'''SELECT "חודש" AS month,"מחלקה" AS dep,"קטגוריה" AS cat,
+   "תת קטגוריה" AS sc,"ספק" AS sup,
+   sum({R}) AS rev, sum({SQ}) AS qty, any_value({BS}) AS basis
+   FROM {SUBP} WHERE {R} IS NOT NULL GROUP BY 1,2,3,4,5''').df()
+rawS['month']=rawS.month.str.replace('/','-',regex=False)
+rawS['g']=rawS.sup.map(grp); rawS['bucket']=rawS.g.isin(BUCKET)
+rawS=rawS[(rawS.rev>0)&rawS.month.isin(months)].copy()
+print(f'תת-קטגוריות: {rawS.sc.nunique()} ב-{rawS.month.nunique()} חודשים')
+
 raw['q']=raw.month.str[:4]+'-Q'+(((raw.month.str[5:7].astype(int)-1)//3)+1).astype(str)
 _nm=raw.groupby('q').month.nunique()
 QOK=sorted(_nm[_nm==3].index)          # drop the incomplete trailing quarter
 rawq=raw[raw.q.isin(QOK)].copy()
 rawq['month']=rawq.q
+rawS['q']=rawS.month.str[:4]+'-Q'+(((rawS.month.str[5:7].astype(int)-1)//3)+1).astype(str)
+_a=pimp(rawS,p22_g_cat,p22_g_dep,p22_g); _b=pimp(rawS,p_g_cat,p_g_dep,p_g)
+_a=_a.fillna(_b); _b=_b.fillna(_a)                       # same interpolation as `raw`
+_l=rawS.month.map({m:i for i,m in enumerate(months)})/(len(months)-1)
+rawS['p_imp']=(1-_l)*_a+_l*_b
+rawSq=rawS[rawS.q.isin(QOK)].copy(); rawSq['month']=rawSq.q
 print(f'רבעונים מלאים: {len(QOK)} ({QOK[0]}–{QOK[-1]})')
 
 series={}
@@ -159,6 +178,14 @@ for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.buc
             S[f'{lvl}|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
                 'cr3':[round(float(x),1) for x in gsub.cr3],'n':[int(x) for x in gsub.n],
                 'rev':[round(float(x),1) for x in gsub.rev]}
+    ds=rawS if tag=='כולל מאגדים' else rawS[~rawS.bucket]
+    z=conc(ds,['month','sc'])
+    for name,gsub in z.groupby('sc'):
+        gsub=gsub.set_index('month').reindex(months)
+        if gsub.rev.notna().sum()<len(months): continue
+        S[f'sub|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
+            'cr3':[round(float(x),1) for x in gsub.cr3],'n':[int(x) for x in gsub.n],
+            'rev':[round(float(x),2) for x in gsub.rev]}
     series[tag]=S
     print(f'{tag}: {len(S)} סדרות')
 
@@ -177,15 +204,24 @@ for tag,dd in [('כולל מאגדים',rawq),('ללא מאגדים',rawq[~rawq.
             S[f'{lvl}|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
                 'cr3':[round(float(x),1) for x in gsub.cr3],'n':[int(x) for x in gsub.n],
                 'rev':[round(float(x),1) for x in gsub.rev]}
+    ds=rawSq if tag=='כולל מאגדים' else rawSq[~rawSq.bucket]
+    z=conc(ds,['month','sc'])
+    for name,gsub in z.groupby('sc'):
+        gsub=gsub.set_index('month').reindex(QOK)
+        if gsub.rev.notna().sum()<len(QOK): continue
+        S[f'sub|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
+            'cr3':[round(float(x),1) for x in gsub.cr3],'n':[int(x) for x in gsub.n],
+            'rev':[round(float(x),2) for x in gsub.rev]}
     seriesq[tag]=S
     print(f'{tag} (רבעוני): {len(S)} סדרות')
 
 
 # ---------- (C) top suppliers inside each department / category ----------
-def toplist(keys,name_of):
+def toplist(keys,name_of,src=None):
     out={}
-    d26=raw[(raw.month.str[:4]=='2026')&(raw.month.str[5:].isin(WIN))]
-    d22=raw[(raw.month.str[:4]=='2022')&(raw.month.str[5:].isin(WIN))]
+    src=raw if src is None else src
+    d26=src[(src.month.str[:4]=='2026')&(src.month.str[5:].isin(WIN))]
+    d22=src[(src.month.str[:4]=='2022')&(src.month.str[5:].isin(WIN))]
     def agg(d):
         z=d.groupby(keys+['g']).agg(rev=('rev','sum'),qty=('qty','sum')).reset_index()
         tot=z.groupby(keys).rev.sum().rename('tot'); z=z.join(tot,on=keys)
@@ -193,11 +229,15 @@ def toplist(keys,name_of):
         return z
     a=agg(d26); b=agg(d22).set_index(keys+['g'])
     kk=keys[0]
-    src=kb if kk=='cat' else kb
-    pu=src.groupby([kk,'g']).apply(_w,include_groups=False)
-    ru=(src.groupby([kk,'g']).rev.sum()/bf.groupby([kk,'g']).rev.sum())
+    # the brand file has no sub-category column, so a sub-category takes the import
+    # propensity measured for its parent category
+    pk='cat' if kk=='sc' else kk
+    par=src.groupby(kk).cat.agg(lambda t:t.mode().iat[0]) if kk=='sc' else None
+    pu=kb.groupby([pk,'g']).apply(_w,include_groups=False)
+    ru=(kb.groupby([pk,'g']).rev.sum()/bf.groupby([pk,'g']).rev.sum())
     bases=d26.groupby(keys).basis.agg(lambda s:sorted(set(s.dropna())))
     for nm,x in a.groupby(keys[0]):
+        pn=par.get(nm,nm) if par is not None else nm
         x=x.sort_values('rev',ascending=False).head(10)
         rr=[]
         for r in x.itertuples():
@@ -208,34 +248,51 @@ def toplist(keys,name_of):
                 sh22=round(float(p.sh),1) if p is not None else None,
                 dsh=round(float(r.sh-p.sh),1) if p is not None else None,
                 growth=round(100*(r.rev/p.rev-1),1) if p is not None and p.rev>0 else None,
-                imp=round(100*float(pu.loc[(nm,r.g)]),1) if (nm,r.g) in pu.index else None,
-                impres=round(100*float(ru.loc[(nm,r.g)]),0) if (nm,r.g) in ru.index else None))
+                imp=round(100*float(pu.loc[(pn,r.g)]),1) if (pn,r.g) in pu.index else None,
+                impres=round(100*float(ru.loc[(pn,r.g)]),0) if (pn,r.g) in ru.index else None))
         bl=bases.loc[nm] if nm in bases.index else []
         out[name_of+'|'+nm]=dict(rows=rr,tot=round(float(a[a[keys[0]]==nm].rev.sum()),1),
             basis=('+'.join(bl) if len(bl)<=1 else 'מעורב: '+'+'.join(bl)))
     return out
 tops={}; tops.update(toplist(['dep'],'dep')); tops.update(toplist(['cat'],'cat'))
+tops.update(toplist(['sc'],'sub',rawS))
 
 # Each listed supplier's share of the unit over time, so the table rows can be opened
 # into a chart. Only the ten already in the table -- everyone else is aggregated away.
-def sharepaths(key,name_of,src,periods):
-    z=src.groupby([key,'month','g']).rev.sum().rename('rev').reset_index()
-    tot=z.groupby([key,'month']).rev.sum().rename('tot')
-    z=z.join(tot,on=[key,'month']); z['sh']=100*z.rev/z.tot
-    w=z.pivot_table(index=[key,'g'],columns='month',values='sh').reindex(columns=periods)
+def _sig(x,n=3):
+    """3 significant digits -- ample for a chart, and much shorter in JSON"""
+    if x is None or not np.isfinite(x) or x==0: return 0
+    return round(float(x),-int(math.floor(math.log10(abs(x))))+(n-1))
+
+def sharepaths(key,name_of,src,periods=None):
+    """Monthly revenue and standard quantity for each listed supplier. The page derives
+       share (against the unit total already carried in `series`) and unit value
+       (revenue over quantity) from these, at either frequency -- so the quarterly
+       drill-down is summed from the months rather than approximated from them."""
+    periods=months if periods is None else periods
+    z=src.groupby([key,'month','g']).agg(rev=('rev','sum'),qty=('qty','sum')).reset_index()
+    WR=z.pivot_table(index=[key,'g'],columns='month',values='rev').reindex(columns=periods)
+    WQ=z.pivot_table(index=[key,'g'],columns='month',values='qty').reindex(columns=periods)
     for uk,d in tops.items():
         lv,nm=uk.split('|',1)
         if lv!=name_of: continue
         for r in d['rows']:
-            if (nm,r['g']) not in w.index: continue
-            v=w.loc[(nm,r['g'])]
-            r['path' if periods is months else 'pathq']=[
-                None if pd.isna(x) else round(float(x),1) for x in v]
-for nm_of,key in [('dep','dep'),('cat','cat')]:
-    sharepaths(key,nm_of,raw,months)
-    sharepaths(key,nm_of,rawq.assign(month=rawq.q),QOK)
-_np=sum(1 for d in tops.values() for r in d['rows'] if 'path' in r)
-print(f'רשימות ספקים: {len(tops)} יחידות | {_np} סדרות נתח לספק')
+            if (nm,r['g']) not in WR.index: continue
+            r['rv']=[None if not np.isfinite(x) else _sig(x) for x in WR.loc[(nm,r['g'])].values]
+            if (nm,r['g']) in WQ.index:
+                qv=WQ.loc[(nm,r['g'])].values
+                if np.isfinite(qv).any():
+                    r['qt']=[None if not np.isfinite(x) else _sig(x) for x in qv]
+for nm_of,key,src in [('dep','dep',raw),('cat','cat',raw)]:
+    sharepaths(key,nm_of,src)
+# There are 994 sub-categories against 54 departments and 301 categories, so carrying a
+# monthly supplier series for each would take about 4 MB more than an artifact can hold.
+# The sub-category drill-down is therefore stored on quarters: the same numbers summed
+# three months at a time, which is also the steadier read for units this small.
+sharepaths('sc','sub',rawSq,QOK)
+for d in [v for k,v in tops.items() if k.startswith('sub|')]: d['freq']='q'
+_np=sum(1 for d in tops.values() for r in d['rows'] if 'rv' in r)
+print(f'רשימות ספקים: {len(tops)} יחידות | {_np} סדרות מכר/כמות לספק')
 
 # ---------- (D) price & quantity index, and import share over time ----------
 # Unit relatives (each category against its own Jan-2022 level) aggregated with
@@ -270,6 +327,18 @@ idx={'__market__':idx_block(cm)}
 for dep,sub in cm.groupby('dep'): idx['dep|'+dep]=idx_block(sub)
 for cat,sub in cm.groupby('cat'):
     if sub.month.nunique()==len(months): idx['cat|'+cat]=idx_block(sub)
+# the same unit relatives one level down, so a sub-category gets its own index
+sm=rawS.groupby(['sc','month']).apply(lambda x: pd.Series({
+    'rev':x.rev.sum(),'qty':x.qty.sum(),
+    'impnum':(x.rev*x.p_imp).sum(),'impden':x.rev[x.p_imp.notna()].sum()}),
+    include_groups=False).reset_index()
+sm['price']=sm.rev/sm.qty
+s0=sm[sm.month==BASE].set_index('sc')
+sm['qrel']=sm.qty/sm.sc.map(s0.qty); sm['prel']=sm.price/sm.sc.map(s0.price)
+sm['w22']=sm.sc.map(rawS[rawS.month.str[:4]=='2022'].groupby('sc').rev.sum())
+sm=sm[np.isfinite(sm.qrel)&np.isfinite(sm.prel)&sm.w22.notna()]
+for sub_,g_ in sm.groupby('sc'):
+    if g_.month.nunique()==len(months): idx['sub|'+sub_]=idx_block(g_)
 print(f'מדדי כמות/מחיר/יבוא: {len(idx)} סדרות (בסיס {BASE})')
 
 # --- quarterly index: quantities summed inside the quarter, price re-derived ---
@@ -296,15 +365,31 @@ idxq={'__market__':idx_blockq(cq)}
 for dep,sub in cq.groupby('dep'): idxq['dep|'+dep]=idx_blockq(sub)
 for cat,sub in cq.groupby('cat'):
     if sub.month.nunique()==len(QOK): idxq['cat|'+cat]=idx_blockq(sub)
+sq=rawSq.groupby(['sc','month']).apply(lambda x: pd.Series({
+    'rev':x.rev.sum(),'qty':x.qty.sum(),
+    'impnum':(x.rev*x.p_imp).sum(),'impden':x.rev[x.p_imp.notna()].sum()}),
+    include_groups=False).reset_index()
+sq['price']=sq.rev/sq.qty
+sq0=sq[sq.month==QOK[0]].set_index('sc')
+sq['qrel']=sq.qty/sq.sc.map(sq0.qty); sq['prel']=sq.price/sq.sc.map(sq0.price)
+sq['w22']=sq.sc.map(rawS[rawS.month.str[:4]=='2022'].groupby('sc').rev.sum())
+sq=sq[np.isfinite(sq.qrel)&np.isfinite(sq.prel)&sq.w22.notna()]
+for sub_,g_ in sq.groupby('sc'):
+    if g_.month.nunique()==len(QOK): idxq['sub|'+sub_]=idx_blockq(g_)
 print(f'מדדים רבעוניים: {len(idxq)} סדרות (בסיס {QOK[0]})')
 
 deps=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('dep|')})
 cats=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('cat|')})
+subs=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('sub|')})
 cat2dep=raw.groupby('cat').dep.agg(lambda s:s.mode().iat[0]).to_dict()
+sub2cat=rawS.groupby('sc').cat.agg(lambda t:t.mode().iat[0]).to_dict()
 rev26=raw[raw.month.str[:4]=='2026'].groupby('cat').rev.sum().to_dict()
-json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,tops=tops,
+srev26=rawS[rawS.month.str[:4]=='2026'].groupby('sc').rev.sum().to_dict()
+json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
     idx=idx,base=BASE,seriesq=seriesq,idxq=idxq,quarters=QOK,baseq=QOK[0],
     cat2dep={k:v for k,v in cat2dep.items() if k in cats},
-    catrev={k:round(float(v),1) for k,v in rev26.items() if k in cats}),
+    sub2cat={k:v for k,v in sub2cat.items() if k in subs},
+    catrev={k:round(float(v),1) for k,v in rev26.items() if k in cats},
+    subrev={k:round(float(v),2) for k,v in srev26.items() if k in subs}),
     open('/home/user/consternation/analysis/dash_data.json','w'),ensure_ascii=False)
 print('saved dash_data.json')
