@@ -57,25 +57,34 @@ def _lvl(k,keys,tbl):
     est=k.groupby(keys).apply(_w,include_groups=False)
     cov=k.groupby(keys).rev.sum()/tbl.groupby(keys).rev.sum()
     return est.where(cov.reindex(est.index)>=MINRES)
-p_g_cat=_lvl(kb,['g','cat'],bf); p_g_dep=_lvl(kb,['g','dep'],bf); p_g=_lvl(kb,'g',bf)
+p_g_cat=_lvl(kb,['g','cat'],bf); p_cat=_lvl(kb,'cat',bf)
+# supplier-level, used ONLY by the market-wide top-10 table, where the row really is the
+# supplier across every category it sells in -- never as a fallback inside a category
+p_g    =_lvl(kb,'g',bf)
 res_g  =kb.groupby('g').rev.sum()/bf.groupby('g').rev.sum()
-p22_g_cat=_lvl(kb22,['g','cat'],bf22); p22_g_dep=_lvl(kb22,['g','dep'],bf22)
-p22_g    =_lvl(kb22,'g',bf22)
-print(f'סיווג מותגים: {100*kb.rev.sum()/bf.rev.sum():.1f}% מהמכר מוכרע | {len(p_g)} קבוצות ספקים')
+p22_g_cat=_lvl(kb22,['g','cat'],bf22); p22_cat=_lvl(kb22,'cat',bf22)
+print(f'סיווג מותגים: {100*kb.rev.sum()/bf.rev.sum():.1f}% מהמכר מוכרע | '
+      f'{len(p_g_cat)} צמדי ספק-קטגוריה, {len(p_cat)} קטגוריות')
 
-def pimp(rows,pc,pd_,pg):
-    """category mix, else department mix, else the group overall -- skipping any level
-       blanked by the MINRES coverage floor, and NaN when none of them qualifies."""
-    out=pd.Series(pc.reindex(pd.MultiIndex.from_arrays([rows.g,rows.cat])).values,index=rows.index)
+def pimp(rows,pgc,pcat_):
+    """This group's mix INSIDE this category; failing that, the category's own mix across
+       all groups; failing that, unresolved.
+
+    What is deliberately absent is any fallback that reads a group's behaviour in OTHER
+    categories. A supplier that imports chocolate tells you nothing about the cottage
+    cheese it also sells, and the department fallback this replaces did exactly that:
+    cottage has no rows at all in the brand file, so it inherited Strauss's and CBC's
+    imports from elsewhere in the dairy department and showed 3-5% imported despite
+    every one of its three suppliers being a domestic dairy. Staying inside the category
+    also RAISES coverage, from 86.3% to 94.0% of 2026 revenue, because the category mix
+    covers categories where one particular supplier has no brand rows but others do."""
+    out=pd.Series(pgc.reindex(pd.MultiIndex.from_arrays([rows.g,rows.cat])).values,index=rows.index)
     m=out.isna()
-    if m.any():
-        out[m]=pd.Series(pd_.reindex(pd.MultiIndex.from_arrays([rows.g,rows.dep])).values,index=rows.index)[m]
-    m=out.isna()
-    if m.any(): out[m]=rows.g.map(pg)[m]
+    if m.any(): out[m]=rows.cat.map(pcat_)[m]
     return out
 # time chart: linear interpolation of each supplier group's mix between the two
 # anchor months (2022-01, 2026-07); a group seen in only one file stays flat.
-pA=pimp(raw,p22_g_cat,p22_g_dep,p22_g); pB=pimp(raw,p_g_cat,p_g_dep,p_g)
+pA=pimp(raw,p22_g_cat,p22_cat); pB=pimp(raw,p_g_cat,p_cat)
 pA=pA.fillna(pB); pB=pB.fillna(pA)
 mnum={m:i for i,m in enumerate(months)}
 lam=raw.month.map(mnum)/ (len(months)-1)
@@ -151,7 +160,7 @@ QOK=sorted(_nm[_nm==3].index)          # drop the incomplete trailing quarter
 rawq=raw[raw.q.isin(QOK)].copy()
 rawq['month']=rawq.q
 rawS['q']=rawS.month.str[:4]+'-Q'+(((rawS.month.str[5:7].astype(int)-1)//3)+1).astype(str)
-_a=pimp(rawS,p22_g_cat,p22_g_dep,p22_g); _b=pimp(rawS,p_g_cat,p_g_dep,p_g)
+_a=pimp(rawS,p22_g_cat,p22_cat); _b=pimp(rawS,p_g_cat,p_cat)
 _a=_a.fillna(_b); _b=_b.fillna(_a)                       # same interpolation as `raw`
 _l=rawS.month.map({m:i for i,m in enumerate(months)})/(len(months)-1)
 rawS['p_imp']=(1-_l)*_a+_l*_b
@@ -265,34 +274,22 @@ def _sig(x,n=3):
     return round(float(x),-int(math.floor(math.log10(abs(x))))+(n-1))
 
 def sharepaths(key,name_of,src,periods=None):
-    """Monthly revenue and standard quantity for each listed supplier. The page derives
-       share (against the unit total already carried in `series`) and unit value
-       (revenue over quantity) from these, at either frequency -- so the quarterly
-       drill-down is summed from the months rather than approximated from them."""
+    """Monthly revenue for each listed supplier. The page divides it by the unit total
+       already carried in `series` to get the share, at either frequency -- so the
+       quarterly drill-down is summed from the months, not approximated from them."""
     periods=months if periods is None else periods
-    z=src.groupby([key,'month','g']).agg(rev=('rev','sum'),qty=('qty','sum')).reset_index()
+    z=src.groupby([key,'month','g']).rev.sum().rename('rev').reset_index()
     WR=z.pivot_table(index=[key,'g'],columns='month',values='rev').reindex(columns=periods)
-    WQ=z.pivot_table(index=[key,'g'],columns='month',values='qty').reindex(columns=periods)
     for uk,d in tops.items():
         lv,nm=uk.split('|',1)
         if lv!=name_of: continue
         for r in d['rows']:
             if (nm,r['g']) not in WR.index: continue
             r['rv']=[None if not np.isfinite(x) else _sig(x) for x in WR.loc[(nm,r['g'])].values]
-            if (nm,r['g']) in WQ.index:
-                qv=WQ.loc[(nm,r['g'])].values
-                if np.isfinite(qv).any():
-                    r['qt']=[None if not np.isfinite(x) else _sig(x) for x in qv]
-for nm_of,key,src in [('dep','dep',raw),('cat','cat',raw)]:
+for nm_of,key,src in [('dep','dep',raw),('cat','cat',raw),('sub','sc',rawS)]:
     sharepaths(key,nm_of,src)
-# There are 994 sub-categories against 54 departments and 301 categories, so carrying a
-# monthly supplier series for each would take about 4 MB more than an artifact can hold.
-# The sub-category drill-down is therefore stored on quarters: the same numbers summed
-# three months at a time, which is also the steadier read for units this small.
-sharepaths('sc','sub',rawSq,QOK)
-for d in [v for k,v in tops.items() if k.startswith('sub|')]: d['freq']='q'
 _np=sum(1 for d in tops.values() for r in d['rows'] if 'rv' in r)
-print(f'רשימות ספקים: {len(tops)} יחידות | {_np} סדרות מכר/כמות לספק')
+print(f'רשימות ספקים: {len(tops)} יחידות | {_np} סדרות מכר לספק')
 
 # ---------- (D) price & quantity index, and import share over time ----------
 # Unit relatives (each category against its own Jan-2022 level) aggregated with
