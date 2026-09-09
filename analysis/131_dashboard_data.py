@@ -14,7 +14,7 @@ def grp(s):
     return s
 
 import sys; sys.path.insert(0,'/home/user/consternation/analysis')
-from brand_roles import brand_role
+from brand_roles import brand_role, IMP_BRANDS as G_IMP, DOM_BRANDS as G_DOM
 SQ='"כמות סטנדרטית"'; BS='"בסיס מדידה"'
 raw=c.execute(f'''SELECT "חודש" AS month,"מחלקה" AS dep,"קטגוריה" AS cat,"ספק" AS sup,
    sum({R}) AS rev, sum({SQ}) AS qty, any_value({BS}) AS basis
@@ -449,6 +449,7 @@ print(f'מותגים מובילים: {len(brands):,} צמדי יחידה-ספק 
 basis={k:v.get('basis','') for k,v in tops.items()}
 json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
     basis=basis,brands=brands,buckets=BUCKET,
+    nbrand_rules=len(G_IMP)+len(G_DOM),
     idx=idx,base=BASE,seriesq=seriesq,idxq=idxq,quarters=QOK,baseq=QOK[0],
     qpart={q:QLEN[q] for q in QPART},
     cat2dep={k:v for k,v in cat2dep.items() if k in cats},

@@ -91,6 +91,9 @@ WIN=sorted(int(m[5:7]) for m in _d.connect().execute(
     '''SELECT DISTINCT "חודש" FROM '/home/user/consternation/retail_sales_2022_2026.parquet'
        WHERE "שנה"=2026''').df()['חודש'])
 print(f'חלון ההשוואה: {len(WIN)} חודשים ראשונים של 2026 מול אותם חודשים ב-2022')
+HE_M=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר']
+# the page states the window; deriving it here stops the caption going stale as months arrive
+WINTXT={'n':len(WIN),'last':HE_M[max(WIN)-1],'first':HE_M[min(WIN)-1]}
 RES={}
 for level in ['cat','sub']:
     d=load(level)
@@ -114,5 +117,6 @@ for level in ['cat','sub']:
                     print(f'  {k:30} n={o["n"]:4} רמה לבד={o["lvl_only"]["avg"][0]:+6.2f} '
                           f'רמה בבקרה={o["lvl"]["avg"][0]:+6.2f}(p={o["lvl"]["avg"][2]:.2f}) '
                           f'שינוי={o["chg"]["avg"][0]:+6.2f}(p={o["chg"]["avg"][2]:.3f}) corr={o["corr"]:+.2f}')
+RES['__win__']=WINTXT
 json.dump(RES,open(OUT,'w'),ensure_ascii=False,separators=(',',':'))
 print('saved',OUT)

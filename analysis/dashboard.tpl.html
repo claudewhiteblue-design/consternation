@@ -203,7 +203,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="card">
  <h2>בקרה על <b>השינוי</b> בריכוזיות</h2>
- <p class="cs" style="max-width:82ch">אותה אמידה עם רגרסור חוצה־חתך שני: <b>השינוי בריכוזיות</b> בין 2022 לינואר–יולי 2026, נמדד על אותו חלון בן שבעה חודשים בשתי השנים. שני הרגרסורים מוכפלים בכל תקופה. הקו הכהה הוא מקדם <b>הרמה</b> אחרי הבקרה, הבהיר הוא מקדם <b>השינוי</b>, והמקווקו הוא מקדם הרמה ללא בקרה — להשוואה. <b style="color:var(--acc2)">שימו לב:</b> השינוי בריכוזיות מתרחש באותו חלון זמן שבו נמדדים המחירים, ולכן הוא אינו קבוע מראש — ספק שמעלה מחיר עלול לאבד נתח וכך להזיז את השינוי עצמו. המקדם שלו הוא <b>מתאם</b>, לא אומדן סיבתי, והוספתו היא במובן המחמיר «בקרה רעה» גם עבור מקדם הרמה.</p>
+ <p class="cs" style="max-width:82ch">אותה אמידה עם רגרסור חוצה־חתך שני: <b>השינוי בריכוזיות</b> בין 2022 ל<span id="vwin">אותו חלון ב-2026</span>, מול אותם חודשי לוח בשתי השנים. שני הרגרסורים מוכפלים בכל תקופה. הקו הכהה הוא מקדם <b>הרמה</b> אחרי הבקרה, הבהיר הוא מקדם <b>השינוי</b>, והמקווקו הוא מקדם הרמה ללא בקרה — להשוואה. <b style="color:var(--acc2)">שימו לב:</b> השינוי בריכוזיות מתרחש באותו חלון זמן שבו נמדדים המחירים, ולכן הוא אינו קבוע מראש — ספק שמעלה מחיר עלול לאבד נתח וכך להזיז את השינוי עצמו. המקדם שלו הוא <b>מתאם</b>, לא אומדן סיבתי, והוספתו היא במובן המחמיר «בקרה רעה» גם עבור מקדם הרמה.</p>
  <div class="ctl">
   <div class="seg" id="v_lv"></div><div class="seg" id="v_sm"></div>
   <div class="seg" id="v_ms"></div><div class="seg" id="v_wt"></div><div class="seg" id="v_fq"></div>
@@ -366,7 +366,7 @@ document.getElementById('tb').innerHTML=
   `<td>${r.n30}<span style="color:var(--ink3)"> · ${r.n3022}</span></td>`+
   `<td>${r.n50}<span style="color:var(--ink3)"> · ${r.n5022}</span></td></tr>`).join('')+'</tbody>';
 document.getElementById('tfoot').innerHTML=
- `<b style="color:var(--ink)">"מהמכר שלה מיובא"</b> = אחוז ממחזור הקבוצה שמקורו במוצרים המיוצרים בחו״ל, לפי סיווג ידני של 560 מותגים בקובץ יולי 2026. `+
+ `<b style="color:var(--ink)">"מהמכר שלה מיובא"</b> = אחוז ממחזור הקבוצה שמקורו במוצרים המיוצרים בחו״ל, לפי סיווג ידני של ${D.nbrand_rules||''} מותגים בקובץ יולי 2026. `+
  `הסיווג מכריע ${T.rows.map(r=>r.impres).filter(v=>v!==null).reduce((a,b)=>Math.min(a,b),100).toFixed(0)}–100% ממחזור כל קבוצה; מותג פרטי אינו ניתן להכרעה ואינו נספר. `+
  `הטבלה אינה כוללת מאגדים, שמחזיקים יחד ${T.bucket_share.toFixed(1)}% מהשוק.`;
 
@@ -1280,6 +1280,8 @@ const VG={};
 function vDraw(){
  ['v_lv','v_sm','v_ms','v_wt','v_fq'].forEach(segSync);
  const r=CC[`${st.vlv}|${st.vfq}|${st.vsm}|${st.vms}|${st.vwt}`]; if(!r) return;
+ {const w=CC.__win__, el=document.getElementById('vwin');   // stated by the run, never hard-coded
+  if(w&&el) el.textContent=`${w.first}–${w.last} 2026 (${w.n} חודשים)`;}
  const m=r.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
  const xs=i=>P.l+iw*i/(m.length-1);
  const B=[{k:'lvl',c:'--t3',ci:1},{k:'chg',c:'--acc2',ci:1},{k:'lvl_only',c:'--ink3',ci:0}];
