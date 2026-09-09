@@ -311,6 +311,13 @@ const SER=()=>FQ==='m'?D.series:D.seriesq;
 const IDX=()=>FQ==='m'?D.idx:D.idxq;
 const fmt=n=>n.toLocaleString('en-US');
 const sgn=(v,d=2)=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(d);
+/* Supplier and sub-category names are vendor text: 212 of them contain a double quote
+   (בע"מ, מ"ל) and three contain an ampersand. Written raw into an HTML attribute the
+   quote closes it early, so the value read back is truncated and never matches --
+   which is why a beer sub-category could not be picked and גלוברנדס בע"מ could not be
+   hidden. Escape on the way into markup, both in attributes and in text. */
+const escA=v=>String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const escT=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const cls=v=>v>0.02?'up':v<-0.02?'dn':'';
 
 document.getElementById('hdr').textContent=
@@ -395,7 +402,7 @@ function matches(q){
 function openList(q){
  const m=matches(q); hi=0;
  ul.innerHTML= m.length? m.slice(0,120).map((o,i)=>
-   `<li data-v="${o.v}" class="${i===0?'hi':''}">${o.t}<br><small>${o.s}</small></li>`).join('')
+   `<li data-v="${escA(o.v)}" class="${i===0?'hi':''}">${escT(o.t)}<br><small>${escT(o.s)}</small></li>`).join('')
   +(m.length>120?`<li class="none">…ועוד ${m.length-120}. צמצם את החיפוש.</li>`:'')
   : '<li class="none">לא נמצאה התאמה</li>';
  ul.hidden=false;
@@ -491,7 +498,7 @@ function drawSup(){
   `<b>לחיצה על שורה פותחת את נתח הספק לאורך זמן.</b></p>`+
   '<div class="scroll"><table><thead><tr><th></th><th class="nm">ספק</th><th>נתח<br>2026</th><th>Δ מול<br>2022</th>'+
   `<th>מכר<br>מ׳ ₪</th><th>כמות<br>${unit(t.basis)}</th><th>מהמכר שלו<br>מיובא</th></tr></thead><tbody>`+
-  t.rows.map((r,i)=>`<tr><td style="color:var(--ink3)">${i+1}</td><td class="nm">${r.g}</td>`+
+  t.rows.map((r,i)=>`<tr><td style="color:var(--ink3)">${i+1}</td><td class="nm">${escT(r.g)}</td>`+
    `<td><span class="bar" style="width:${(r.sh/mx*40).toFixed(1)}px"></span>${r.sh.toFixed(1)}%</td>`+
    `<td class="${r.dsh===null?'':cls(r.dsh)}">${r.dsh===null?'<span style="color:var(--ink3)">חדש</span>':sgn(r.dsh,1)}</td>`+
    `<td>${fmt(Math.round(r.rev))}</td><td>${fmt(Math.round(r.qty))}</td>`+
@@ -518,7 +525,7 @@ function drawSupPanel(){
  if(!SUPSEL||!t){box.innerHTML='';return}
  const r=t.rows.find(x=>x.g===SUPSEL);
  const shut=v=>`<div class="spanel"><span class="x" data-close="1">×</span>`+
-               `<h4>${SUPSEL}</h4><p class="cs">${v}</p></div>`;
+               `<h4>${escT(SUPSEL)}</h4><p class="cs">${v}</p></div>`;
  if(!r||!r.rv){box.innerHTML=shut('אין סדרה לספק זה ביחידה הנבחרת.');return}
  const US=SERALL()['כולל מאגדים'][`${lv}|${sel}`];
  if(!US){box.innerHTML=shut('אין סדרת מכר ליחידה זו בתדירות הנבחרת.');return}
@@ -550,7 +557,7 @@ function drawSupPanel(){
    g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  const a=sh[fi], b=sh[li];
  box.innerHTML=`<div class="spanel"><span class="x" data-close="1">×</span>`+
-  `<h4>${SUPSEL} — נתח מ־${sel} לאורך זמן</h4>`+
+  `<h4>${escT(SUPSEL)} — נתח מ־${escT(sel)} לאורך זמן</h4>`+
   `<p class="cs" style="margin:2px 0 6px">נתח מהמכר הכספי של היחידה, ${FQ==='m'?'חודשי':'רבעוני'} וללא החלקה. `+
   `${mlab(per[fi])}: ${a.toFixed(1)}% ← ${mlab(per[li])}: ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות). `+
   `שיא ${Math.max(...fin).toFixed(1)}% · שפל ${Math.min(...fin).toFixed(1)}%.`+partNote()+`</p>`+
@@ -655,8 +662,8 @@ function drawPrice(name){
  const shown=series.filter(sr=>!sr.hidden);
  const all=shown.flatMap(x=>x.v).filter(v=>v!=null&&v>0);
  const legend=()=>{document.getElementById('pleg').innerHTML=series.map(sr=>
-   `<span data-g="${sr.g}" style="cursor:pointer;opacity:${sr.hidden?0.35:1}" title="לחיצה מסתירה או מחזירה את הקו">`+
-   `<i style="background:var(${COL[sr.ci]})"></i>${sr.hidden?`<s>${sr.g}</s>`:sr.g}</span>`).join('');};
+   `<span data-g="${escA(sr.g)}" style="cursor:pointer;opacity:${sr.hidden?0.35:1}" title="לחיצה מסתירה או מחזירה את הקו">`+
+   `<i style="background:var(${COL[sr.ci]})"></i>${sr.hidden?`<s>${escT(sr.g)}</s>`:escT(sr.g)}</span>`).join('');};
  if(!all.length){legend();
   document.getElementById('pch').innerHTML='';
   document.getElementById('pfoot').innerHTML= shown.length
@@ -685,8 +692,8 @@ function drawPrice(name){
  legend();
  document.getElementById('pfoot').innerHTML=shown.map(sr=>{
    const f=sr.v.find(v=>v!=null), l=[...sr.v].reverse().find(v=>v!=null);
-   return REL ? `<b style="color:var(--ink)">${sr.g}</b> ${sgn(l-100,1)} נק׳`
-              : `<b style="color:var(--ink)">${sr.g}</b> ${fmtp(f)} ← ${fmtp(l)} (${sgn(100*(l/f-1),1)}%)`;
+   return REL ? `<b style="color:var(--ink)">${escT(sr.g)}</b> ${sgn(l-100,1)} נק׳`
+              : `<b style="color:var(--ink)">${escT(sr.g)}</b> ${fmtp(f)} ← ${fmtp(l)} (${sgn(100*(l/f-1),1)}%)`;
   }).join(' · ')
   +(REL?` — מדד, ${mlab(BASEQ)}=100.`+(dropped?` ${dropped} ספקים בלי מחיר ברבעון הבסיס הושמטו.`:'')
        :` — ₪ ל${punit(b)}.`)
@@ -716,7 +723,7 @@ const fmtp=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed
   let body=`<b>${mlabq(G.per[i])}</b>`, any=false;
   G.series.forEach((sr,k)=>{const v=sr.v[i]; if(v===null||v===undefined) return; any=true;
    ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4" fill="var(${G.COL[k]})" stroke="var(--surf)" stroke-width="1.6"/>`;
-   body+=`<div class="r"><span>${sr.g}</span><span>${G.fmtv(v)}</span></div>`;});
+   body+=`<div class="r"><span>${escT(sr.g)}</span><span>${G.fmtv(v)}</span></div>`;});
   if(!any){tp.classList.remove('on');document.getElementById('pov').innerHTML='';return}
   document.getElementById('pov').innerHTML=ov;
   tp.innerHTML=body; tp.classList.add('on');
