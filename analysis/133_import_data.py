@@ -76,5 +76,5 @@ for level in ['cat','sub']:
                   cmean=[round(float(np.average(meta[cm].values[gc==i],weights=w[gc==i])),1) for i in range(K)],
                   fmean=[round(float(np.average(meta[fm].values[gf==j],weights=w[gf==j])),1) for j in range(K)],
                   corr=round(float(np.corrcoef(meta[cm].values,meta[fm].values)[0,1]),3))
-json.dump(RES,open(OUT,'w'),ensure_ascii=False)
+json.dump(RES,open(OUT,'w'),ensure_ascii=False,separators=(',',':'))
 print('saved',OUT)

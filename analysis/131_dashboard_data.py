@@ -117,7 +117,7 @@ for g,r in top.iterrows():
         dshare=round(float(r.share-p.share),2) if p is not None else None,
         growth=round(100*(r.rev/p.rev-1),1) if p is not None and p.rev>0 else None,
         imp=round(100*float(p_g.get(g)),1) if g in p_g.index else None,
-        impres=round(100*float(res_g.get(g,0)),0) if g in p_g.index else None,
+        impres=round(100*float(res_g.get(g,0)),0) if g in p_g.index and np.isfinite(res_g.get(g,0)) else None,
         ncat22=int(p.ncat) if p is not None else None,
         n3022=int(p.n30) if p is not None else None, n5022=int(p.n50) if p is not None else None))
 buck=a26.loc[[g for g in a26.index if g in BUCKET]]
@@ -258,7 +258,8 @@ def toplist(keys,name_of,src=None):
                 dsh=round(float(r.sh-p.sh),1) if p is not None else None,
                 growth=round(100*(r.rev/p.rev-1),1) if p is not None and p.rev>0 else None,
                 imp=round(100*float(pu.loc[(pn,r.g)]),1) if (pn,r.g) in pu.index else None,
-                impres=round(100*float(ru.loc[(pn,r.g)]),0) if (pn,r.g) in ru.index else None))
+                impres=round(100*float(ru.loc[(pn,r.g)]),0)
+                       if (pn,r.g) in ru.index and np.isfinite(ru.loc[(pn,r.g)]) else None))
         bl=bases.loc[nm] if nm in bases.index else []
         out[name_of+'|'+nm]=dict(rows=rr,tot=round(float(a[a[keys[0]]==nm].rev.sum()),1),
             basis=('+'.join(bl) if len(bl)<=1 else 'מעורב: '+'+'.join(bl)))
@@ -384,6 +385,16 @@ for sub_,g_ in sq.groupby('sc'):
     if g_.month.nunique()==len(QOK): idxq['sub|'+sub_]=idx_blockq(g_)
 print(f'מדדים רבעוניים: {len(idxq)} סדרות (בסיס {QOK[0]})')
 
+# A unit with no bucket suppliers has the same series under both toggles. Store it once:
+# the value 1 under "ללא מאגדים" tells the page to read the "כולל מאגדים" entry. An
+# explicit marker, not a silent fallback, so a unit that genuinely lacks the
+# bucket-free series (all its revenue was buckets) is never shown the wrong numbers.
+for _SS in (series,seriesq):
+    _A,_B=_SS['כולל מאגדים'],_SS['ללא מאגדים']
+    for _k in list(_B):
+        if _k in _A and _B[_k]==_A[_k]: _B[_k]=1
+print('סדרות זהות בשני מצבי המאגדים, נשמרות פעם אחת:',
+      sum(1 for _SS in (series,seriesq) for _v in _SS['ללא מאגדים'].values() if _v==1))
 deps=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('dep|')})
 cats=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('cat|')})
 subs=sorted({k.split('|',1)[1] for k in series['כולל מאגדים'] if k.startswith('sub|')})
@@ -400,5 +411,6 @@ json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,subs=su
     sub2cat={k:v for k,v in sub2cat.items() if k in subs},
     catrev={k:round(float(v),1) for k,v in rev26.items() if k in cats},
     subrev={k:round(float(v),2) for k,v in srev26.items() if k in subs}),
-    open('/home/user/consternation/analysis/dash_data.json','w'),ensure_ascii=False)
+    open('/home/user/consternation/analysis/dash_data.json','w'),ensure_ascii=False,
+    separators=(',',':'))          # the default separators are 15% of the file
 print('saved dash_data.json')

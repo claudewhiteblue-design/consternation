@@ -101,5 +101,5 @@ for level in ['cat','sub']:
                     print(f'  {k:30} n={o["n"]:4} רמה לבד={o["lvl_only"]["avg"][0]:+6.2f} '
                           f'רמה בבקרה={o["lvl"]["avg"][0]:+6.2f}(p={o["lvl"]["avg"][2]:.2f}) '
                           f'שינוי={o["chg"]["avg"][0]:+6.2f}(p={o["chg"]["avg"][2]:.3f}) corr={o["corr"]:+.2f}')
-json.dump(RES,open(OUT,'w'),ensure_ascii=False)
+json.dump(RES,open(OUT,'w'),ensure_ascii=False,separators=(',',':'))
 print('saved',OUT)

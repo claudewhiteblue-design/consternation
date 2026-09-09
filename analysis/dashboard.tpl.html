@@ -81,7 +81,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 <div class="nav" id="nav"></div>
 
 <div class="page" id="p0">
-<p class="sub" id="hdr"></p>
+<p class="sub" id="hdr">טוען נתונים…</p>
 
 <div class="kpi" id="kpi"></div>
 
@@ -269,13 +269,35 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 </div><!-- /s1 -->
 </div><!-- /p1 -->
 </div>
+__PAYLOAD__
 <script>
-const D=__DATA__;
-const A=__ADATA__;
-const XI=__XDATA__;
-const CC=__CDATA__;
-const B5=__BDATA__;
-const I=__IDATA__;
+/* The data travels gzipped and base64-encoded (about a third of its JSON size) and is
+   inflated here before anything draws. DecompressionStream is built into every
+   browser since 2023; older ones get a small inflate library from the one CDN this
+   page may load scripts from. */
+async function inflate(b64){
+ const bin=atob(b64), n=bin.length, u8=new Uint8Array(n);
+ for(let i=0;i<n;i++) u8[i]=bin.charCodeAt(i);
+ if(typeof DecompressionStream==='function'){
+  const txt=await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  return JSON.parse(txt);
+ }
+ if(typeof pako==='undefined'){
+  await new Promise((ok,err)=>{const el=document.createElement('script');
+   el.src='https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js';
+   el.onload=ok; el.onerror=()=>err(new Error('inflate library failed to load'));
+   document.head.appendChild(el);});
+ }
+ return JSON.parse(pako.ungzip(u8,{to:'string'}));
+}
+async function loadPayload(){
+ const keys=Object.keys(PAYLOAD), vals=await Promise.all(keys.map(k=>inflate(PAYLOAD[k])));
+ return Object.fromEntries(keys.map((k,i)=>[k,vals[i]]));
+}
+(async()=>{
+let D,A,XI,CC,B5,I;
+try{ ({D,A,XI,CC,B5,I}=await loadPayload()); }
+catch(e){ document.getElementById('hdr').textContent='הנתונים לא נטענו: '+e.message; throw e; }
 let M=D.months; const T=D.table;
 let FQ='m';
 const SER=()=>FQ==='m'?D.series:D.seriesq;
@@ -401,7 +423,8 @@ function draw(){
  [...lvEl.children].forEach((b,i)=>b.classList.toggle('on',LV[i][0]===lv));
  [...bkEl.children].forEach(b=>b.classList.toggle('on',b.textContent===bk));
  [...fqEl.children].forEach((b,i)=>b.classList.toggle('on',FQL[i][0]===FQ));
- const S=SER()[bk], raw=S[key()];
+ const S=SER()[bk]; let raw=S[key()];
+ if(raw===1) raw=SER()[BK[0]][key()];      // identical under both toggles, stored once
  if(!raw){document.getElementById('ch').innerHTML='';document.getElementById('cfoot').textContent='אין נתונים ליחידה זו בתדירות הנבחרת.';drawSup();drawIdx();return;}
  const s={cr3:ma(raw.cr3),hhi:ma(raw.hhi),rev:raw.rev};
  GEO.raw=raw; GEO.s=s; GEO.panels=[];
@@ -476,6 +499,8 @@ function drawSup(){
    the unit total, which `series` already holds with buckets included, matching the
    table. Quarters are summed from the months rather than averaged. */
 let SUPSEL=null, SPG={};
+document.getElementById('sup').addEventListener('click',e=>{
+ if(e.target.closest('[data-close]')){SUPSEL=null;drawSupPanel();}});
 function drawSupPanel(){
  const box=document.getElementById('spanel'); if(!box) return;
  const t=D.tops[`${lv}|${sel}`];
@@ -485,7 +510,7 @@ function drawSupPanel(){
    tr.classList.toggle('on', !!t && t.rows[i].g===SUPSEL));
  if(!SUPSEL||!t){box.innerHTML='';return}
  const r=t.rows.find(x=>x.g===SUPSEL);
- const shut=v=>`<div class="spanel"><span class="x" onclick="SUPSEL=null;drawSupPanel()">×</span>`+
+ const shut=v=>`<div class="spanel"><span class="x" data-close="1">×</span>`+
                `<h4>${SUPSEL}</h4><p class="cs">${v}</p></div>`;
  if(!r||!r.rv){box.innerHTML=shut('אין סדרה לספק זה ביחידה הנבחרת.');return}
  const US=SERALL()['כולל מאגדים'][`${lv}|${sel}`];
@@ -517,7 +542,7 @@ function drawSupPanel(){
  per.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1')
    g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  const a=sh[fi], b=sh[li];
- box.innerHTML=`<div class="spanel"><span class="x" onclick="SUPSEL=null;drawSupPanel()">×</span>`+
+ box.innerHTML=`<div class="spanel"><span class="x" data-close="1">×</span>`+
   `<h4>${SUPSEL} — נתח מ־${sel} לאורך זמן</h4>`+
   `<p class="cs" style="margin:2px 0 6px">נתח מהמכר הכספי של היחידה, ${FQ==='m'?'חודשי':'רבעוני'} וללא החלקה. `+
   `${mlab(per[fi])}: ${a.toFixed(1)}% ← ${mlab(per[li])}: ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות). `+
@@ -1252,5 +1277,5 @@ document.getElementById('bch').addEventListener('mouseleave',()=>{
  document.getElementById('btip').classList.remove('on');
  const o=document.getElementById('bov'); if(o)o.innerHTML='';});
 bDraw();
-
+})();
 </script>

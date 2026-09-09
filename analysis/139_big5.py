@@ -128,5 +128,5 @@ for level in ['cat','sub']:
                                   f'ריכוזיות={o["lvl"]["avg"][0]:+6.2f} corr={o["corr"]:+.2f}')
                 # descriptive paths don't depend on the concentration measure
                 RES[f'{sk}|paths|{thr}']=paths(x)
-json.dump(RES,open(OUT,'w'),ensure_ascii=False)
+json.dump(RES,open(OUT,'w'),ensure_ascii=False,separators=(',',':'))
 print('saved',OUT)

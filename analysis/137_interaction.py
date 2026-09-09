@@ -91,5 +91,5 @@ for level in ['cat','sub']:
                         a=RES[k]
                         print(f'  {k:38} mid={a["mid"]["avg"][0]:+6.2f}(p={a["mid"]["avg"][2]:.2f}) lo={a["lo"]["avg"][0]:+6.2f} hi={a["hi"]["avg"][0]:+6.2f} '
                               f'θ={a["int"]["avg"][0]:+6.2f} (p={a["int"]["avg"][2]:.3f})')
-json.dump(RES,open(OUT,'w'),ensure_ascii=False)
+json.dump(RES,open(OUT,'w'),ensure_ascii=False,separators=(',',':'))
 print('saved',OUT)

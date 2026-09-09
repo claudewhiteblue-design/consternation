@@ -159,5 +159,5 @@ for level in ['cat','sub']:
                     RES['runs'][k]=panel(x,measure,weighted)
                     a=RES['runs'][k]
                     print(f'  {k:32} n={a["n"]:4} T={len(a["months"]):3} avg={a["avg"][0]:+6.2f}% p={a["avg"][2]:.3f}')
-json.dump(RES,open(OUT,'w'),ensure_ascii=False)
+json.dump(RES,open(OUT,'w'),ensure_ascii=False,separators=(',',':'))
 print('saved',OUT)
