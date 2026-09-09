@@ -77,7 +77,13 @@ def panel2(x,measure,weighted,with_change):
         out['corr']=round(float(np.corrcoef(z,dz)[0,1]),3)
     return out
 
-WIN=list(range(1,8))                    # Jan-Jul, the like-for-like window
+# The like-for-like window is however much of 2026 the panel actually holds, compared
+# against the same calendar months of 2022 -- so it widens by itself as months arrive.
+import duckdb as _d
+WIN=sorted(int(m[5:7]) for m in _d.connect().execute(
+    '''SELECT DISTINCT "חודש" FROM '/home/user/consternation/retail_sales_2022_2026.parquet'
+       WHERE "שנה"=2026''').df()['חודש'])
+print(f'חלון ההשוואה: {len(WIN)} חודשים ראשונים של 2026 מול אותם חודשים ב-2022')
 RES={}
 for level in ['cat','sub']:
     d=load(level)
