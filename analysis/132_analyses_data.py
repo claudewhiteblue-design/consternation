@@ -66,11 +66,14 @@ def prep(d,drop_meat):
 def to_quarter(x):
     """Collapse the monthly panel to calendar quarters. Revenue and quantity are summed
        and the price recomputed, so the quarterly price is a proper unit value rather
-       than an average of monthly prices. Incomplete quarters are dropped."""
+       than an average of monthly prices. The trailing quarter is kept even when still
+       filling up -- the price is a ratio of two sums over the same months, so a
+       two-month quarter is as valid a unit value as a three-month one; only a gap in
+       the middle of the series would be dropped."""
     q=x.copy()
     q['q']=q.month.str[:4]+'-Q'+(((q.month.str[5:7].astype(int)-1)//3)+1).astype(str)
     nm=q.groupby('q').month.nunique()
-    q=q[q.q.isin(nm[nm==3].index)]
+    q=q[q.q.isin([k for k in nm.index if nm[k]==3 or k==max(nm.index)])]
     keep=[c for c in q.columns if c not in ('month','q','rev','qty','logp')]
     g=q.groupby(['u','q']).agg(rev=('rev','sum'),qty=('qty','sum'),
         **{c:(c,'first') for c in keep if c!='u'}).reset_index()

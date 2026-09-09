@@ -1,12 +1,12 @@
 <title>לוח ריכוזיות — שוק המזון</title>
 <style>
 :root{color-scheme:light;--bg:#fcfcfb;--surf:#fff;--ink:#0b0b0b;--ink2:#52514e;--ink3:#83827c;
---line:#e4e3dd;--grid:#eeede8;--acc:#1a5b9e;--acc2:#b5642a;--pos:#1f7a4d;--neg:#a8352b;--fill:#1a5b9e14;--b1:#eaf3ea;--b2:#fbf2df;--b3:#fae8e4;--b1t:#2f7a52;--b2t:#96701c;--b3t:#a8352b;--t1:#9dc3ea;--t2:#3d82c9;--t3:#123f70}
+--line:#e4e3dd;--grid:#eeede8;--acc:#1a5b9e;--acc2:#b5642a;--pos:#1f7a4d;--neg:#a8352b;--fill:#1a5b9e14;--b1:#eaf3ea;--b2:#fbf2df;--b3:#fae8e4;--b1t:#2f7a52;--b2t:#96701c;--b3t:#a8352b;--t1:#9dc3ea;--t2:#3d82c9;--t3:#123f70;--s1:#1a5b9e;--s2:#c2691f;--s3:#2f7a52;--s4:#7b4ea8;--s5:#6b6a63;}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#141413;--surf:#1a1a19;
 --ink:#fff;--ink2:#c3c2b7;--ink3:#8f8e85;--line:#33322e;--grid:#2a2926;--acc:#5b9ee0;--acc2:#d98d4f;
---pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f;--b1:#1c2b22;--b2:#2e2718;--b3:#2f1e1b;--b1t:#7fcfa2;--b2t:#d8b45c;--b3t:#e0796d;--t1:#cfe3f7;--t2:#4a92dc;--t3:#1a5b9e}}
+--pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f;--b1:#1c2b22;--b2:#2e2718;--b3:#2f1e1b;--b1t:#7fcfa2;--b2t:#d8b45c;--b3t:#e0796d;--t1:#cfe3f7;--t2:#4a92dc;--t3:#1a5b9e;--s1:#5b9ee0;--s2:#e09a52;--s3:#5fbe8c;--s4:#b18adf;--s5:#a3a29a;}}
 :root[data-theme="dark"]{color-scheme:dark;--bg:#141413;--surf:#1a1a19;--ink:#fff;--ink2:#c3c2b7;--ink3:#8f8e85;
---line:#33322e;--grid:#2a2926;--acc:#5b9ee0;--acc2:#d98d4f;--pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f;--b1:#1c2b22;--b2:#2e2718;--b3:#2f1e1b;--b1t:#7fcfa2;--b2t:#d8b45c;--b3t:#e0796d;--t1:#cfe3f7;--t2:#4a92dc;--t3:#1a5b9e}
+--line:#33322e;--grid:#2a2926;--acc:#5b9ee0;--acc2:#d98d4f;--pos:#5fbe8c;--neg:#e0796d;--fill:#5b9ee01f;--b1:#1c2b22;--b2:#2e2718;--b3:#2f1e1b;--b1t:#7fcfa2;--b2t:#d8b45c;--b3t:#e0796d;--t1:#cfe3f7;--t2:#4a92dc;--t3:#1a5b9e;--s1:#5b9ee0;--s2:#e09a52;--s3:#5fbe8c;--s4:#b18adf;--s5:#a3a29a;}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);direction:rtl;
 font-family:"Segoe UI",Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6}
@@ -118,6 +118,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <h2>מחיר חמשת הספקים הגדולים <span id="pttl" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
  <p class="cs" id="punit" style="max-width:82ch;font-weight:600;color:var(--ink2);margin-bottom:2px"></p>
  <p class="cs" style="max-width:82ch">מחיר בפועל, לא מדד: המכר הכספי של הספק חלקי הכמות הסטנדרטית שלו, באותה יחידת מדידה שבה נמדדת היחידה הנבחרת. חמשת הגדולים לפי מכר 2026 — חמש השורות הראשונות בטבלה למטה. הקו גולמי וללא החלקה, כך שמבצעים וחגים נראים בו.</p>
+ <div class="ctl"><div class="seg" id="p_md"></div></div>
  <div class="leg" id="pleg"></div>
  <div class="scroll"><div class="chwrap"><svg id="pch" viewBox="0 0 940 320" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
   <div class="tip" id="ptip"></div></div></div>
@@ -476,7 +477,7 @@ function draw(){
   `CR3 ${c0.toFixed(1)}% ← ${c1.toFixed(1)}% (${sgn(c1-c0,1)}) · HHI ${fmt(h0)} ← ${fmt(h1)} (${sgn(h1-h0,0)}) `+
   `<span class="pill" style="background:var(${bd.bg});color:var(${bd.tx})">${bd.lab}</span>`+
   (bd.lab!==bd0.lab?` <span style="color:var(--ink3)">(בתחילת 2022: ${bd0.lab})</span>`:'')+
-  (lv==='שוק'?'':` · ${s.rev.at(-1).toFixed(1)} מ׳ ₪ בחודש האחרון`);
+  (lv==='שוק'?'':` · ${s.rev.at(-1).toFixed(1)} מ׳ ₪ בחודש האחרון`)+partNote();
 }
 function drawSup(){
  const el=document.getElementById('sup');
@@ -552,7 +553,7 @@ function drawSupPanel(){
   `<h4>${SUPSEL} — נתח מ־${sel} לאורך זמן</h4>`+
   `<p class="cs" style="margin:2px 0 6px">נתח מהמכר הכספי של היחידה, ${FQ==='m'?'חודשי':'רבעוני'} וללא החלקה. `+
   `${mlab(per[fi])}: ${a.toFixed(1)}% ← ${mlab(per[li])}: ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות). `+
-  `שיא ${Math.max(...fin).toFixed(1)}% · שפל ${Math.min(...fin).toFixed(1)}%.</p>`+
+  `שיא ${Math.max(...fin).toFixed(1)}% · שפל ${Math.min(...fin).toFixed(1)}%.`+partNote()+`</p>`+
   `<div class="scroll"><div class="chwrap"><svg viewBox="0 0 940 190" id="spch" style="width:100%;min-width:660px;height:auto;direction:ltr">${g}<g id="spov"></g></svg>`+
   `<div class="tip" id="sptip"></div></div></div></div>`;
  SPG={sh,y,xs,W,P,ih,iw,per};
@@ -565,7 +566,7 @@ function drawSupPanel(){
   document.getElementById('spov').innerHTML=
    `<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`+
    `<circle cx="${x}" cy="${G.y(G.sh[i])}" r="4.2" fill="var(--acc)" stroke="var(--surf)" stroke-width="1.6"/>`;
-  tp.innerHTML=`<b>${mlab(G.per[i])}</b><div class="r"><span>נתח</span><span>${G.sh[i].toFixed(1)}%</span></div>`;
+  tp.innerHTML=`<b>${mlabq(G.per[i])}</b><div class="r"><span>נתח</span><span>${G.sh[i].toFixed(1)}%</span></div>`;
   tp.classList.add('on');
   const px=x/G.W*rc.width, tw=tp.offsetWidth;
   tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+18:px-tw-18))+'px';
@@ -574,6 +575,7 @@ function drawSupPanel(){
   document.getElementById('spov').innerHTML='';});
 }
 const SERALL=()=>FQ==='m'?D.series:D.seriesq;
+const PMD=[['abs','₪ בפועל'],['rel','מדד — שינוי מהתקופה הראשונה']];
 
 /* ---------- what the quantity and the price are actually counted in ---------- */
 /* `basis` is the measurement basis the panel reports for the unit: ליטר, ק"ג or
@@ -611,12 +613,15 @@ function drawPrice(name){
  if(!b||b.startsWith('מעורב')) return bad(
    `ב${name} נמדדות קטגוריות ביותר מבסיס אחד${b?` (${b.replace('מעורב: ','')})`:''}, ולכן אין מחיר בשקלים ליחידה. `+
    'בחירת קטגוריה או תת-קטגוריה בודדת תציג אותו.');
- document.getElementById('punit').innerHTML=`<b>המחיר</b> הוא ₪ ל${punit(b)}.`;
+ document.getElementById('punit').innerHTML = st.pmd==='rel'
+   ? `<b>מדד</b>: כל ספק מול המחיר שלו עצמו בתקופה הראשונה = 100, כך שחמישה מחירים בגבהים שונים הופכים לחמישה מסלולים ברי-השוואה.`
+   : `<b>המחיר</b> הוא ₪ ל${punit(b)}.`;
  const rows=t.rows.filter(r=>r.pp).slice(0,5);
  if(!rows.length) return bad('אין כמות סטנדרטית לספקים ביחידה זו, ולכן אין מחיר.');
+ const REL = st.pmd==='rel';
  // monthly rows aggregate to quarters by summing revenue and quantity, not by
  // averaging the monthly prices -- so the quarterly point is a true unit value
- const per=M, series=rows.map(r=>{
+ const per=M; let series=rows.map(r=>{
   let v=r.pp;
   if(FQ==='q'&&r.pp.length===D.months.length){
    const o=[];
@@ -626,18 +631,30 @@ function drawPrice(name){
     o.push(any&&qt>0?rv*1000/qt:null);}
    v=o;}
   return {g:r.g,v};});
+ let base=null;
+ if(REL){
+  // each supplier against its own first period, so five different price levels become
+  // five comparable paths; a supplier absent at the start has no base and is dropped
+  const kept=[];
+  series.forEach(sr=>{const b=sr.v.find(v=>v!==null&&v>0);
+   if(b) kept.push({g:sr.g,v:sr.v.map(v=>(v===null||v<=0)?null:100*v/b),b});});
+  base=series.length-kept.length;
+  series=kept;
+ }
  const all=series.flatMap(x=>x.v).filter(v=>v!==null&&v>0);
  if(!all.length) return bad('אין מחיר לספקים ביחידה זו בתדירות הנבחרת.');
  const W=940,P={t:16,r:22,b:32,l:60},ih=320-P.t-P.b,iw=W-P.l-P.r;
  const xs=i=>P.l+iw*i/(per.length-1);
  let lo=Math.min(...all), hi=Math.max(...all);
  const pd=(hi-lo)*0.1||Math.max(hi*0.05,0.1); lo=Math.max(0,lo-pd); hi+=pd;
+ const fmtv = REL ? (v=>v.toFixed(0)) : fmtp;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
- const COL=['--acc','--acc2','--t3','--t2','--ink3'];
+ const COL=['--s1','--s2','--s3','--s4','--s5'];
  let g='';
  nice(lo,hi,5).forEach(v=>{
   g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`+
-     `<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${fmtp(v)}</text>`;});
+     `<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${fmtv(v)}</text>`;});
+ if(REL) g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(100)}" y2="${y(100)}" stroke="var(--ink3)" stroke-width="1"/>`;
  series.forEach((sr,i)=>{
   const fi=sr.v.findIndex(v=>v!==null), li=sr.v.length-1-[...sr.v].reverse().findIndex(v=>v!==null);
   if(fi<0) return;
@@ -650,9 +667,11 @@ function drawPrice(name){
   `<span><i style="background:var(${COL[i]})"></i>${sr.g}</span>`).join('');
  document.getElementById('pfoot').innerHTML=series.map(sr=>{
    const f=sr.v.find(v=>v!==null), l=[...sr.v].reverse().find(v=>v!==null);
-   return `<b style="color:var(--ink)">${sr.g}</b> ${fmtp(f)} ← ${fmtp(l)} (${sgn(100*(l/f-1),1)}%)`;
-  }).join(' · ')+` — ₪ ל${punit(b)}.`;
- Object.assign(PG,{series,y,xs,W,P,iw,ih,per,COL,b});
+   return REL ? `<b style="color:var(--ink)">${sr.g}</b> ${sgn(l-100,1)} נק׳`
+              : `<b style="color:var(--ink)">${sr.g}</b> ${fmtp(f)} ← ${fmtp(l)} (${sgn(100*(l/f-1),1)}%)`;
+  }).join(' · ')+(REL?` — מדד, ${mlab(per[0])}=100.`+(base?` ${base} ספקים בלי מחיר בתקופת הבסיס הושמטו.`:'')
+                     :` — ₪ ל${punit(b)}.`)+partNote();
+ Object.assign(PG,{series,y,xs,W,P,iw,ih,per,COL,b,fmtv});
 }
 const fmtp=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed(3);
 {const el=document.getElementById('pch'), tp=document.getElementById('ptip');
@@ -662,10 +681,10 @@ const fmtp=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed
   let i=Math.round((xv-G.P.l)/G.iw*(G.per.length-1)); i=Math.max(0,Math.min(G.per.length-1,i));
   const x=G.xs(i);
   let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
-  let body=`<b>${mlab(G.per[i])}</b>`, any=false;
+  let body=`<b>${mlabq(G.per[i])}</b>`, any=false;
   G.series.forEach((sr,k)=>{const v=sr.v[i]; if(v===null||v===undefined) return; any=true;
    ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4" fill="var(${G.COL[k]})" stroke="var(--surf)" stroke-width="1.6"/>`;
-   body+=`<div class="r"><span>${sr.g}</span><span>${fmtp(v)}</span></div>`;});
+   body+=`<div class="r"><span>${sr.g}</span><span>${G.fmtv(v)}</span></div>`;});
   if(!any){tp.classList.remove('on');document.getElementById('pov').innerHTML='';return}
   document.getElementById('pov').innerHTML=ov;
   tp.innerHTML=body; tp.classList.add('on');
@@ -678,6 +697,15 @@ const fmtp=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed
 const chEl=document.getElementById('ch'), tip=document.getElementById('tip');
 const HE=['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
 const mlab=m=>m.includes('Q')?`רבעון ${m.slice(6)} ${m.slice(0,4)}`:`${HE[+m.slice(5)-1]} ${m.slice(0,4)}`;
+// The trailing quarter can still be filling up. Shares and prices are ratios and need
+// no caveat, but the reader does: every quarterly footer says so, and the tooltip
+// marks the period itself.
+const qpartN = q => (D.qpart||{})[q];
+const mlabq  = m => mlab(m) + (qpartN(m) ? ` (${qpartN(m)} מתוך 3 חודשים)` : '');
+const partNote = () => { if(FQ!=='q') return '';
+  const q=Object.keys(D.qpart||{})[0]; if(!q) return '';
+  return ` <b style="color:var(--acc2)">${mlab(q)} עדיין חלקי — ${D.qpart[q]} חודשים מתוך 3;</b>`+
+         ` נתחים ומחירים הם יחסים ולכן ברי-השוואה, והכמות מוצגת לפי ממוצע חודשי בתוך הרבעון.`; };
 function hover(ev){
  if(!GEO.xs) return;
  const r=chEl.getBoundingClientRect(), xv=(ev.clientX-r.left)*(GEO.W/r.width);
@@ -688,7 +716,7 @@ function hover(ev){
  GEO.panels.forEach(p=>{const v=GEO.s[p.k][i]; if(v!==null)
    ov+=`<circle cx="${x}" cy="${p.y(v)}" r="4.2" fill="var(--acc)" stroke="var(--surf)" stroke-width="1.6"/>`;});
  document.getElementById('ov').innerHTML=ov;
- tip.innerHTML=`<b>${mlab(M[i])}</b><div style="color:var(--ink3);font-size:11.5px;margin-bottom:4px">ממוצע נע 3 חודשים</div>`+
+ tip.innerHTML=`<b>${mlabq(M[i])}</b><div style="color:var(--ink3);font-size:11.5px;margin-bottom:4px">ממוצע נע 3 חודשים</div>`+
   `<div class="r"><span>CR3</span><span>${GEO.s.cr3[i].toFixed(1)}%</span></div>`+
   `<div class="r"><span>HHI</span><span>${fmt(Math.round(GEO.s.hhi[i]))}</span></div>`+
   (FQ==='m'?`<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>החודש עצמו</span><span>${GEO.raw.cr3[i].toFixed(1)}% · ${fmt(GEO.raw.hhi[i])}</span></div>`:'')+
@@ -744,7 +772,7 @@ function drawIdx(){
   document.getElementById('qfoot').innerHTML=
    `<b style="color:var(--ink)">${name}</b> · ${mlab(M.at(-1))}: מחיר ${p1.toFixed(1)} · כמות ${q1.toFixed(1)} · מכר נומינלי ${(p1*q1/100).toFixed(1)}<br>`+
    `<span style="color:var(--ink2)">${FQ==='m'?'12 החודשים':'4 הרבעונים'} האחרונים מול ${FQ==='m'?'12 הראשונים':'4 הראשונים'}: מחיר ${p12b.toFixed(1)} ← ${p12.toFixed(1)} (${sgn(100*(p12/p12b-1),1)}%) · `+
-   `כמות ${q12b.toFixed(1)} ← ${q12.toFixed(1)} (${sgn(100*(q12/q12b-1),1)}%)</span>`;
+   `כמות ${q12b.toFixed(1)} ← ${q12.toFixed(1)} (${sgn(100*(q12/q12b-1),1)}%)</span>`+partNote();
  }
  // --- panel 2: import share
  {const ih=280-P.t-P.b, y0=P.t;
@@ -769,7 +797,7 @@ function drawIdx(){
   const a=ok[START], b=ok.at(-1);
   document.getElementById('ifoot2').innerHTML=
    `<b style="color:var(--ink)">${name}</b> · ${a.toFixed(1)}% ← ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות) · `+
-   `הסיווג מכריע ${S.res.at(-1).toFixed(0)}% מהמחזור; היתר (בעיקר מותג פרטי) מחוץ לחישוב.`+
+   `הסיווג מכריע ${S.res.at(-1).toFixed(0)}% מהמחזור; היתר (בעיקר מותג פרטי) מחוץ לחישוב.`+partNote()+
    (S.res.at(-1)<70?` <b style="color:var(--acc2)">כיסוי נמוך — יש לקרוא בזהירות.</b>`:'');
  }
 }
@@ -780,7 +808,7 @@ function idxHover(ev,G,svgId,ovId,tipId,kind){
  let i=Math.round((xv-G.P.l)/G.iw*(G.m.length-1)); i=Math.max(START,Math.min(G.m.length-1,i));
  const x=G.xs(i);
  let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
- let body=`<b>${mlab(G.m[i])}</b>`;
+ let body=`<b>${mlabq(G.m[i])}</b>`;
  if(kind==='q'){
   ov+=`<circle cx="${x}" cy="${G.y(G.p[i])}" r="4.2" fill="var(--acc)" stroke="var(--surf)" stroke-width="1.6"/>`;
   ov+=`<circle cx="${x}" cy="${G.y(G.q[i])}" r="4.2" fill="var(--acc2)" stroke="var(--surf)" stroke-width="1.6"/>`;
@@ -824,6 +852,7 @@ const AM=[['cr3','CR3'],['hhi','HHI']];
 const AW=[['w','משוקלל מכר'],['u','משקל שווה']];
 const AF=[['m','חודשי'],['q','רבעוני']];
 const AK=[['3','שלישונים'],['2','חציון']];
+// the overview's price chart shares the analyses' segmented-control helper
 const st={lv:'cat',sm:'no_meat',ms:'cr3',wt:'w',fq:'m',
           tlv:'cat',tsm:'no_meat',tms:'cr3',tk:'3',tfq:'m'};
 function seg(id,opts,key,cb){
@@ -834,6 +863,8 @@ function seg(id,opts,key,cb){
 }
 function segSync(id){const el=document.getElementById(id);const vals=el.dataset.vals.split(',');
  [...el.children].forEach((b,i)=>b.classList.toggle('on',vals[i]===st[el.dataset.key]));}
+
+st.pmd='abs'; seg('p_md',PMD,'pmd',()=>drawIdx());   // overview price chart mode
 seg('a_lv',AL,'lv',()=>aDraw()); seg('a_sm',AS,'sm',()=>aDraw());
 seg('a_ms',AM,'ms',()=>aDraw()); seg('a_wt',AW,'wt',()=>aDraw()); seg('a_fq',AF,'fq',()=>aDraw());
 seg('t_lv',AL,'tlv',()=>tDraw()); seg('t_sm',AS,'tsm',()=>tDraw()); seg('t_ms',AM,'tms',()=>tDraw());
@@ -911,7 +942,7 @@ function ahover(ev,G,svgId,ovId,tipId,mode){
  let i=Math.round((xv-G.P.l)/G.iw*(G.m.length-1)); i=Math.max(0,Math.min(G.m.length-1,i));
  const x=G.xs(i);
  let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
- let body=`<b>${mlab(G.m[i])}</b>`;
+ let body=`<b>${mlabq(G.m[i])}</b>`;
  if(mode==='a'){
   const v=G.r.est[i], s=G.r.se[i];
   ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4.2" fill="var(--acc)" stroke="var(--surf)" stroke-width="1.6"/>`;
@@ -1152,7 +1183,7 @@ document.getElementById('xch').addEventListener('mousemove',e=>{
  ov+=`<circle cx="${x}" cy="${G.y(G.r.hi.est[i])}" r="4.2" fill="var(--t3)" stroke="var(--surf)" stroke-width="1.6"/>`;
  document.getElementById('xov').innerHTML=ov;
  const th=G.r.int.est[i], tp2=G.r.int.p[i];
- tp.innerHTML=`<b>${mlab(G.m[i])}</b>`+
+ tp.innerHTML=`<b>${mlabq(G.m[i])}</b>`+
   `<div class="r"><span>חשיפה ממוצעת</span><span>${(G.r.mid.est[i]>0?'+':'')+G.r.mid.est[i].toFixed(2)}%</span></div>`+
   `<div class="r"><span>חשיפה נמוכה</span><span>${(G.r.lo.est[i]>0?'+':'')+G.r.lo.est[i].toFixed(2)}%</span></div>`+
   `<div class="r"><span>חשיפה גבוהה</span><span>${(G.r.hi.est[i]>0?'+':'')+G.r.hi.est[i].toFixed(2)}%</span></div>`+
@@ -1214,7 +1245,7 @@ document.getElementById('vch').addEventListener('mousemove',e=>{
  ov+=`<circle cx="${x}" cy="${G.y(G.r.chg.est[i])}" r="4.2" fill="var(--acc2)" stroke="var(--surf)" stroke-width="1.6"/>`;
  document.getElementById('vov').innerHTML=ov;
  const pf3=p=>p<0.001?'<0.001':p.toFixed(3);
- tp.innerHTML=`<b>${mlab(G.m[i])}</b>`+
+ tp.innerHTML=`<b>${mlabq(G.m[i])}</b>`+
   `<div class="r"><span>רמה (בבקרה)</span><span>${(G.r.lvl.est[i]>0?'+':'')+G.r.lvl.est[i].toFixed(2)}% (p=${pf3(G.r.lvl.p[i])})</span></div>`+
   `<div class="r"><span>שינוי</span><span>${(G.r.chg.est[i]>0?'+':'')+G.r.chg.est[i].toFixed(2)}% (p=${pf3(G.r.chg.p[i])})</span></div>`+
   `<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>רמה ללא בקרה</span><span>${(G.r.lvl_only.est[i]>0?'+':'')+G.r.lvl_only.est[i].toFixed(2)}%</span></div>`;
@@ -1277,7 +1308,7 @@ document.getElementById('bch').addEventListener('mousemove',e=>{
  ov+=`<circle cx="${x}" cy="${G.y(G.r.lvl.est[i])}" r="4.2" fill="var(--t3)" stroke="var(--surf)" stroke-width="1.6"/>`;
  document.getElementById('bov').innerHTML=ov;
  const pf3=p=>p<0.001?'<0.001':p.toFixed(3);
- tp.innerHTML=`<b>${mlab(G.m[i])}</b>`+
+ tp.innerHTML=`<b>${mlabq(G.m[i])}</b>`+
   `<div class="r"><span>פער הנוכחות (בבקרה)</span><span>${(G.r.big.est[i]>0?'+':'')+G.r.big.est[i].toFixed(2)}% (p=${pf3(G.r.big.p[i])})</span></div>`+
   `<div class="r"><span>מקדם הריכוזיות</span><span>${(G.r.lvl.est[i]>0?'+':'')+G.r.lvl.est[i].toFixed(2)}%</span></div>`+
   `<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>פער ללא בקרה</span><span>${(G.r.big_only.est[i]>0?'+':'')+G.r.big_only.est[i].toFixed(2)}%</span></div>`;

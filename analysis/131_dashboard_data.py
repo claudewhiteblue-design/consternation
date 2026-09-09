@@ -156,7 +156,15 @@ print(f'תת-קטגוריות: {rawS.sc.nunique()} ב-{rawS.month.nunique()} ח�
 
 raw['q']=raw.month.str[:4]+'-Q'+(((raw.month.str[5:7].astype(int)-1)//3)+1).astype(str)
 _nm=raw.groupby('q').month.nunique()
-QOK=sorted(_nm[_nm==3].index)          # drop the incomplete trailing quarter
+# Keep the trailing quarter even when it is still filling up, so the newest months are
+# visible; only a GAP mid-series would be dropped. QLEN carries each quarter's month
+# count: shares and prices are ratios and need no adjustment, but any level (quantity)
+# is put on a per-month basis before it is indexed, so a two-month quarter is not
+# mistaken for a third less demand.
+_last=max(_nm.index)
+QOK=sorted([q for q in _nm.index if _nm[q]==3 or q==_last])
+QLEN={q:int(_nm[q]) for q in QOK}
+QPART=[q for q in QOK if QLEN[q]<3]
 rawq=raw[raw.q.isin(QOK)].copy()
 rawq['month']=rawq.q
 rawS['q']=rawS.month.str[:4]+'-Q'+(((rawS.month.str[5:7].astype(int)-1)//3)+1).astype(str)
@@ -165,7 +173,7 @@ _a=_a.fillna(_b); _b=_b.fillna(_a)                       # same interpolation as
 _l=rawS.month.map({m:i for i,m in enumerate(months)})/(len(months)-1)
 rawS['p_imp']=(1-_l)*_a+_l*_b
 rawSq=rawS[rawS.q.isin(QOK)].copy(); rawSq['month']=rawSq.q
-print(f'רבעונים מלאים: {len(QOK)} ({QOK[0]}–{QOK[-1]})')
+print(f'רבעונים: {len(QOK)} ({QOK[0]}–{QOK[-1]})'+(f' | חלקי: {QPART} ({QLEN[QPART[0]]} מתוך 3 חודשים)' if QPART else ''))
 
 series={}
 for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.bucket])]:
@@ -354,8 +362,9 @@ cq=rawq.groupby(['cat','month']).apply(lambda x: pd.Series({
     'impnum':(x.rev*x.p_imp).sum(),'impden':x.rev[x.p_imp.notna()].sum()}),
     include_groups=False).reset_index()
 cq['price']=cq.rev/cq.qty
+cq['qpm']=cq.qty/cq.month.map(QLEN)          # quantity per month, comparable across quarters
 q0=cq[cq.month==QOK[0]].set_index('cat')
-cq['qrel']=cq.qty/cq.cat.map(q0.qty); cq['prel']=cq.price/cq.cat.map(q0.price)
+cq['qrel']=cq.qpm/cq.cat.map(q0.qpm); cq['prel']=cq.price/cq.cat.map(q0.price)
 cq['w22']=cq.cat.map(raw[raw.month.str[:4]=='2022'].groupby('cat').rev.sum())
 cq=cq[np.isfinite(cq.qrel)&np.isfinite(cq.prel)&cq.w22.notna()]
 cq['dep']=cq.cat.map(c2d)
@@ -377,8 +386,9 @@ sq=rawSq.groupby(['sc','month']).apply(lambda x: pd.Series({
     'impnum':(x.rev*x.p_imp).sum(),'impden':x.rev[x.p_imp.notna()].sum()}),
     include_groups=False).reset_index()
 sq['price']=sq.rev/sq.qty
+sq['qpm']=sq.qty/sq.month.map(QLEN)
 sq0=sq[sq.month==QOK[0]].set_index('sc')
-sq['qrel']=sq.qty/sq.sc.map(sq0.qty); sq['prel']=sq.price/sq.sc.map(sq0.price)
+sq['qrel']=sq.qpm/sq.sc.map(sq0.qpm); sq['prel']=sq.price/sq.sc.map(sq0.price)
 sq['w22']=sq.sc.map(rawS[rawS.month.str[:4]=='2022'].groupby('sc').rev.sum())
 sq=sq[np.isfinite(sq.qrel)&np.isfinite(sq.prel)&sq.w22.notna()]
 for sub_,g_ in sq.groupby('sc'):
@@ -407,6 +417,7 @@ basis={k:v.get('basis','') for k,v in tops.items()}
 json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
     basis=basis,
     idx=idx,base=BASE,seriesq=seriesq,idxq=idxq,quarters=QOK,baseq=QOK[0],
+    qpart={q:QLEN[q] for q in QPART},
     cat2dep={k:v for k,v in cat2dep.items() if k in cats},
     sub2cat={k:v for k,v in sub2cat.items() if k in subs},
     catrev={k:round(float(v),1) for k,v in rev26.items() if k in cats},

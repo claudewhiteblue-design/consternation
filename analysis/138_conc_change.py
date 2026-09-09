@@ -49,16 +49,23 @@ def panel2(x,measure,weighted,with_change):
     def dm(v):
         B=np.repeat(v,T)[:,None]*I; return B-B.reshape(N,T,T).mean(axis=1).repeat(T,axis=0)
     Dm=I-I.reshape(N,T,T).mean(axis=1).repeat(T,axis=0)
-    blocks=[Dm[:,1:],dm(z)]; nn=[f'd|{m}' for m in months[1:]]+[f'z|{m}' for m in months]
+    # Each demeaned interaction block sums to zero across its T columns, so every block
+    # carries one linear dependency. Drop its first period to keep the design full rank:
+    # the dropped coefficient is implicitly zero and contrasts against the 2022 mean are
+    # invariant to the choice. Without this the clustered covariance is singular -- with
+    # two regressors it produced NaN standard errors as soon as a 19th quarter arrived.
+    blocks=[Dm[:,1:],dm(z)[:,1:]]; nn=[f'd|{m}' for m in months[1:]]+[f'z|{m}' for m in months[1:]]
     if with_change:
-        blocks.append(dm(dz)); nn+=[f'c|{m}' for m in months]
+        blocks.append(dm(dz)[:,1:]); nn+=[f'c|{m}' for m in months[1:]]
     r=(sm.WLS(y,np.hstack(blocks),weights=np.repeat(w22.values,T)) if weighted
        else sm.OLS(y,np.hstack(blocks))).fit(
         cov_type='cluster',cov_kwds={'groups':np.repeat(meta.cat.values,T)})
     K=len(nn)
     def contrast(tag):
         def e(m):
-            v=np.zeros(K); v[nn.index(f'{tag}|{m}')]=1.0; return v
+            v=np.zeros(K)
+            if f'{tag}|{m}' in nn: v[nn.index(f'{tag}|{m}')]=1.0
+            return v
         base=np.mean([e(m) for m in Y22],axis=0)
         est=[];se=[];pv=[]
         for m in months:
