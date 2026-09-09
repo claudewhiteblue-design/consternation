@@ -606,6 +606,8 @@ function drawPrice(name){
  const card=document.getElementById('pcard'); if(!card) return;
  const t=D.tops[`${lv}|${sel}`], b=basisOf();
  document.getElementById('pttl').textContent='· '+name;
+ segSync('p_md');
+ const uk=`${lv}|${sel}`; if(PHIDEFOR!==uk){PHIDE=new Set(); PHIDEFOR=uk;}
  const bad=m=>{card.querySelector('#pch').innerHTML='';document.getElementById('pleg').innerHTML='';
    document.getElementById('punit').innerHTML='';document.getElementById('pfoot').innerHTML=m;};
  if(lv==='שוק') return bad('הגרף הזה מוצג ברמת מחלקה, קטגוריה או תת-קטגוריה — מחיר ממוצע לכלל השוק אין לו יחידת מדידה משותפת.');
@@ -613,66 +615,96 @@ function drawPrice(name){
  if(!b||b.startsWith('מעורב')) return bad(
    `ב${name} נמדדות קטגוריות ביותר מבסיס אחד${b?` (${b.replace('מעורב: ','')})`:''}, ולכן אין מחיר בשקלים ליחידה. `+
    'בחירת קטגוריה או תת-קטגוריה בודדת תציג אותו.');
- document.getElementById('punit').innerHTML = st.pmd==='rel'
-   ? `<b>מדד</b>: כל ספק מול המחיר שלו עצמו בתקופה הראשונה = 100, כך שחמישה מחירים בגבהים שונים הופכים לחמישה מסלולים ברי-השוואה.`
+ const REL = st.pmd==='rel';
+ const BASEQ = D.quarters[0];
+ document.getElementById('punit').innerHTML = REL
+   ? `<b>מדד</b>: כל ספק מול <b>המחיר שלו עצמו ב${mlab(BASEQ)}</b> = 100 — ערך יחידה של הרבעון כולו, לא של חודש בודד. כך חמישה מחירים בגבהים שונים הופכים לחמישה מסלולים ברי-השוואה.`
    : `<b>המחיר</b> הוא ₪ ל${punit(b)}.`;
  const rows=t.rows.filter(r=>r.pp).slice(0,5);
  if(!rows.length) return bad('אין כמות סטנדרטית לספקים ביחידה זו, ולכן אין מחיר.');
- const REL = st.pmd==='rel';
- // monthly rows aggregate to quarters by summing revenue and quantity, not by
- // averaging the monthly prices -- so the quarterly point is a true unit value
- const per=M; let series=rows.map(r=>{
+ const COL=['--s1','--s2','--s3','--s4','--s5'];
+ // A supplier can be absent from the shelf for a month, and the shared ma() would add
+ // that null as a zero and report a third of the real price. Average what is actually
+ // there, and leave a gap where the supplier itself has one.
+ const ma3=a=>FQ==='q'?a.slice():a.map((v,i)=>{
+   if(v==null) return null;
+   const w=a.slice(Math.max(0,i-MAW+1),i+1).filter(x=>x!=null);
+   return i<MAW-1?null:w.reduce((x,y)=>x+y,0)/w.length;});
+ // colour and legend order follow the supplier's rank, so hiding one does not recolour the rest
+ const per=M;
+ let series=rows.map((r,i)=>{
   let v=r.pp;
-  if(FQ==='q'&&r.pp.length===D.months.length){
-   const o=[];
-   for(let i=0;i<D.quarters.length;i++){ let rv=0,qt=0,any=false;
-    for(let j=0;j<3;j++){const k=i*3+j, pr=r.pp[k], rev=r.rv?r.rv[k]:null;
-     if(pr!==null&&pr!==undefined&&rev!==null&&rev!==undefined&&pr>0){rv+=rev;qt+=rev*1000/pr;any=true;}}
-    o.push(any&&qt>0?rv*1000/qt:null);}
-   v=o;}
-  return {g:r.g,v};});
- let base=null;
+  // quarters re-derive the unit value from summed revenue and quantity rather than
+  // averaging monthly prices, so a quarterly point is a true unit value
+  const quarterly=a2=>{const o=[];
+   for(let q=0;q<D.quarters.length;q++){ let rv=0,qt=0,any=false;
+    for(let j=0;j<3;j++){const k=q*3+j, pr=a2[k], rev=r.rv?r.rv[k]:null;
+     if(pr!=null&&rev!=null&&pr>0){rv+=rev;qt+=rev*1000/pr;any=true;}}
+    o.push(any&&qt>0?rv*1000/qt:null);} return o;};
+  if(FQ==='q'&&r.pp.length===D.months.length) v=quarterly(r.pp);
+  // the index base is that supplier's own first-quarter unit value, in both frequencies
+  const q1=quarterly(r.pp)[0];
+  v=ma3(v);                                   // three-period moving average, monthly only
+  return {g:r.g, v, q1, ci:i, hidden:PHIDE.has(r.g)};});
+ let dropped=0;
  if(REL){
-  // each supplier against its own first period, so five different price levels become
-  // five comparable paths; a supplier absent at the start has no base and is dropped
-  const kept=[];
-  series.forEach(sr=>{const b=sr.v.find(v=>v!==null&&v>0);
-   if(b) kept.push({g:sr.g,v:sr.v.map(v=>(v===null||v<=0)?null:100*v/b),b});});
-  base=series.length-kept.length;
-  series=kept;
+  series=series.map(sr=>{
+   if(!(sr.q1>0)) {dropped++; return null;}
+   return {...sr, v:sr.v.map(v=>(v==null||v<=0)?null:100*v/sr.q1)};}).filter(Boolean);
  }
- const all=series.flatMap(x=>x.v).filter(v=>v!==null&&v>0);
- if(!all.length) return bad('אין מחיר לספקים ביחידה זו בתדירות הנבחרת.');
+ const shown=series.filter(sr=>!sr.hidden);
+ const all=shown.flatMap(x=>x.v).filter(v=>v!=null&&v>0);
+ const legend=()=>{document.getElementById('pleg').innerHTML=series.map(sr=>
+   `<span data-g="${sr.g}" style="cursor:pointer;opacity:${sr.hidden?0.35:1}" title="לחיצה מסתירה או מחזירה את הקו">`+
+   `<i style="background:var(${COL[sr.ci]})"></i>${sr.hidden?`<s>${sr.g}</s>`:sr.g}</span>`).join('');};
+ if(!all.length){legend();
+  document.getElementById('pch').innerHTML='';
+  document.getElementById('pfoot').innerHTML= shown.length
+   ? 'אין מחיר לספקים ביחידה זו בתדירות הנבחרת.'
+   : 'כל הספקים מוסתרים — לחיצה על שם במקרא מחזירה אותם.';
+  PG.xs=null; return;}
  const W=940,P={t:16,r:22,b:32,l:60},ih=320-P.t-P.b,iw=W-P.l-P.r;
  const xs=i=>P.l+iw*i/(per.length-1);
  let lo=Math.min(...all), hi=Math.max(...all);
  const pd=(hi-lo)*0.1||Math.max(hi*0.05,0.1); lo=Math.max(0,lo-pd); hi+=pd;
  const fmtv = REL ? (v=>v.toFixed(0)) : fmtp;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
- const COL=['--s1','--s2','--s3','--s4','--s5'];
  let g='';
  nice(lo,hi,5).forEach(v=>{
   g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`+
      `<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${fmtv(v)}</text>`;});
- if(REL) g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(100)}" y2="${y(100)}" stroke="var(--ink3)" stroke-width="1"/>`;
- series.forEach((sr,i)=>{
-  const fi=sr.v.findIndex(v=>v!==null), li=sr.v.length-1-[...sr.v].reverse().findIndex(v=>v!==null);
+ if(REL&&lo<100&&hi>100) g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(100)}" y2="${y(100)}" stroke="var(--ink3)" stroke-width="1"/>`;
+ shown.forEach(sr=>{
+  const fi=sr.v.findIndex(v=>v!=null), li=sr.v.length-1-[...sr.v].reverse().findIndex(v=>v!=null);
   if(fi<0) return;
-  g+=`<path d="${sr.v.map((v,j)=>v===null?'':`${j===fi?'M':'L'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[i]})" stroke-width="2"/>`;
-  g+=`<circle cx="${xs(li)}" cy="${y(sr.v[li])}" r="3.4" fill="var(${COL[i]})"/>`;});
+  g+=`<path d="${sr.v.map((v,j)=>v==null?'':`${j===fi?'M':'L'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[sr.ci]})" stroke-width="2"/>`;
+  g+=`<circle cx="${xs(li)}" cy="${y(sr.v[li])}" r="3.4" fill="var(${COL[sr.ci]})"/>`;});
  per.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1')
   g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  document.getElementById('pch').innerHTML=g+'<g id="pov"></g>';
- document.getElementById('pleg').innerHTML=series.map((sr,i)=>
-  `<span><i style="background:var(${COL[i]})"></i>${sr.g}</span>`).join('');
- document.getElementById('pfoot').innerHTML=series.map(sr=>{
-   const f=sr.v.find(v=>v!==null), l=[...sr.v].reverse().find(v=>v!==null);
+ legend();
+ document.getElementById('pfoot').innerHTML=shown.map(sr=>{
+   const f=sr.v.find(v=>v!=null), l=[...sr.v].reverse().find(v=>v!=null);
    return REL ? `<b style="color:var(--ink)">${sr.g}</b> ${sgn(l-100,1)} נק׳`
               : `<b style="color:var(--ink)">${sr.g}</b> ${fmtp(f)} ← ${fmtp(l)} (${sgn(100*(l/f-1),1)}%)`;
-  }).join(' · ')+(REL?` — מדד, ${mlab(per[0])}=100.`+(base?` ${base} ספקים בלי מחיר בתקופת הבסיס הושמטו.`:'')
-                     :` — ₪ ל${punit(b)}.`)+partNote();
- Object.assign(PG,{series,y,xs,W,P,iw,ih,per,COL,b,fmtv});
+  }).join(' · ')
+  +(REL?` — מדד, ${mlab(BASEQ)}=100.`+(dropped?` ${dropped} ספקים בלי מחיר ברבעון הבסיס הושמטו.`:'')
+       :` — ₪ ל${punit(b)}.`)
+  +(FQ==='m'?' הקו הוא ממוצע נע של שלושה חודשים.':'')
+  +(series.length>shown.length?(n=>` <b>${n===1?'ספק אחד מוסתר':`${n} ספקים מוסתרים`}</b> — לחיצה על שם במקרא מחזירה אותו.`)(series.length-shown.length):'')
+  +partNote();
+ Object.assign(PG,{series:shown,y,xs,W,P,iw,ih,per,COL,b,fmtv});
 }
+// clicking a name in the legend hides or restores that supplier's line
+// hidden lines are scoped to the unit on screen: a name hidden in one category should
+// not stay hidden in the next, where it may be a different-sized player entirely
+let PHIDE=new Set(), PHIDEFOR=null;
+document.getElementById('pleg').addEventListener('click',e=>{
+ const sp=e.target.closest('[data-g]'); if(!sp) return;
+ const g=sp.dataset.g;
+ if(PHIDE.has(g)) PHIDE.delete(g); else PHIDE.add(g);
+ drawPrice(lv==='שוק'?'כלל השוק':sel);
+});
 const fmtp=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed(3);
 {const el=document.getElementById('pch'), tp=document.getElementById('ptip');
  el.addEventListener('mousemove',e=>{
@@ -861,10 +893,14 @@ function seg(id,opts,key,cb){
   b.onclick=()=>{st[key]=v;cb()};el.appendChild(b)});
  el.dataset.key=key; el.dataset.vals=opts.map(o=>o[0]).join(',');
 }
-function segSync(id){const el=document.getElementById(id);const vals=el.dataset.vals.split(',');
+function segSync(id){const el=document.getElementById(id);
+ if(!el||!el.dataset.vals) return;                 // not registered yet
+ const vals=el.dataset.vals.split(',');
  [...el.children].forEach((b,i)=>b.classList.toggle('on',vals[i]===st[el.dataset.key]));}
 
-st.pmd='abs'; seg('p_md',PMD,'pmd',()=>drawIdx());   // overview price chart mode
+// The overview's price toggle reuses this page's control helper, which is defined after
+// the overview has already drawn once -- so paint it now that the buttons exist.
+st.pmd='abs'; seg('p_md',PMD,'pmd',()=>drawIdx()); drawIdx();
 seg('a_lv',AL,'lv',()=>aDraw()); seg('a_sm',AS,'sm',()=>aDraw());
 seg('a_ms',AM,'ms',()=>aDraw()); seg('a_wt',AW,'wt',()=>aDraw()); seg('a_fq',AF,'fq',()=>aDraw());
 seg('t_lv',AL,'tlv',()=>tDraw()); seg('t_sm',AS,'tsm',()=>tDraw()); seg('t_ms',AM,'tms',()=>tDraw());
