@@ -74,6 +74,13 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 .sup tbody tr{cursor:pointer}
 .sup tbody tr:hover{background:var(--grid)}
 .sup tbody tr.on{background:var(--grid);box-shadow:inset 3px 0 0 var(--acc)}
+.sup tbody tr.det{cursor:default}
+.sup tbody tr.det:hover{background:transparent}
+.sup tbody tr.det>td{padding:0 0 12px;border-bottom:1px solid var(--line)}
+.brands{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
+.brands b{font-weight:600;color:var(--ink2);font-size:12.5px;align-self:center;margin-left:2px}
+.brands span{background:var(--grid);border-radius:20px;padding:3px 10px;font-size:12.5px;white-space:nowrap}
+.brands span i{font-style:normal;color:var(--ink3);font-variant-numeric:tabular-nums}
 .sup tbody tr.on td.nm{color:var(--acc)}
 .spanel{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:12px 14px 6px;background:var(--surf)}
 .spanel h4{font-size:13.5px;margin:0 0 2px;font-weight:600}
@@ -321,6 +328,8 @@ const sgn=(v,d=2)=>(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(d);
    quote closes it early, so the value read back is truncated and never matches --
    which is why a beer sub-category could not be picked and גלוברנדס בע"מ could not be
    hidden. Escape on the way into markup, both in attributes and in text. */
+// attribute-selector escaping for names carrying quotes or backslashes
+const cssEsc=v=>String(v).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
 const escA=v=>String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const escT=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const cls=v=>v>0.02?'up':v<-0.02?'dn':'';
@@ -507,9 +516,11 @@ function drawSup(){
    `<td><span class="bar" style="width:${(r.sh/mx*40).toFixed(1)}px"></span>${r.sh.toFixed(1)}%</td>`+
    `<td class="${r.dsh===null?'':cls(r.dsh)}">${r.dsh===null?'<span style="color:var(--ink3)">חדש</span>':sgn(r.dsh,1)}</td>`+
    `<td>${fmt(Math.round(r.rev))}</td><td>${fmt(Math.round(r.qty))}</td>`+
-   `<td>${r.imp===null?'<span style="color:var(--ink3)">—</span>':r.imp.toFixed(1)+'%'}</td></tr>`).join('')+
-  '</tbody></table></div><div id="spanel"></div>';
- el.querySelectorAll('tbody tr').forEach((tr,i)=>{
+   `<td>${r.imp===null?'<span style="color:var(--ink3)">—</span>':r.imp.toFixed(1)+'%'}</td></tr>`+
+   // the detail row sits directly under its supplier and spans the table; empty until opened
+   `<tr class="det" data-for="${escA(r.g)}" hidden><td colspan="7"><div class="spwrap"></div></td></tr>`).join('')+
+  '</tbody></table></div>';
+ el.querySelectorAll('tbody tr:not(.det)').forEach((tr,i)=>{
   tr.onclick=()=>{ SUPSEL = (SUPSEL===t.rows[i].g ? null : t.rows[i].g); drawSupPanel(); };});
  drawSupPanel();
 }
@@ -521,13 +532,18 @@ let SUPSEL=null, SPG={};
 document.getElementById('sup').addEventListener('click',e=>{
  if(e.target.closest('[data-close]')){SUPSEL=null;drawSupPanel();}});
 function drawSupPanel(){
- const box=document.getElementById('spanel'); if(!box) return;
  const t=D.tops[`${lv}|${sel}`];
  // a supplier picked in one unit is usually absent from the next one
  if(SUPSEL && !(t&&t.rows.some(x=>x.g===SUPSEL))) SUPSEL=null;
- document.querySelectorAll('#sup tbody tr').forEach((tr,i)=>
+ document.querySelectorAll('#sup tbody tr:not(.det)').forEach((tr,i)=>
    tr.classList.toggle('on', !!t && t.rows[i].g===SUPSEL));
- if(!SUPSEL||!t){box.innerHTML='';return}
+ // every detail row closes; the selected supplier's opens in place
+ document.querySelectorAll('#sup tbody tr.det').forEach(tr=>{
+   tr.hidden = tr.dataset.for!==SUPSEL;
+   if(tr.hidden) tr.querySelector('.spwrap').innerHTML='';});
+ if(!SUPSEL||!t) return;
+ const box=document.querySelector(`#sup tbody tr.det[data-for="${cssEsc(SUPSEL)}"] .spwrap`);
+ if(!box) return;
  const r=t.rows.find(x=>x.g===SUPSEL);
  const shut=v=>`<div class="spanel"><span class="x" data-close="1">×</span>`+
                `<h4>${escT(SUPSEL)}</h4><p class="cs">${v}</p></div>`;
@@ -561,8 +577,17 @@ function drawSupPanel(){
  per.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1')
    g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  const a=sh[fi], b=sh[li];
+ const bl=(D.brands||{})[`${lv}|${sel}|${SUPSEL}`];
+ const brandStrip = bl&&bl.length
+   ? `<div class="brands"><b>מותגים מובילים:</b>`+
+     bl.map(([nm,sh])=>`<span>${escT(nm)} <i>${sh.toFixed(1)}%</i></span>`).join('')+
+     `</div>`
+   : `<p class="cs" style="margin:0 0 8px">${(D.buckets||[]).includes(SUPSEL)
+       ? 'זהו מאגד ולא ספק ממותג — המכר שלו מרוכז תחת מותג פרטי או ללא מיתוג, ולכן אין לו מותגים לפרט.'
+       : 'אין פירוט מותגים לספק זה ביחידה: קובץ המותגים הוא תצלום של חודש אחד (אוגוסט 2026), והצמד הזה לא מופיע בו.'}</p>`;
  box.innerHTML=`<div class="spanel"><span class="x" data-close="1">×</span>`+
   `<h4>${escT(SUPSEL)} — נתח מ־${escT(sel)} לאורך זמן</h4>`+
+  brandStrip+
   `<p class="cs" style="margin:2px 0 6px">נתח מהמכר הכספי של היחידה, ${FQ==='m'?'חודשי':'רבעוני'} וללא החלקה. `+
   `${mlab(per[fi])}: ${a.toFixed(1)}% ← ${mlab(per[li])}: ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות). `+
   `שיא ${Math.max(...fin).toFixed(1)}% · שפל ${Math.min(...fin).toFixed(1)}%.`+partNote()+`</p>`+

@@ -30,8 +30,8 @@ LAST=max(m for m in months if m.startswith('2026'))
 # The brand file is a single month (07/2026), so a group's imported share is fixed at
 # its 2026 value; what moves over time is which groups sell, not their origin mix.
 def _brandfile(path):
-    x=c.execute(f'''SELECT "מחלקה" dep,"קטגוריה" cat,"ספק" sup,"מותג" brand,{R} rev
-       FROM '{path}' WHERE {R}>0''').df()
+    x=c.execute(f'''SELECT "מחלקה" dep,"קטגוריה" cat,"תת קטגוריה" sc,"ספק" sup,
+       "מותג" brand,{R} rev FROM '{path}' WHERE {R}>0''').df()
     x['g']=x.sup.map(grp)
     x['role']=[brand_role(b,p) for b,p in zip(x.brand,x.dep)]
     return x
@@ -412,10 +412,43 @@ cat2dep=raw.groupby('cat').dep.agg(lambda s:s.mode().iat[0]).to_dict()
 sub2cat=rawS.groupby('sc').cat.agg(lambda t:t.mode().iat[0]).to_dict()
 rev26=raw[raw.month.str[:4]=='2026'].groupby('cat').rev.sum().to_dict()
 srev26=rawS[rawS.month.str[:4]=='2026'].groupby('sc').rev.sum().to_dict()
+# ---------- (E) the brands each listed supplier actually sells in the unit ----------
+# One month (August 2026) against the table's eight-month window, so it answers "which
+# brands" and not "how much" -- the share is each brand's share of that supplier's
+# revenue inside the unit, in that month.
+# The August file is the newest brand snapshot and by far the most complete: it covers
+# 1,171 sub-categories against the July anchor's 1,081, leaving only 9 of the panel's
+# uncovered instead of 104. It is used for these lists only -- the import classification
+# stays on the July anchor, which every regression is built against.
+bfL=c.execute(f'''SELECT "מחלקה" dep,"קטגוריה" cat,"תת קטגוריה" sc,"ספק" sup,
+   "מותג" brand,{R} rev FROM '/home/user/consternation/brands_202608.parquet'
+   WHERE {R}>0''').df()
+bfL['g']=bfL.sup.map(grp)
+def brandlists(level,key):
+    z=bfL.groupby([key,'g','brand']).rev.sum().reset_index()
+    tot=z.groupby([key,'g']).rev.sum().rename('t')
+    z=z.join(tot,on=[key,'g']); z['sh']=100*z.rev/z.t
+    z=z.sort_values('rev',ascending=False)
+    out={}
+    for (u,g),d in z.groupby([key,'g'],sort=False):
+        d=d.head(5)
+        out[f'{level}|{u}|{g}']=[[b,round(float(sh),1)] for b,sh in zip(d.brand,d.sh)
+                                 if b not in ('מותג פרטי','לא ידוע','ללא מיתוג')]
+    return {k:v for k,v in out.items() if v}
+brands={}
+for _lv,_key in [('cat','cat'),('sub','sc')]:
+
+    brands.update(brandlists(_lv,_key))
+# only the pairs a table actually lists are worth carrying into the page
+_want={f"{k}|{r['g']}" for k,d in tops.items() if not k.startswith('dep|') for r in d['rows']}
+_all=len(brands); brands={k:v for k,v in brands.items() if k in _want}
+print(f'מותגים מובילים: {len(brands):,} צמדי יחידה-ספק נשמרים (מתוך {_all:,}) | '
+      f'מכסים {len(brands):,} מתוך {len(_want):,} שורות בטבלאות')
+
 # what each unit's quantity is counted in, for the axis labels
 basis={k:v.get('basis','') for k,v in tops.items()}
 json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
-    basis=basis,
+    basis=basis,brands=brands,buckets=BUCKET,
     idx=idx,base=BASE,seriesq=seriesq,idxq=idxq,quarters=QOK,baseq=QOK[0],
     qpart={q:QLEN[q] for q in QPART},
     cat2dep={k:v for k,v in cat2dep.items() if k in cats},
