@@ -919,6 +919,7 @@ navEl.children[0].classList.add('on');
 const AL=[['cat','קטגוריה'],['sub','תת-קטגוריה']];
 const AS=[['no_meat','ללא בשר ועוף'],['all','כולל בשר ועוף']];
 const AM=[['cr3','CR3'],['cr3x','CR3 ללא מאגדים'],['hhi','HHI']];
+const cml=k=>(AM.find(x=>x[0]===k)||[k,k])[1];
 
 const AF=[['m','חודשי'],['q','רבעוני']];
 const AK=[['3','שלישונים'],['2','חציון']];
@@ -977,7 +978,7 @@ function aDraw(){
  document.getElementById('ach').innerHTML=g+'<g id="aov"></g>';
  const last=r.est.at(-1), lp=r.p.at(-1);
  document.getElementById('afoot').innerHTML=
-  `${r.n} יחידות · ${r.ncl} אשכולות · ${st.ms.toUpperCase()} ממוצע ${r.mean_v} (ס״ת ${r.sd_v}) · `+
+  `${r.n} יחידות · ${r.ncl} אשכולות · ${cml(st.ms)} ממוצע ${r.mean_v} (ס״ת ${r.sd_v}) · `+
   `<b style="color:var(--ink)">${mlab(m.at(-1))}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${lp<0.001?'<0.001':lp.toFixed(3)}) · `+
   `ממוצע כל התקופה שאחרי 2022: ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% (p=${r.avg[2]<0.001?'<0.001':r.avg[2].toFixed(3)}) · `+
   `מבחן F משותף: p=${r.joint_p<1e-4?r.joint_p.toExponential(1):r.joint_p.toFixed(4)}`;
@@ -999,7 +1000,7 @@ function tDraw(){
  document.getElementById('tk_ttl').textContent=t.k===2?'מחציות':'שלישוני';
  document.getElementById('tk_txt').textContent=t.k===2?'שתי מחציות':'שלושה שלישונים';
  document.getElementById('tleg').innerHTML=t.groups.map((gr,i)=>
-  `<span><i style="background:var(${COL[t.k===2?i*2:i]})"></i>${t.k===2?'מחצית':'שלישון'} ${gr.t}${gr.t===1?' — מפוזר':gr.t===t.k?' — מרוכז':''} · ${st.tms.toUpperCase()} ${gr.v} · ${gr.n} יחידות</span>`).join('');
+  `<span><i style="background:var(${COL[t.k===2?i*2:i]})"></i>${t.k===2?'מחצית':'שלישון'} ${gr.t}${gr.t===1?' — מפוזר':gr.t===t.k?' — מרוכז':''} · ${cml(st.tms)} ${gr.v} · ${gr.n} יחידות</span>`).join('');
  const a=t.groups[0].path.at(-1), b=t.groups.at(-1).path.at(-1);
  const gp=TG.gap; let mx=0; gp.forEach((v,i)=>{if(Math.abs(v)>Math.abs(gp[mx]))mx=i;});
  document.getElementById('tfoot2').innerHTML=
@@ -1056,7 +1057,7 @@ sub1.children[0].classList.add('on');
 // [key, full label for controls and prose, short label for composed labels such as
 // "<measure> נמוך" in a table header, where the "(מוערך)" qualifier only gets in the way]
 const IM=[['imp_share','נתח ייבואנים','נתח ייבואנים'],['fx_v3','חשיפת מט״ח (מוערך)','חשיפת מט״ח']];
-const CM=[['cr3','CR3'],['hhi','HHI']];
+const CM=AM;
 Object.assign(st,{ilv:'cat',ism:'no_meat',ims:'imp_share',iwt:'w',ifq:'m',
                   itlv:'cat',itsm:'no_meat',itms:'imp_share',itk:'3',itfq:'m',
                   dlv:'cat',dsm:'no_meat',dcm:'cr3',dfm:'imp_share',dk:'3'});
@@ -1150,12 +1151,12 @@ function dsDraw(){
  document.getElementById('dstb').innerHTML=
   '<thead><tr><th></th>'+CL.map(c=>`<th>${c}</th>`).join('')+'<th>סה״כ</th></tr></thead><tbody>'+
   d.cells.map((row,i)=>{const tot=d.rowtot[i];
-   return `<tr><td class="nm">${RLk[i]} <span style="color:var(--ink3);font-weight:400">${st.dcm.toUpperCase()} ${d.cmean[i]}</span></td>`+
+   return `<tr><td class="nm">${RLk[i]} <span style="color:var(--ink3);font-weight:400">${cml(st.dcm)} ${d.cmean[i]}</span></td>`+
     row.map(c=>`<td>${(100*c.rev/tot).toFixed(1)}%<span style="color:var(--ink3)"> · ${c.n}</span></td>`).join('')+
     `<td style="color:var(--ink3)">${fmt(Math.round(tot))} מ׳ ₪</td></tr>`}).join('')+'</tbody>';
  const c0=d.cells[0].at(-1), c2=d.cells.at(-1)[0];
  document.getElementById('dsfoot').innerHTML=
-  `מתאם רציף ${st.dcm.toUpperCase()}–${nm}: <b style="color:var(--ink)">${d.corr>0?'+':''}${d.corr}</b> — חלש. `+
+  `מתאם רציף ${cml(st.dcm)}–${nm}: <b style="color:var(--ink)">${d.corr>0?'+':''}${d.corr}</b> — חלש. `+
   `אבל היחידות המפוזרות ברובן חשופות (${(100*c0.rev/d.rowtot[0]).toFixed(1)}% מהן בקבוצת החשיפה הגבוהה), `+
   `והמרוכזות ברובן מוגנות (${(100*c2.rev/d.rowtot.at(-1)).toFixed(1)}% בקבוצה הנמוכה). שני "האפקטים" נמדדים על אותן ${st.dlv==='cat'?'קטגוריות':'תת-קטגוריות'} מכיוונים הפוכים.`;
  const last=d.months.at(-1);
@@ -1185,11 +1186,10 @@ function dsDraw(){
   `${(d.cells.at(-1)[0].idx-d.cells[0][0].idx).toFixed(1)} נקודות.`;
 }
 function iNote(){
- const u=I.runs[`${st.ilv}|${st.ifq}|${st.ism}|${st.ims}|u`];
  const d=I.ds[`${st.ilv}|m|${st.ism}|cr3|${st.ims}`];
  const hh=I.runs[`${st.ilv}|${st.ifq}|no_meat|fx_v3|w`];
  document.getElementById('inote').innerHTML=
-  `<p class="note"><b>זה הממצא החזק ביותר בכל הניתוח — וגם הוא לא עובר את הרף.</b> חשיפת מט״ח (מוערך), משוקלל, ללא בשר ועוף, ברמת ${st.ilv==='cat'?'קטגוריה':'תת-קטגוריה'}: ${hh.avg[0].toFixed(2)}% לכל ס״ת עם p=${hh.avg[2].toFixed(3)}. הסימן הוא הצפוי: השקל התחזק בתקופה, וקטגוריות חשופות יותר לייבוא התייקרו פחות. המקדם של החודש האחרון כן מובהק (${hh.est.at(-1).toFixed(2)}%, p=${hh.p.at(-1).toFixed(3)}), אבל הממוצע על פני כל התקופה אינו, והמפרט הלא־משוקלל מאפס את זה לגמרי (${(u.avg[0]>0?'+':'')+u.avg[0].toFixed(2)}%).</p>`+
+  `<p class="note"><b>זה הממצא החזק ביותר בכל הניתוח — וגם הוא לא עובר את הרף.</b> חשיפת מט״ח (מוערך), משוקלל, ללא בשר ועוף, ברמת ${st.ilv==='cat'?'קטגוריה':'תת-קטגוריה'}: ${hh.avg[0].toFixed(2)}% לכל ס״ת עם p=${hh.avg[2].toFixed(3)}. הסימן הוא הצפוי: השקל התחזק בתקופה, וקטגוריות חשופות יותר לייבוא התייקרו פחות. המקדם של החודש האחרון כן מובהק (${hh.est.at(-1).toFixed(2)}%, p=${hh.p.at(-1).toFixed(3)}), אבל הממוצע על פני כל התקופה אינו.</p>`+
   `<p class="note" style="margin-top:14px"><b>שלישוני החשיפה הם החתך היחיד שנשאר מונוטוני</b> בכל דגימה ובכל מדד — בניגוד לשלישוני הריכוזיות, שמתהפכים. זו הסיבה שאני נוטה יותר אמון בכיוון של הייבוא מאשר בזה של הריכוזיות, גם אם אף אחד מהם לא מגיע למובהקות.</p>`+
   `<p class="note" style="margin-top:14px"><b>והחפיפה המבנית היא הסיבה להיזהר משניהם.</b> המתאם הרציף בין ${IM.find(x=>x[0]===st.ims)[1]} ל־CR3 הוא ${d?d.corr:'—'} בלבד, אבל בקצוות הם כמעט מתלכדים. מי שמריץ רגרסיית ריכוזיות בלי בקרת ייבוא מודד חלק מאפקט הייבוא, ולהפך.</p>`;
 }
@@ -1230,7 +1230,7 @@ function xDraw(){
  const L=r.lo.avg, H=r.hi.avg, TH=r.int.avg, MD=r.mid.avg;
  const pf2=p=>p<0.001?'<0.001':p.toFixed(3);
  document.getElementById('xfoot').innerHTML=
-  `${r.n} יחידות · מתאם ${st.xcm.toUpperCase()}–${IM.find(x=>x[0]===st.xfm)[1]}: ${r.corr>0?'+':''}${r.corr} · ממוצעי כל התקופה שאחרי 2022:<br>`+
+  `${r.n} יחידות · מתאם ${cml(st.xcm)}–${IM.find(x=>x[0]===st.xfm)[1]}: ${r.corr>0?'+':''}${r.corr} · ממוצעי כל התקופה שאחרי 2022:<br>`+
   `<b style="color:var(--ink)">מקדם הריכוזיות בבקרה על ייבוא (בחשיפה ממוצעת): ${(MD[0]>0?'+':'')+MD[0].toFixed(2)}% (p=${pf2(MD[2])})</b><br>`+
   `<span style="color:var(--ink2)">ופירוקו: בחשיפה נמוכה ${(L[0]>0?'+':'')+L[0].toFixed(2)}% (p=${pf2(L[2])}) · `+
   `בחשיפה גבוהה ${(H[0]>0?'+':'')+H[0].toFixed(2)}% (p=${pf2(H[2])}) · `+
