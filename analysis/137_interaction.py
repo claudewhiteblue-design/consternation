@@ -83,9 +83,9 @@ for level in ['cat','sub']:
         dq=d if freq=='m' else to_quarter(d)
         for drop in [True,False]:
             x=prep(dq,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
-            for cm in ['cr3','hhi']:
+            for cm in ['cr3','cr3x','hhi']:
                 for fm in ['fx_v3','imp_share']:
-                    for wt in [True,False]:
+                    for wt in [True]:
                         k=f'{sk}|{cm}|{fm}|{"w" if wt else "u"}'
                         RES[k]=panel3(x,cm,fm,wt)
                         a=RES[k]

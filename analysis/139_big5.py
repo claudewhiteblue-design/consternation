@@ -115,8 +115,8 @@ for level in ['cat','sub']:
             dq=d if freq=='m' else to_quarter(d)
             for drop in [True,False]:
                 x=prep(dq,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
-                for meas in ['cr3','hhi']:
-                    for wt in [True,False]:
+                for meas in ['cr3','cr3x','hhi']:
+                    for wt in [True]:
                         k=f'{sk}|{meas}|{"w" if wt else "u"}|{thr}'
                         o=panel_b(x,meas,wt,True)
                         o['big_only']=panel_b(x,meas,wt,False)['big']

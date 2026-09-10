@@ -33,8 +33,14 @@ def conc_window(level,year,months):
     s['g']=s.sup.apply(lambda x:'תנובה' if 'תנובה' in x else 'שטראוס' if 'שטראוס' in x else x)
     s=s.groupby(['u','g']).rev.sum().reset_index()
     tot=s.groupby('u').rev.sum().rename('t'); s=s.join(tot,on='u'); s['sh']=100*s.rev/s.t
-    return pd.DataFrame({f'hhi{year}':s.assign(q=s.sh**2).groupby('u').q.sum(),
-        f'cr3{year}':s.sort_values('sh',ascending=False).groupby('u').sh.apply(lambda x:x.head(3).sum())})
+    # the same measure over named suppliers only, renormalised over what is left
+    sx=s[~s.g.isin(G['BUCKET'])].copy()
+    tx=sx.groupby('u').rev.sum().rename('tx'); sx=sx.join(tx,on='u'); sx['shx']=100*sx.rev/sx.tx
+    out=pd.DataFrame({f'hhi{year}':s.assign(q=s.sh**2).groupby('u').q.sum(),
+        f'cr3{year}':s.sort_values('sh',ascending=False).groupby('u').sh.apply(lambda x:x.head(3).sum()),
+        f'cr3x{year}':sx.sort_values('shx',ascending=False).groupby('u').shx.apply(lambda x:x.head(3).sum())})
+    out[f'cr3x{year}']=out[f'cr3x{year}'].fillna(out[f'cr3{year}'])
+    return out
 
 def panel2(x,measure,weighted,with_change):
     months=sorted(x.month.unique()); Y22=base_periods(months)
@@ -99,17 +105,17 @@ for level in ['cat','sub']:
     d=load(level)
     a=conc_window(level,2022,WIN); b=conc_window(level,2026,WIN)
     ch=a.join(b,how='inner')
-    for m in ['cr3','hhi']:
+    for m in ['cr3','cr3x','hhi']:
         ch[f'd_{m}']=ch[f'{m}2026']-ch[f'{m}2022']
-    d=d.merge(ch[['d_cr3','d_hhi','cr32022','cr32026']],left_on='u',right_index=True,how='inner')
+    d=d.merge(ch[['d_cr3','d_cr3x','d_hhi','cr32022','cr32026']],left_on='u',right_index=True,how='inner')
     print(f'{level}: {d.u.nunique()} יחידות | שינוי CR3 חציוני {ch.d_cr3.median():+.1f} נק׳, '
           f'ס״ת {ch.d_cr3.std():.1f} | עלה ב-{100*(ch.d_cr3>0).mean():.0f}% מהיחידות')
     for freq in ['m','q']:
         dq=d if freq=='m' else to_quarter(d)
         for drop in [True,False]:
             x=prep(dq,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
-            for meas in ['cr3','hhi']:
-                for wt in [True,False]:
+            for meas in ['cr3','cr3x','hhi']:
+                for wt in [True]:
                     k=f'{sk}|{meas}|{"w" if wt else "u"}'
                     o=panel2(x,meas,wt,True)
                     o['lvl_only']=panel2(x,meas,wt,False)['lvl']

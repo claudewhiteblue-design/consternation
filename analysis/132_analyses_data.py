@@ -33,6 +33,8 @@ EXCAT=['כלים חד פעמים',
        'מים מועשרים','מיץ טבעי סחוט מקורר','משקאות מוגזים טעמי פירות','משקאות קלים',
        'משקה מוגז עדין בטעמים','משקה קולה רגיל','משקה קולה דיאט','תה קר','נקטר',
        'מיץ 100% פרי','מיץ 100% ירק','משקאות חמוציות','משקה חליטת צמחים']
+# aggregates that stand in for many firms, not firms themselves
+BUCKET=['ספק כללי','ספק מותג פרטי','ספק קצביה כללי','ספק כללי בשר טרי','יצרן פרטי','יצרן לא ידוע']
 R='"מכר כספי (מיליוני ₪)"'; SQ='"כמות סטנדרטית"'
 SRC={'cat':("'/home/user/consternation/retail_sales_2022_2026.parquet'",'"קטגוריה"'),
      'sub':("'/tmp/subcat_std.parquet'",'"תת קטגוריה"')}
@@ -50,8 +52,16 @@ def load(level):
     s['g']=s.sup.apply(lambda x:'תנובה' if 'תנובה' in x else 'שטראוס' if 'שטראוס' in x else x)
     s=s.groupby(['u','g']).rev.sum().reset_index()
     tot=s.groupby('u').rev.sum().rename('t'); s=s.join(tot,on='u'); s['sh']=100*s.rev/s.t
+    # CR3 again over named suppliers only. The buckets are not firms: "ספק מותג פרטי"
+    # is every retailer's own label pooled, "ספק כללי" is an unattributed remainder.
+    # Counting them as a competitor understates concentration where they are large, and
+    # the shares are renormalised over what is left so the measure stays a share of 100.
+    sx=s[~s.g.isin(BUCKET)].copy()
+    tx=sx.groupby('u').rev.sum().rename('tx'); sx=sx.join(tx,on='u'); sx['sh']=100*sx.rev/sx.tx
     conc=pd.DataFrame({'hhi':s.assign(q=s.sh**2).groupby('u').q.sum(),
-                       'cr3':s.sort_values('sh',ascending=False).groupby('u').sh.apply(lambda x:x.head(3).sum())})
+                       'cr3':s.sort_values('sh',ascending=False).groupby('u').sh.apply(lambda x:x.head(3).sum()),
+                       'cr3x':sx.sort_values('sh',ascending=False).groupby('u').sh.apply(lambda x:x.head(3).sum())})
+    conc['cr3x']=conc.cr3x.fillna(conc.cr3)      # a unit that is all bucket keeps the plain CR3
     d=d.merge(conc,left_on='u',right_index=True)
     NP=d.month.nunique(); n=d.groupby('u').month.nunique()
     d=d[d.u.isin(n[n==NP].index)].copy()
@@ -154,10 +164,10 @@ for level in ['cat','sub']:
         dd=d if freq=='m' else to_quarter(d)
         for drop in [True,False]:
             x=prep(dd,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
-            for measure in ['cr3','hhi']:
+            for measure in ['cr3','cr3x','hhi']:
                 for kk in [2,3]:
                     RES['terc'][f'{sk}|{measure}|{kk}']=terciles(x,measure,kk)
-                for weighted in [True,False]:
+                for weighted in [True]:
                     k=f'{sk}|{measure}|{"w" if weighted else "u"}'
                     RES['runs'][k]=panel(x,measure,weighted)
                     a=RES['runs'][k]

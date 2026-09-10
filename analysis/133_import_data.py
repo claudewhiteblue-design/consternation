@@ -35,15 +35,15 @@ for level in ['cat','sub']:
     dq=d if freq=='m' else to_quarter(d)
     for drop in [True,False]:
       x=prep(dq,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
-      u=x.groupby('u').agg(cr3=('cr3','first'),hhi=('hhi','first'),
+      u=x.groupby('u').agg(cr3=('cr3','first'),cr3x=('cr3x','first'),hhi=('hhi','first'),
                            fx_v3=('fx_v3','first'),
                            imp_share=('imp_share','first'),rev=('rev','sum'))
       RES['corr'][sk]={f'{a}|{b}':round(float(u[a].corr(u[b])),3)
-                       for a in ['cr3','hhi'] for b in ['fx_v3','imp_share']}
+                       for a in ['cr3','cr3x','hhi'] for b in ['fx_v3','imp_share']}
       for measure in ['fx_v3','imp_share']:
           for kk in [2,3]:
               RES['terc'][f'{sk}|{measure}|{kk}']=terciles(x,measure,kk)
-          for weighted in [True,False]:
+          for weighted in [True]:
               k=f'{sk}|{measure}|{"w" if weighted else "u"}'
               RES['runs'][k]=panel(x,measure,weighted)
               a=RES['runs'][k]
@@ -59,7 +59,7 @@ for level in ['cat','sub']:
       def terc(v,K):
           o=np.argsort(v); cw=np.cumsum(w[o])/w.sum()
           g=np.empty(len(v),dtype=int); g[o]=np.digitize(cw,[i/K for i in range(1,K)]); return g
-      for cm in ['cr3','hhi']:
+      for cm in ['cr3','cr3x','hhi']:
           for fm in ['fx_v3','imp_share']:
             for K in [2,3]:
               gc,gf=terc(meta[cm].values,K),terc(meta[fm].values,K)
