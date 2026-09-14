@@ -282,6 +282,9 @@ def _sig(x,n=3):
     if x is None or not np.isfinite(x) or x==0: return 0
     return round(float(x),-int(math.floor(math.log10(abs(x))))+(n-1))
 
+SH_MIN=3.0        # a supplier holding less than this % of the unit is not its price level
+SUPPRESSED=[0]
+
 def sharepaths(key,name_of,src,periods=None):
     """Monthly revenue for each listed supplier, plus the unit value (revenue over
        standard quantity) of the five largest. The page divides the revenue by the unit
@@ -290,11 +293,18 @@ def sharepaths(key,name_of,src,periods=None):
     periods=months if periods is None else periods
     z=src.groupby([key,'month','g']).agg(rev=('rev','sum'),qty=('qty','sum')).reset_index()
     z['pr']=np.where(z.qty>0,z.rev*1000/z.qty,np.nan)
+    # Share of the whole unit that month, over every supplier -- not just the ten listed.
+    z['sh']=100*z.rev/z.groupby([key,'month']).rev.transform('sum')
     WR=z.pivot_table(index=[key,'g'],columns='month',values='rev').reindex(columns=periods)
     WP=z.pivot_table(index=[key,'g'],columns='month',values='pr').reindex(columns=periods)
+    WS=z.pivot_table(index=[key,'g'],columns='month',values='sh').reindex(columns=periods)
     for uk,d in tops.items():
         lv,nm=uk.split('|',1)
         if lv!=name_of: continue
+        # the price level of the unit that month, taken as the median of the plotted lines
+        five=[r['g'] for r in d['rows'][:5] if (nm,r['g']) in WP.index]
+        if not five: continue
+        ref=np.nanmedian(np.vstack([WP.loc[(nm,g)].values for g in five]),axis=0)
         for r in d['rows']:
             if (nm,r['g']) not in WR.index: continue
             r['rv']=[None if not np.isfinite(x) else _sig(x) for x in WR.loc[(nm,r['g'])].values]
@@ -302,12 +312,26 @@ def sharepaths(key,name_of,src,periods=None):
             # for all ten would not fit in the page
             if d['rows'].index(r)<5 and (nm,r['g']) in WP.index:
                 pv=WP.loc[(nm,r['g'])].values
+                # A month where a supplier sits far off the unit's price level AND holds
+                # almost none of it is not a different price for the same thing -- it is a
+                # different thing. Strauss in משקה סויה מצונן ran 21 months at 31₪ against
+                # a category at 11₪ on 1% of the revenue, then vanished for ten months and
+                # came back at 9.4₪ on 7%. Drawing that as one price line is wrong, and it
+                # owned the axis: Tnuva is 93% of that unit and its whole 4.5-year path was
+                # squeezed into 5% of the chart. Either test alone would be too blunt --
+                # a real premium brand is far off the level but big, a small supplier is
+                # small but priced normally -- so both have to hold.
+                sv=WS.loc[(nm,r['g'])].values
+                odd=((pv>2*ref)|(pv<0.5*ref))&(sv<SH_MIN)
+                pv=np.where(odd,np.nan,pv)
+                SUPPRESSED[0]+=int(np.sum(odd&np.isfinite(sv)))
                 if np.isfinite(pv).any():
                     r['pp']=[None if not np.isfinite(x) else _sig(x) for x in pv]
 for nm_of,key,src in [('dep','dep',raw),('cat','cat',raw),('sub','sc',rawS)]:
     sharepaths(key,nm_of,src)
 _np=sum(1 for d in tops.values() for r in d['rows'] if 'rv' in r)
-print(f'רשימות ספקים: {len(tops)} יחידות | {_np} סדרות מכר לספק')
+print(f'רשימות ספקים: {len(tops)} יחידות | {_np} סדרות מכר לספק | '
+      f'{SUPPRESSED[0]} נקודות מחיר הושמטו (מחיר חריג ונתח מתחת ל-{SH_MIN}%)')
 
 # ---------- (D) price & quantity index, and import share over time ----------
 # Unit relatives (each category against its own Jan-2022 level) aggregated with
