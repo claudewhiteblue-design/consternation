@@ -13,7 +13,8 @@ has to stay under is 16 MB for the rendered file.
 import json, gzip, base64, os
 HERE=os.path.dirname(os.path.abspath(__file__))
 PARTS=[('D','dash_data.json'),('A','analyses_data.json'),('I','import_data.json'),
-       ('XI','interaction_data.json'),('CC','conc_change_data.json'),('B5','big5_data.json')]
+       ('XI','interaction_data.json'),('CC','conc_change_data.json'),('B5','big5_data.json'),
+       ('SC','scatter_data.json')]
 
 def pack(path):
     obj=json.load(open(os.path.join(HERE,path)))
