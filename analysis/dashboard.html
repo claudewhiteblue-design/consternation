@@ -186,7 +186,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="card">
  <h2>ריכוזיות מול שינוי המחיר — פיזור</h2>
- <p class="cs" style="max-width:82ch">אותה שאלה בלי מודל: כל נקודה היא יחידה אחת, הציר האופקי הוא הריכוזיות שלה ב־2022 והציר האנכי הוא <b>השינוי במחיר בין ממוצע 2022 ל<span id="gwin">שנים־עשר החודשים האחרונים</span></b>. שניהם חלונות של שנה מלאה, כך שהעונתיות מתבטלת מעצמה. <b>גודל לפי מכר</b> מצייר את שטח העיגול לפי המכר ב־2022 ומתאים גם את קו המגמה למשקל הזה; <b>גודל אחיד</b> נותן לכל יחידה אותו משקל בדיוק. ההבדל בין שתי התצוגות הוא עצמו הממצא: בתצוגה האחידה הקצוות הם יחידות זעירות שבהן «מחיר» הוא בעיקר תמהיל אריזה.</p>
+ <p class="cs" style="max-width:82ch">אותה שאלה בלי מודל: כל נקודה היא יחידה אחת, הציר האופקי הוא הריכוזיות שלה ב־2022 והציר האנכי הוא <b>השינוי במחיר בין ממוצע 2022 ל<span id="gwin">שנים־עשר החודשים האחרונים</span></b>. שניהם חלונות של שנה מלאה, כך שהעונתיות מתבטלת מעצמה. <b>גודל לפי מכר</b> מצייר את שטח העיגול לפי המכר ב־2022 ומתאים גם את קו המגמה למשקל הזה; <b>גודל אחיד</b> נותן לכל יחידה אותו משקל בדיוק. ההבדל בין שתי התצוגות הוא עצמו הממצא. <b>רצפת מכר:</b> קטגוריות מתחת ל־50 מ׳ ₪ ותת־קטגוריות מתחת ל־30 מ׳ ₪ אינן מוצגות — ביחידות כאלה «מחיר» הוא בעיקר תמהיל אריזה, והן שייצרו את הזנב שמעל 100%. מה שנשאר מכסה 96% מהמכר ברמת הקטגוריה ו־85% ברמת תת־הקטגוריה. במחלקות אין רצפה.</p>
  <div class="ctl">
   <div class="seg" id="g_lv"></div><div class="seg" id="g_sm"></div>
   <div class="seg" id="g_ms"></div><div class="seg" id="g_sz"></div>
@@ -1063,6 +1063,7 @@ aDraw(); tDraw();
 const GL=[['dep','מחלקה'],['cat','קטגוריה'],['sub','תת-קטגוריה']];
 const GZ=[['r','גודל לפי מכר'],['u','גודל אחיד']];
 const GX={cr3:2,cr3x:3,hhi:4};
+const GF={dep:0,cat:50,sub:30};   // revenue floor in מיליוני ₪, by level
 Object.assign(st,{glv:'cat',gsm:'no_meat',gms:'cr3',gsz:'r'});
 seg('g_lv',GL,'glv',()=>gDraw()); seg('g_sm',AS,'gsm',()=>gDraw());
 seg('g_ms',AM,'gms',()=>gDraw()); seg('g_sz',GZ,'gsz',()=>gDraw());
@@ -1070,8 +1071,11 @@ const GG={};
 function gDraw(){
  ['g_lv','g_sm','g_ms','g_sz'].forEach(segSync);
  const raw=SC[st.glv]||[]; if(!raw.length) return;
- // the meat departments leave together, exactly as they do in the regressions
- const rows=raw.filter(r=>st.gsm==='all'||!r[7]);
+ // the meat departments leave together, exactly as they do in the regressions.
+ // A revenue floor drops the micro units whose "price" is mostly pack mix -- the same
+ // units that produced the +100% tail. Departments have no floor; the smallest is 15 מ' ₪.
+ const rows=raw.filter(r=>(st.gsm==='all'||!r[7])&&r[6]>=GF[st.glv]);
+ const cut=raw.filter(r=>(st.gsm==='all'||!r[7])&&r[6]<GF[st.glv]).length;
  const xi=GX[st.gms], sized=st.gsz==='r';
  const W=940,H=430,P={t:20,r:26,b:44,l:58},iw=W-P.l-P.r,ih=H-P.t-P.b;
  const xv=rows.map(r=>r[xi]), yv=rows.map(r=>r[5]), wv=rows.map(r=>sized?r[6]:1);
@@ -1138,7 +1142,8 @@ function gDraw(){
   `${rows.length} יחידות · שינוי חציוני ${sgn(med,1)}% · ${sized?'ממוצע משוקלל־מכר':'ממוצע פשוט'} ${sgn(wavg,1)}% · `+
   `<b style="color:var(--ink)">שיפוע ${sgn(b*sdx,2)}% לכל ס״ת ${escT(cml(st.gms))}</b> (ס״ת=${sdx.toFixed(sdx<10?1:0)}) · `+
   `מתאם ${sgn(rr,2)} (R²=${(rr*rr).toFixed(3)})`+
-  (pts.some(p=>p.out)?` · ${pts.filter(p=>p.out).length} יחידות מחוץ לתחום הציר, מסומנות כמשולש בקצה`:'');
+  (pts.some(p=>p.out)?` · ${pts.filter(p=>p.out).length} מחוץ לתחום הציר, מסומנות כמשולש בקצה`:'')+
+  (cut?` · ${cut} יחידות מתחת לרצפת ${GF[st.glv]} מ׳ ₪ הושמטו`:'');
  document.getElementById('gnote').innerHTML=
   `<b>המשקל הופך את סימן השיפוע, וכאן רואים למה.</b> באותו חתך בדיוק, ${sized?'משוקלל־מכר':'משקל שווה'} נותן `+
   `<b style="color:var(--ink)">${sgn(F.b*F.sdx,2)}%</b> לכל ס״ת ו${sized?'משקל שווה':'משוקלל־מכר'} נותן `+
