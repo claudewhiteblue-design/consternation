@@ -5,7 +5,8 @@ The event study answers "does the concentrated half move differently from the
 dispersed half"; this is the same question drawn without a model, so an outlier is
 visible as an outlier rather than absorbed into a coefficient.
 
-  x  2022 concentration of the unit (CR3 / CR3 without the buckets / HHI)
+  x  a cross-sectional measure of the unit: 2022 concentration (CR3 / CR3 without the
+     buckets / HHI) or its 2022 exposure to imports (importer share / FX exposure)
   y  % change between the unit's 2022 average price and its last twelve months,
      which are both full years, so seasonality cancels rather than being assumed away
   r  2022 revenue, when the size toggle is on
@@ -25,6 +26,19 @@ G={}; exec(src,G)
 load,prep,BUCKET=G['load'],G['prep'],G['BUCKET']
 EXCAT,EXDEP,EXDEP_ALL=G['EXCAT'],G['EXDEP'],G['EXDEP_ALL']
 OUT='/home/user/consternation/analysis/scatter_data.json'
+KEY={'cat':'ctg','sub':'sc'}
+
+
+def imports(level):
+    """The two import measures, on the same 2022 footing the regressions use: the
+       importer share is read from the January-2022 brand file and units with under
+       30% of revenue resolved are dropped, so the regressor precedes the price path.
+       Departments have neither measure, so their rows carry nulls."""
+    k=KEY[level]; h='/home/user/consternation/analysis'
+    v3=pd.read_csv(f'{h}/import_share_v3_{level}_2022.csv')
+    v3=v3[v3.resolved_pct>=30].set_index(k).imp_share_v3
+    fx=pd.read_csv(f'{h}/fx_exposure_v3_{level}.csv').set_index(k).fx_v3
+    return v3,fx
 R='"מכר כספי (מיליוני ₪)"'
 c=duckdb.connect(); c.execute('SET enable_progress_bar=false')
 
@@ -72,11 +86,16 @@ for level in ['cat','sub']:
                             cr3=('cr3','first'),cr3x=('cr3x','first'),hhi=('hhi','first'))
     keep=prep(x,False).u.unique()                      # EXCAT / EXDEP_ALL always out
     meta=meta.loc[[u for u in meta.index if u in set(keep)]]
+    v3,fx=imports(level)
+    def g(t,u,n):
+        return round(float(t[u]),n) if u in t.index and np.isfinite(t[u]) else None
     rows=[[u,meta.dep[u],round(float(meta.cr3[u]),1),round(float(meta.cr3x[u]),1),
            round(float(meta.hhi[u]),0),round(float(ch[u]),2),round(float(r22[u]),2),
-           int(meta.dep[u] in EXDEP)] for u in meta.index]
+           int(meta.dep[u] in EXDEP),g(v3,u,1),g(fx,u,1)] for u in meta.index]
     RES[level]=rows
-    print(f'{level}: {len(rows)} נקודות')
+    print(f'{level}: {len(rows)} נקודות | '
+          f'נתח ייבואנים ל-{sum(1 for r in rows if r[8] is not None)} | '
+          f'חשיפת מט״ח ל-{sum(1 for r in rows if r[9] is not None)}')
 
 # ---------- department: revenue-weighted mean of its categories' log change ----------
 sd=sup[~sup.ctg.isin(EXCAT)&~sup.dep.isin(EXDEP_ALL)]
@@ -92,7 +111,7 @@ for dep,grp in cats.groupby('dep'):
     y=100*(np.exp(float(np.average(dl.reindex(us).values,weights=w)))-1)
     rows.append([dep,dep,round(float(cd.cr3[dep]),1),round(float(cd.cr3x[dep]),1),
                  round(float(cd.hhi[dep]),0),round(y,2),round(float(w.sum()),2),
-                 int(dep in EXDEP)])
+                 int(dep in EXDEP),None,None])
 RES['dep']=rows
 print(f'dep: {len(rows)} נקודות')
 RES['__win__']={'first':last[0],'last':last[-1]}

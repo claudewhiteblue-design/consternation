@@ -285,6 +285,22 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 </div>
 
 <div class="card">
+ <h2>חשיפה לייבוא מול שינוי המחיר — פיזור</h2>
+ <p class="cs" style="max-width:82ch">אותו גרף כמו בעמוד הריכוזיות, עם הרגרסור השני: כל נקודה היא יחידה אחת, הציר האופקי הוא החשיפה שלה לייבוא ב־2022 והציר האנכי הוא <b>השינוי במחיר בין ממוצע 2022 ל<span id="giwin">שנים־עשר החודשים האחרונים</span></b>. אותם כללים בדיוק: <b>גודל לפי מכר</b> מצייר את שטח העיגול לפי המכר ב־2022 ומתאים לו את קו המגמה, רצפת מכר של 50 מ׳ ₪ בקטגוריות ו־30 בתת־קטגוריות, וציר מחיר קטום ב־±50% עם משולשים בקצה. <b>אין כאן רמת מחלקה</b> — מדדי הייבוא מוגדרים ברמת קטגוריה ותת־קטגוריה בלבד. יחידה שאין לה ערך למדד הנבחר (נתח ייבואנים שלא הוכרע ב־30% מהמכר) אינה נספרת, ומספרן מופיע בשורת הסיכום.</p>
+ <div class="ctl">
+  <div class="seg" id="gi_lv"></div><div class="seg" id="gi_sm"></div>
+  <div class="seg" id="gi_ms"></div><div class="seg" id="gi_sz"></div>
+ </div>
+ <div class="leg"><span><i style="background:var(--acc);height:11px;width:11px;border-radius:50%;opacity:.55"></i>יחידה</span>
+  <span><i style="background:var(--ink)"></i>קו מגמה</span>
+  <span style="color:var(--ink3)">שיוט מציג את שם היחידה</span></div>
+ <div class="scroll"><div class="chwrap"><svg id="gich" viewBox="0 0 940 430" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="gitip"></div></div></div>
+ <p class="foot" id="gifoot"></p>
+ <p class="note" id="ginote" style="margin-top:12px"></p>
+</div>
+
+<div class="card">
  <h2>קודם כל: השניים חופפים מבנית</h2>
  <p class="cs" style="max-width:82ch">התפלגות קבוצות החשיפה בתוך כל קבוצת ריכוזיות, באחוזי מכר 2022. המתאם הרציף ביניהם חלש — אבל בקצוות החפיפה חזקה מאוד, ולכן אי אפשר לקרוא כל אחד מהם כאילו השני אינו קיים.</p>
  <div class="ctl"><div class="seg" id="d_lv"></div><div class="seg" id="d_sm"></div><div class="seg" id="d_cm"></div>
@@ -935,6 +951,8 @@ navEl.children[0].classList.add('on');
 const AL=[['cat','קטגוריה'],['sub','תת-קטגוריה']];
 const AS=[['no_meat','ללא בשר ועוף'],['all','כולל בשר ועוף']];
 const AM=[['cr3','CR3'],['cr3x','CR3 ללא מאגדים'],['hhi','HHI']];
+// declared here rather than with the imports tab: the scatter above uses it too
+const IM=[['imp_share','נתח ייבואנים','נתח ייבואנים'],['fx_v3','חשיפת מט״ח (מוערך)','חשיפת מט״ח']];
 const cml=k=>(AM.find(x=>x[0]===k)||[k,k])[1];
 
 const AF=[['m','חודשי'],['q','רבעוני']];
@@ -1059,25 +1077,42 @@ function ahover(ev,G,svgId,ovId,tipId,mode){
   const o=document.getElementById(k?'tov':'aov'); if(o)o.innerHTML='';});});
 aDraw(); tDraw();
 
-/* ---------- concentration vs price change, one dot per unit ---------- */
+/* ---------- a cross-sectional measure against the price change, one dot per unit ----------
+   Two instances of the same chart: concentration on the first sub-tab, import exposure on
+   the second. Everything except the x measure, the levels offered and the wording is shared. */
 const GL=[['dep','מחלקה'],['cat','קטגוריה'],['sub','תת-קטגוריה']];
 const GZ=[['r','גודל לפי מכר'],['u','גודל אחיד']];
-const GX={cr3:2,cr3x:3,hhi:4};
+const GX={cr3:2,cr3x:3,hhi:4,imp_share:8,fx_v3:9};
 const GF={dep:0,cat:50,sub:30};   // revenue floor in מיליוני ₪, by level
 const YCAP=50;                    // the price-change axis is capped at +-50%
-Object.assign(st,{glv:'cat',gsm:'no_meat',gms:'cr3',gsz:'r'});
-seg('g_lv',GL,'glv',()=>gDraw()); seg('g_sm',AS,'gsm',()=>gDraw());
-seg('g_ms',AM,'gms',()=>gDraw()); seg('g_sz',GZ,'gsz',()=>gDraw());
-const GG={};
-function gDraw(){
- ['g_lv','g_sm','g_ms','g_sz'].forEach(segSync);
- const raw=SC[st.glv]||[]; if(!raw.length) return;
+const GCFG={p:'g',ms:AM,lvs:GL,sv:'gch',ov:'gov',tip:'gtip',foot:'gfoot',note:'gnote',
+            of:'הריכוזיות'};
+// departments have no import measure, so that instance offers the two levels the rest
+// of the imports tab uses
+const ICFG={p:'gi',ms:IM,lvs:AL,sv:'gich',ov:'giov',tip:'gitip',foot:'gifoot',note:'ginote',
+            of:'החשיפה לייבוא'};
+const GST={};
+const glab=(C,k)=>(C.ms.find(x=>x[0]===k)||[k,k])[1];
+function gInit(C){
+ const d={glv:'cat',gsm:'no_meat',gms:C.ms[0][0],gsz:'r'};
+ Object.keys(d).forEach(k=>st[C.p+k.slice(1)]=d[k]);
+ [['lv',C.lvs],['sm',AS],['ms',C.ms],['sz',GZ]].forEach(([k,o])=>
+  seg(`${C.p}_${k}`,o,C.p+k,()=>gDraw(C)));
+}
+function gDraw(C){
+ ['lv','sm','ms','sz'].forEach(k=>segSync(`${C.p}_${k}`));
+ const lv=st[C.p+'lv'], ms=st[C.p+'ms'], sized=st[C.p+'sz']==='r', sm=st[C.p+'sm'];
+ const raw=SC[lv]||[]; if(!raw.length) return;
+ const xi=GX[ms];
  // the meat departments leave together, exactly as they do in the regressions.
  // A revenue floor drops the micro units whose "price" is mostly pack mix -- the same
  // units that produced the +100% tail. Departments have no floor; the smallest is 15 מ' ₪.
- const rows=raw.filter(r=>(st.gsm==='all'||!r[7])&&r[6]>=GF[st.glv]);
- const cut=raw.filter(r=>(st.gsm==='all'||!r[7])&&r[6]<GF[st.glv]).length;
- const xi=GX[st.gms], sized=st.gsz==='r';
+ // A unit with no value for this measure is not a zero, it is unknown, and is left out.
+ const ok=r=>(sm==='all'||!r[7])&&r[xi]!=null;
+ const rows=raw.filter(r=>ok(r)&&r[6]>=GF[lv]);
+ const cut=raw.filter(r=>ok(r)&&r[6]<GF[lv]).length;
+ const nom=raw.filter(r=>(sm==='all'||!r[7])&&r[xi]==null&&r[6]>=GF[lv]).length;
+ if(!rows.length) return;
  const W=940,H=430,P={t:20,r:26,b:44,l:58},iw=W-P.l-P.r,ih=H-P.t-P.b;
  const xv=rows.map(r=>r[xi]), yv=rows.map(r=>r[5]), wv=rows.map(r=>sized?r[6]:1);
  let x0=Math.min(...xv), x1=Math.max(...xv); const xp=(x1-x0)*0.05||1; x0-=xp; x1+=xp;
@@ -1089,26 +1124,26 @@ function gDraw(){
  const yp=(y1-y0)*0.06; y0=Math.max(-YCAP,y0-yp); y1=Math.min(YCAP,y1+yp);
  const X=v=>P.l+iw*(v-x0)/(x1-x0), Y=v=>P.t+ih*(1-(v-y0)/(y1-y0));
  // weighted least squares, so the fit reads the same weighting as the bubbles.
- // Both fits are computed every draw: the sign of this slope depends on the weighting,
- // and the note under the chart says so with the other one's number rather than in the abstract.
+ // Both fits are computed every draw: the note under the chart compares them with the
+ // other one's number rather than in the abstract.
  const fit=ws=>{const sw=ws.reduce((a,b)=>a+b,0);
   const mx=rows.reduce((a,r,i)=>a+ws[i]*r[xi],0)/sw, my=rows.reduce((a,r,i)=>a+ws[i]*r[5],0)/sw;
   let sxy=0,sxx=0,syy=0;
   rows.forEach((r,i)=>{const dx=r[xi]-mx, dy=r[5]-my;
    sxy+=ws[i]*dx*dy; sxx+=ws[i]*dx*dx; syy+=ws[i]*dy*dy;});
   const b=sxx>0?sxy/sxx:0;
-  // HHI runs 0-10000 and CR3 0-100, so the slope is quoted per standard deviation
-  return {b,a:my-b*mx,rr:(sxx>0&&syy>0)?sxy/Math.sqrt(sxx*syy):0,sdx:Math.sqrt(sxx/sw),my,sw};};
+  // HHI runs 0-10000 and the others 0-100, so the slope is quoted per standard deviation
+  return {b,a:my-b*mx,rr:(sxx>0&&syy>0)?sxy/Math.sqrt(sxx*syy):0,sdx:Math.sqrt(sxx/sw),sw};};
  const F=fit(wv), O=fit(rows.map(r=>sized?1:r[6]));
  const {b,a,rr,sdx,sw}=F;
  let g=axis(P,W,Y,v=>(v>0?'+':'')+v.toFixed(0)+'%',nice(y0,y1,5));
  nice(x0,x1,6).forEach(v=>{
   g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${P.t}" y2="${P.t+ih}" stroke="var(--grid)" stroke-width="1"/>`;
   g+=`<text x="${X(v)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${v}</text>`;});
- g+=`<text x="${P.l+iw/2}" y="${H-8}" text-anchor="middle" direction="rtl" fill="var(--ink3)" font-size="11.5">${escT(cml(st.gms))} ב־2022</text>`;
+ g+=`<text x="${P.l+iw/2}" y="${H-8}" text-anchor="middle" direction="rtl" fill="var(--ink3)" font-size="11.5">${escT(glab(C,ms))} ב־2022</text>`;
  // area, not radius, carries the revenue: a bubble twice as wide is four times the sales
- const mxr=Math.max(...rows.map(r=>r[6])), big={dep:26,cat:22,sub:15}[st.glv];
- const rad=r=>sized?Math.max(2.6,Math.min(big,big*Math.sqrt(r[6]/mxr))):(st.glv==='sub'?3:4);
+ const mxr=Math.max(...rows.map(r=>r[6])), big={dep:26,cat:22,sub:15}[lv];
+ const rad=r=>sized?Math.max(2.6,Math.min(big,big*Math.sqrt(r[6]/mxr))):(lv==='sub'?3:4);
  const pts=rows.map((r,i)=>({r,i,x:X(r[xi]),y:Y(Math.max(y0,Math.min(y1,r[5]))),rr:rad(r),
                              out:r[5]>y1?1:r[5]<y0?-1:0}));
  // large first, so a small unit is never buried under a big one and stays hoverable
@@ -1126,55 +1161,64 @@ function gDraw(){
  const box=[];
  const free=(x,y,w)=>!box.some(q=>x<q[2]&&q[0]<x+w&&y-11<q[3]&&q[1]<y+4);
  lab.forEach(p=>{const w=p.r[0].length*6.9+6, o=p.rr+6;
-  const cand=[[p.x+o,p.y+4,'start'],[p.x-o-w,p.y+4,'start'],
-              [p.x-w/2,p.y-o-2,'start'],[p.x-w/2,p.y+o+11,'start']];
+  const cand=[[p.x+o,p.y+4],[p.x-o-w,p.y+4],[p.x-w/2,p.y-o-2],[p.x-w/2,p.y+o+11]];
   const c=cand.find(([x,y])=>x>P.l+2&&x+w<W-P.r-2&&y>P.t+10&&y<P.t+ih-2&&free(x,y,w));
   if(!c) return;
   box.push([c[0],c[1]-11,c[0]+w,c[1]+4]);
   g+=`<text x="${c[0].toFixed(1)}" y="${c[1].toFixed(1)}" text-anchor="start" `+
      `fill="var(--ink2)" font-size="11" paint-order="stroke" stroke="var(--surf)" stroke-width="3">${escT(p.r[0])}</text>`;});
- document.getElementById('gch').innerHTML=g+'<g id="gov"></g>';
- GG.pts=pts; GG.W=W; GG.H=H; GG.sized=sized;
+ document.getElementById(C.sv).innerHTML=g+`<g id="${C.ov}"></g>`;
+ GST[C.p]={pts,W,H,C};
  const med=[...yv].sort((u,v)=>u-v)[Math.floor(yv.length/2)];
  const wavg=rows.reduce((z,r,i)=>z+wv[i]*r[5],0)/sw;
- document.getElementById('gfoot').innerHTML=
+ document.getElementById(C.foot).innerHTML=
   `${rows.length} יחידות · שינוי חציוני ${sgn(med,1)}% · ${sized?'ממוצע משוקלל־מכר':'ממוצע פשוט'} ${sgn(wavg,1)}% · `+
-  `<b style="color:var(--ink)">שיפוע ${sgn(b*sdx,2)}% לכל ס״ת ${escT(cml(st.gms))}</b> (ס״ת=${sdx.toFixed(sdx<10?1:0)}) · `+
+  `<b style="color:var(--ink)">שיפוע ${sgn(b*sdx,2)}% לכל ס״ת ${escT(glab(C,ms))}</b> (ס״ת=${sdx.toFixed(sdx<10?1:0)}) · `+
   `מתאם ${sgn(rr,2)} (R²=${(rr*rr).toFixed(3)})`+
   (pts.some(p=>p.out)?` · ${pts.filter(p=>p.out).length} מחוץ לתחום הציר, מסומנות כמשולש בקצה`:'')+
-  (cut?` · ${cut} יחידות מתחת לרצפת ${GF[st.glv]} מ׳ ₪ הושמטו`:'');
- document.getElementById('gnote').innerHTML=
-  `<b>המשקל הופך את סימן השיפוע, וכאן רואים למה.</b> באותו חתך בדיוק, ${sized?'משוקלל־מכר':'משקל שווה'} נותן `+
-  `<b style="color:var(--ink)">${sgn(F.b*F.sdx,2)}%</b> לכל ס״ת ו${sized?'משקל שווה':'משוקלל־מכר'} נותן `+
-  `<b style="color:var(--ink)">${sgn(O.b*O.sdx,2)}%</b>. שני המספרים זעירים ושני המתאמים מתחת ל־0.15, `+
-  `כך שההיפוך אינו שתי תשובות סותרות אלא <b>אותה תשובה: אין כאן קשר</b>. מה שמזיז את הסימן הוא מי נספר — `+
-  `היחידה הממוצעת או השקל הממוצע — ולא הריכוזיות.`;
+  (cut?` · ${cut} יחידות מתחת לרצפת ${GF[lv]} מ׳ ₪ הושמטו`:'')+
+  (nom?` · ${nom} ללא ערך למדד הזה, מחוץ לחישוב`:'');
+ // the two weightings either agree on the direction or they do not; say which, with both numbers
+ const w1=F.b*F.sdx, w2=O.b*O.sdx, flip=w1*w2<0, weak=Math.abs(rr)<0.15;
+ const nw=sized?'משוקלל־מכר':'משקל שווה', no=sized?'משקל שווה':'משוקלל־מכר';
+ document.getElementById(C.note).innerHTML=
+  `<b>${flip?'המשקל הופך את סימן השיפוע, וכאן רואים למה.':'שתי השקילות מסכימות על הכיוון.'}</b> `+
+  `באותו חתך בדיוק, ${nw} נותן <b style="color:var(--ink)">${sgn(w1,2)}%</b> לכל ס״ת `+
+  `ו${no} נותן <b style="color:var(--ink)">${sgn(w2,2)}%</b>. `+
+  (flip?`${weak?'שני המספרים זעירים והמתאם מתחת ל־0.15, כך שההיפוך אינו שתי תשובות סותרות אלא <b>אותה תשובה: אין כאן קשר</b>. ':''}`+
+        `מה שמזיז את הסימן הוא מי נספר — היחידה הממוצעת או השקל הממוצע — ולא ${C.of}.`
+       :`הכיוון אינו תלוי בשאלה אם סופרים את היחידה הממוצעת או את השקל הממוצע, וזה מה שמבדיל אותו `+
+        `מהחתכים שבהם הסימן מתהפך. ${weak?'המתאם עדיין מתחת ל־0.15 — כיוון יציב, לא קשר חזק.':''}`);
 }
-document.getElementById('gch').addEventListener('mousemove',e=>{
- if(!GG.pts) return;
- const el=document.getElementById('gch'), rc=el.getBoundingClientRect();
- const mx=(e.clientX-rc.left)/rc.width*GG.W, my=(e.clientY-rc.top)/rc.height*GG.H;
- let best=null,bd=1e9;
- GG.pts.forEach(p=>{const d=Math.hypot(p.x-mx,p.y-my)-p.rr;
-  if(d<bd){bd=d;best=p;}});
- const tp=document.getElementById('gtip');
- if(!best||bd>9){tp.classList.remove('on');document.getElementById('gov').innerHTML='';return;}
- document.getElementById('gov').innerHTML=
-  `<circle cx="${best.x.toFixed(1)}" cy="${best.y.toFixed(1)}" r="${(best.rr+2.5).toFixed(1)}" fill="none" stroke="var(--ink)" stroke-width="1.8"/>`;
- tp.innerHTML=`<b>${escT(best.r[0])}</b>`+
-  (st.glv==='dep'?'':`<div style="color:var(--ink3);font-size:11.5px">${escT(best.r[1])}</div>`)+
-  `<div class="r"><span>${escT(cml(st.gms))} 2022</span><span>${best.r[GX[st.gms]]}</span></div>`+
-  `<div class="r"><span>שינוי המחיר</span><span>${sgn(best.r[5],1)}%</span></div>`+
-  `<div class="r"><span>מכר 2022</span><span>${best.r[6]>=10?Math.round(best.r[6]):best.r[6].toFixed(1)} מ׳ ₪</span></div>`;
- tp.classList.add('on');
- const px=best.x/GG.W*rc.width, py=best.y/GG.H*rc.height, tw=tp.offsetWidth, th=tp.offsetHeight;
- tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+16:px-tw-16))+'px';
- tp.style.top=Math.max(4,Math.min(rc.height-th-4,py-th/2))+'px';
-});
-document.getElementById('gch').addEventListener('mouseleave',()=>{
- document.getElementById('gtip').classList.remove('on');
- const o=document.getElementById('gov'); if(o)o.innerHTML='';});
-gDraw();
+['g','gi'].forEach(pref=>{
+ const C=pref==='g'?GCFG:ICFG, el=document.getElementById(C.sv);
+ el.addEventListener('mousemove',e=>{
+  const S=GST[pref]; if(!S) return;
+  const rc=el.getBoundingClientRect();
+  const mx=(e.clientX-rc.left)/rc.width*S.W, my=(e.clientY-rc.top)/rc.height*S.H;
+  let best=null,bd=1e9;
+  S.pts.forEach(p=>{const d=Math.hypot(p.x-mx,p.y-my)-p.rr; if(d<bd){bd=d;best=p;}});
+  const tp=document.getElementById(C.tip);
+  if(!best||bd>9){tp.classList.remove('on');document.getElementById(C.ov).innerHTML='';return;}
+  const ms=st[pref+'ms'];
+  document.getElementById(C.ov).innerHTML=
+   `<circle cx="${best.x.toFixed(1)}" cy="${best.y.toFixed(1)}" r="${(best.rr+2.5).toFixed(1)}" fill="none" stroke="var(--ink)" stroke-width="1.8"/>`;
+  tp.innerHTML=`<b>${escT(best.r[0])}</b>`+
+   (st[pref+'lv']==='dep'?'':`<div style="color:var(--ink3);font-size:11.5px">${escT(best.r[1])}</div>`)+
+   `<div class="r"><span>${escT(glab(C,ms))} 2022</span><span>${best.r[GX[ms]]}</span></div>`+
+   `<div class="r"><span>שינוי המחיר</span><span>${sgn(best.r[5],1)}%</span></div>`+
+   `<div class="r"><span>מכר 2022</span><span>${best.r[6]>=10?Math.round(best.r[6]):best.r[6].toFixed(1)} מ׳ ₪</span></div>`;
+  tp.classList.add('on');
+  const px=best.x/S.W*rc.width, py=best.y/S.H*rc.height, tw=tp.offsetWidth, th=tp.offsetHeight;
+  tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+16:px-tw-16))+'px';
+  tp.style.top=Math.max(4,Math.min(rc.height-th-4,py-th/2))+'px';});
+ el.addEventListener('mouseleave',()=>{
+  document.getElementById(C.tip).classList.remove('on');
+  const o=document.getElementById(C.ov); if(o)o.innerHTML='';});});
+// the comparison window is derived from the data, so the caption cannot go stale
+if(SC.__win__){const w=`${mlab(SC.__win__.first)} – ${mlab(SC.__win__.last)}`;
+ ['gwin','giwin'].forEach(id=>{const e=document.getElementById(id); if(e)e.textContent=w;});}
+gInit(GCFG); gInit(ICFG); gDraw(GCFG); gDraw(ICFG);
 
 /* ================= analyses sub-tabs ================= */
 const SUB=['ריכוזיות','ייבוא'];
@@ -1189,7 +1233,6 @@ sub1.children[0].classList.add('on');
 /* ================= imports ================= */
 // [key, full label for controls and prose, short label for composed labels such as
 // "<measure> נמוך" in a table header, where the "(מוערך)" qualifier only gets in the way]
-const IM=[['imp_share','נתח ייבואנים','נתח ייבואנים'],['fx_v3','חשיפת מט״ח (מוערך)','חשיפת מט״ח']];
 const CM=AM;
 Object.assign(st,{ilv:'cat',ism:'no_meat',ims:'imp_share',iwt:'w',ifq:'m',
                   itlv:'cat',itsm:'no_meat',itms:'imp_share',itk:'3',itfq:'m',
