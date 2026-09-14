@@ -186,7 +186,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="card">
  <h2>ריכוזיות מול שינוי המחיר — פיזור</h2>
- <p class="cs" style="max-width:82ch">אותה שאלה בלי מודל: כל נקודה היא יחידה אחת, הציר האופקי הוא הריכוזיות שלה ב־2022 והציר האנכי הוא <b>השינוי במחיר בין ממוצע 2022 ל<span id="gwin">שנים־עשר החודשים האחרונים</span></b>. שניהם חלונות של שנה מלאה, כך שהעונתיות מתבטלת מעצמה. <b>גודל לפי מכר</b> מצייר את שטח העיגול לפי המכר ב־2022 ומתאים גם את קו המגמה למשקל הזה; <b>גודל אחיד</b> נותן לכל יחידה אותו משקל בדיוק. ההבדל בין שתי התצוגות הוא עצמו הממצא. <b>רצפת מכר:</b> קטגוריות מתחת ל־50 מ׳ ₪ ותת־קטגוריות מתחת ל־30 מ׳ ₪ אינן מוצגות — ביחידות כאלה «מחיר» הוא בעיקר תמהיל אריזה, והן שייצרו את הזנב שמעל 100%. מה שנשאר מכסה 96% מהמכר ברמת הקטגוריה ו־85% ברמת תת־הקטגוריה. במחלקות אין רצפה.</p>
+ <p class="cs" style="max-width:82ch">אותה שאלה בלי מודל: כל נקודה היא יחידה אחת, הציר האופקי הוא הריכוזיות שלה ב־2022 והציר האנכי הוא <b>השינוי במחיר בין ממוצע 2022 ל<span id="gwin">שנים־עשר החודשים האחרונים</span></b>. שניהם חלונות של שנה מלאה, כך שהעונתיות מתבטלת מעצמה. <b>גודל לפי מכר</b> מצייר את שטח העיגול לפי המכר ב־2022 ומתאים גם את קו המגמה למשקל הזה; <b>גודל אחיד</b> נותן לכל יחידה אותו משקל בדיוק. ההבדל בין שתי התצוגות הוא עצמו הממצא. <b>רצפת מכר:</b> קטגוריות מתחת ל־50 מ׳ ₪ ותת־קטגוריות מתחת ל־30 מ׳ ₪ אינן מוצגות — ביחידות כאלה «מחיר» הוא בעיקר תמהיל אריזה, והן שייצרו את הזנב שמעל 100%. מה שנשאר מכסה 96% מהמכר ברמת הקטגוריה ו־85% ברמת תת־הקטגוריה. במחלקות אין רצפה. <b>ציר המחיר קטום ב־±50%</b>, ויחידות שמעבר לו מוצמדות לקצה כמשולש — הן עדיין נספרות בקו המגמה ובשורת הסיכום.</p>
  <div class="ctl">
   <div class="seg" id="g_lv"></div><div class="seg" id="g_sm"></div>
   <div class="seg" id="g_ms"></div><div class="seg" id="g_sz"></div>
@@ -1064,6 +1064,7 @@ const GL=[['dep','מחלקה'],['cat','קטגוריה'],['sub','תת-קטגור�
 const GZ=[['r','גודל לפי מכר'],['u','גודל אחיד']];
 const GX={cr3:2,cr3x:3,hhi:4};
 const GF={dep:0,cat:50,sub:30};   // revenue floor in מיליוני ₪, by level
+const YCAP=50;                    // the price-change axis is capped at +-50%
 Object.assign(st,{glv:'cat',gsm:'no_meat',gms:'cr3',gsz:'r'});
 seg('g_lv',GL,'glv',()=>gDraw()); seg('g_sm',AS,'gsm',()=>gDraw());
 seg('g_ms',AM,'gms',()=>gDraw()); seg('g_sz',GZ,'gsz',()=>gDraw());
@@ -1080,14 +1081,12 @@ function gDraw(){
  const W=940,H=430,P={t:20,r:26,b:44,l:58},iw=W-P.l-P.r,ih=H-P.t-P.b;
  const xv=rows.map(r=>r[xi]), yv=rows.map(r=>r[5]), wv=rows.map(r=>sized?r[6]:1);
  let x0=Math.min(...xv), x1=Math.max(...xv); const xp=(x1-x0)*0.05||1; x0-=xp; x1+=xp;
- // a handful of micro units swing by more than 100%, and letting them set the axis
- // squashes everything else into a band. The axis is trimmed to the central 99% and
- // the few outside it are pinned to the edge as triangles -- still hoverable, still
- // counted in the fit, just not allowed to own the whole plot.
- const srt=[...yv].sort((u,v)=>u-v);
- const q=f=>srt[Math.max(0,Math.min(srt.length-1,Math.round(f*(srt.length-1))))];
- let y0=Math.min(q(0.005),0), y1=Math.max(q(0.995),0);
- const yp=(y1-y0)*0.06; y0-=yp; y1+=yp;
+ // The axis stops at +-50%: past that the movement is pack mix, not price, and letting
+ // it set the scale squashes everything else into a band. Units outside are pinned to
+ // the edge as triangles -- still hoverable, still counted in the fit. When the data is
+ // narrower than the cap the axis follows the data, so the cap never pads empty space.
+ let y0=Math.min(...yv,0), y1=Math.max(...yv,0);
+ const yp=(y1-y0)*0.06; y0=Math.max(-YCAP,y0-yp); y1=Math.min(YCAP,y1+yp);
  const X=v=>P.l+iw*(v-x0)/(x1-x0), Y=v=>P.t+ih*(1-(v-y0)/(y1-y0));
  // weighted least squares, so the fit reads the same weighting as the bubbles.
  // Both fits are computed every draw: the sign of this slope depends on the weighting,
