@@ -87,6 +87,12 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 .spanel .x{float:left;cursor:pointer;color:var(--ink3);font-size:18px;line-height:1;padding:0 4px}
 .spanel .x:hover{color:var(--ink)}
 .sup table{min-width:640px}
+.kids tbody tr{cursor:pointer}
+.kids tbody tr:hover{background:var(--grid)}
+.kids td.nm{color:var(--acc);font-weight:600}
+.kids tbody tr.off{cursor:default;color:var(--ink3)}
+.kids tbody tr.off:hover{background:transparent}
+.kids tbody tr.off td.nm{color:var(--ink3);font-weight:400}
 </style>
 <div class="wrap">
 <h1>לוח ריכוזיות — שוק המזון</h1>
@@ -114,6 +120,13 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
   <div class="tip" id="tip"></div></div></div>
  <p class="foot" id="cfoot"></p>
  <div class="sup" id="sup"></div>
+</div>
+
+<div class="card" id="kidcard" hidden>
+ <h2><span id="kidttl">מה מרכיב את היחידה</span></h2>
+ <p class="cs" id="kidcs" style="max-width:82ch"></p>
+ <div class="scroll"><table id="kidtb" class="kids"></table></div>
+ <p class="foot" id="kidfoot"></p>
 </div>
 
 <div class="card">
@@ -573,6 +586,7 @@ function draw(){
  document.getElementById('ch').innerHTML=g+'<g id="ov"></g>';
  drawSup();
  drawIdx();
+ drawKids();
  // a unit born mid-period has nothing at START, so the comparison starts where it does
  const f0=Math.max(START,s.cr3.findIndex((v,i)=>i>=START&&v!=null));
  const c0=s.cr3[f0],c1=s.cr3.at(-1),h0=Math.round(s.hhi[f0]),h1=Math.round(s.hhi.at(-1));
@@ -886,6 +900,68 @@ chEl.addEventListener('mouseleave',()=>{tip.classList.remove('on');const o=docum
 /* ---------- price / quantity index and import share over time ---------- */
 const QG={},IG2={};
 function idxKey(){return lv==='שוק'?'__market__':`${lv}|${sel}`}
+
+/* ---------- what the selected unit is made of ----------
+   Browsing straight to a sub-category still works exactly as before; this only adds the
+   other direction, so a category can be opened up and walked into. */
+function goTo(level,name){
+ lv=level; lvEl && [...lvEl.children].forEach((b,i)=>b.classList.toggle('on',LV[i][0]===lv));
+ fill(); choose(name);
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function kidChange(key){
+ // same comparison the index card reports: last twelve periods against the first twelve
+ const e=IDX()[key]; if(!e||!e.p) return null;
+ const v=e.p, N=FQ==='m'?12:4;
+ const a=v.slice(0,N).filter(x=>x!=null), b=v.slice(-N).filter(x=>x!=null);
+ if(a.length<N||!b.length) return null;
+ const m=z=>z.reduce((x,y)=>x+y,0)/z.length;
+ return 100*(m(b)/m(a)-1);
+}
+function drawKids(){
+ const card=document.getElementById('kidcard');
+ const isDep=lv==='dep', isCat=lv==='cat';
+ if(!(isDep||isCat)||!sel){card.hidden=true;return;}
+ const childLv=isDep?'cat':'sub';
+ const map=isDep?D.cat2dep:D.sub2cat, rev=isDep?D.catrev:D.subrev;
+ const kids=Object.keys(map).filter(k=>map[k]===sel).sort((a,b)=>(rev[b]||0)-(rev[a]||0));
+ if(!kids.length){card.hidden=true;return;}
+ card.hidden=false;
+ const kidWord=isDep?'קטגוריות':'תת-קטגוריות';
+ document.getElementById('kidttl').innerHTML=`${kidWord} ב<b>${escT(sel)}</b>`;
+ document.getElementById('kidcs').innerHTML=
+  `לחיצה על שורה עוברת ל${isDep?'קטגוריה':'תת-קטגוריה'} ולוקחת איתה את כל העמוד. `+
+  `הריכוזיות והמחיר של כל שורה הם שלה עצמה, ולא של ${escT(sel)}.`;
+ const S=SER()[bk];
+ const parentRev=(isDep?(DEPREV[sel]||0):(D.catrev[sel]||0));
+ const sum=kids.reduce((a,k)=>a+(rev[k]||0),0);
+ const rows=kids.map(k=>{
+  let ser=S[`${childLv}|${k}`]; if(ser===1) ser=SER()[BK[0]][`${childLv}|${k}`];
+  const cr3=ser? [...ser.cr3].reverse().find(v=>v!=null) : null;
+  const n=ser? ser.nlast : null;
+  return {k,rev:rev[k]||0,cr3,n,dp:kidChange(`${childLv}|${k}`),ok:!!ser};});
+ document.getElementById('kidtb').innerHTML=
+  `<thead><tr><th style="text-align:right">${isDep?'קטגוריה':'תת-קטגוריה'}</th>`+
+  `<th>מכר 2026<br>מ׳ ₪</th><th>נתח מ${escT(sel)}</th><th>CR3<br>אחרון</th>`+
+  `<th>קבוצות<br>ספקים</th><th>מחיר: 12 אחרונים<br>מול 12 ראשונים</th></tr></thead><tbody>`+
+  rows.map(r=>{
+   const w=sum>0?100*r.rev/sum:0;
+   return `<tr class="${r.ok?'':'off'}" ${r.ok?`data-k="${escA(r.k)}"`:''}>`+
+    `<td class="nm">${escT(r.k)}</td>`+
+    `<td>${r.rev>=10?Math.round(r.rev):r.rev.toFixed(1)}</td>`+
+    `<td>${w.toFixed(1)}%<span class="bar" style="width:${(w*0.6).toFixed(1)}px"></span></td>`+
+    `<td>${r.cr3==null?'—':r.cr3.toFixed(1)+'%'}</td>`+
+    `<td>${r.n==null?'—':r.n}</td>`+
+    `<td class="${r.dp==null?'':r.dp>0?'up':'dn'}">${r.dp==null?'—':sgn(r.dp,1)+'%'}</td></tr>`;}).join('')
+  +'</tbody>';
+ document.getElementById('kidtb').onclick=e=>{
+  const tr=e.target.closest('tr[data-k]'); if(tr) goTo(childLv,tr.dataset.k);};
+ const cov=parentRev>0?100*sum/parentRev:100;
+ document.getElementById('kidfoot').innerHTML=
+  `${rows.length} ${kidWord} · ${Math.round(sum)} מ׳ ₪ ב-2026`+
+  (cov<99?` · <b style="color:var(--acc2)">${cov.toFixed(0)}% ממכר ${escT(sel)}</b> — היתר הוא ${kidWord} שאין להן סדרה רציפה מספיק ולכן אינן מוצגות בלוח`:'');
+}
+
 function drawIdx(){
  START=(FQ==='m'?MAW-1:0);
  const S=IDX()[idxKey()], name= lv==='שוק'?'כלל השוק':sel;
