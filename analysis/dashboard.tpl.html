@@ -119,7 +119,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 <div class="card">
  <h2>כמות ומחיר <span id="qttl" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
  <p class="cs" id="qunit" style="max-width:82ch;font-weight:600;color:var(--ink2);margin-bottom:2px"></p>
- <p class="cs" style="max-width:82ch">שני מדדים על בסיס <b><span id="qbase">ינואר 2022</span> = 100</b>. המחיר הוא מכר כספי חלקי כמות סטנדרטית. כדי שמחלקות עם בסיסי מדידה מעורבים יישארו בעלות משמעות, המדד נבנה כיחס של כל קטגוריה מול עצמה ואז ממוצע משוקלל־מכר 2022 של הקטגוריות שבתוך היחידה. הקו הוא ממוצע נע של שלושה חודשים. <b>הכמות עונתית מאוד</b> — הקפיצות הן פסח, ראש השנה וסוכות. ינואר עצמו הוא חודש שפל: ממוצע 2022 גבוה ממנו בכ־12%, ולכן <b>גובה קו הכמות מוטה כלפי מעלה</b> בגלל בחירת הבסיס. המספר הנקי הוא ההשוואה בשורת הסיכום — 12 חודשים אחרונים מול 12 הראשונים.</p>
+ <p class="cs" style="max-width:82ch">שני מדדים על בסיס <b><span id="qbase">ינואר 2022</span> = 100</b><span id="qlate"></span>. המחיר הוא מכר כספי חלקי כמות סטנדרטית. כדי שמחלקות עם בסיסי מדידה מעורבים יישארו בעלות משמעות, המדד נבנה כיחס של כל קטגוריה מול עצמה ואז ממוצע משוקלל־מכר 2022 של הקטגוריות שבתוך היחידה. הקו הוא ממוצע נע של שלושה חודשים. <b>הכמות עונתית מאוד</b> — הקפיצות הן פסח, ראש השנה וסוכות. ינואר עצמו הוא חודש שפל: ממוצע 2022 גבוה ממנו בכ־12%, ולכן <b>גובה קו הכמות מוטה כלפי מעלה</b> בגלל בחירת הבסיס. המספר הנקי הוא ההשוואה בשורת הסיכום — 12 חודשים אחרונים מול 12 הראשונים.</p>
  <div class="leg"><span><i style="background:var(--acc)"></i>מחיר</span><span><i style="background:var(--acc2)"></i>כמות</span></div>
  <div class="scroll"><div class="chwrap"><svg id="qch" viewBox="0 0 940 300" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
   <div class="tip" id="qtip"></div></div></div>
@@ -855,7 +855,13 @@ function drawIdx(){
  const S=IDX()[idxKey()], name= lv==='שוק'?'כלל השוק':sel;
  document.getElementById('qttl').textContent='· '+name;
  unitNote(name);
- const qb=document.getElementById('qbase'); if(qb) qb.textContent= FQ==='m'?'ינואר 2022':'רבעון 1 2022';
+ // A sub-category born after January 2022 is indexed to its own first period, so the
+ // caption has to say which -- otherwise its "100" reads as if it started with everyone else.
+ const lb=(lv==='תת-קטגוריה')&&(FQ==='m'?(D.latebase||{}):(D.lateq||{}))[sel];
+ const qb=document.getElementById('qbase');
+ if(qb) qb.textContent= lb?(FQ==='m'?mlab(lb):mlab(lb)):(FQ==='m'?'ינואר 2022':'רבעון 1 2022');
+ {const el=document.getElementById('qlate');
+  if(el) el.innerHTML= lb?` <b style="color:var(--acc2)">היחידה הזו נולדה אחרי תחילת התקופה</b> — היא מופיעה לראשונה ב־${escT(mlab(lb))}, ולכן המדד שלה מבוסס על החודש הראשון שלה ולא על ינואר 2022, והגרפים שלה מתחילים משם. אין להשוות את גובה הקו שלה לזה של יחידות ותיקות.`:'';}
  document.getElementById('ittl2').textContent='· '+name;
  drawPrice(name);
  if(!S){['qch','ich2'].forEach(i=>document.getElementById(i).innerHTML='');

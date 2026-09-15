@@ -175,6 +175,29 @@ rawS['p_imp']=(1-_l)*_a+_l*_b
 rawSq=rawS[rawS.q.isin(QOK)].copy(); rawSq['month']=rawSq.q
 print(f'רבעונים: {len(QOK)} ({QOK[0]}–{QOK[-1]})'+(f' | חלקי: {QPART} ({QLEN[QPART[0]]} מתוך 3 חודשים)' if QPART else ''))
 
+# A sub-category had to carry revenue in every month to get a series at all, which
+# permanently excluded anything born after January 2022. The largest casualty was
+# "נוזל כביסה + מרכך" -- launched June 2022, 108 מ' ₪ in 2026, bigger than plenty of
+# units on display. So a unit is also admitted when it has been continuously present
+# for the last RECENT months: long enough to carry a real series, and the gap before
+# it simply is not drawn. Seasonal units (Passover cookies, sunscreen) still fail, and
+# that is right -- two selling months a year is not a price series in the sense the
+# chart assumes. Their index is based on their own first month, not on January 2022,
+# and LATEBASE tells the page which ones so the caption can say so.
+RECENT=24
+_smonths=rawS.groupby('sc').month.apply(set)
+_full={k for k,v in _smonths.items() if len(v)==len(months)}
+LATE={k for k,v in _smonths.items() if k not in _full and set(months[-RECENT:])<=v}
+LATEBASE={k:min(_smonths[k]) for k in LATE}
+SUBOK=_full|LATE
+print(f'תתי-קטגוריה: {len(_full)} עם כל {len(months)} החודשים + {len(LATE)} רצופות '
+      f'ב-{RECENT} האחרונים = {len(SUBOK)} מוצגות (מתוך {rawS.sc.nunique()})')
+
+def _n(v,d=None):
+    """None rather than NaN: a month the unit did not exist in is a gap, not a zero,
+       and the build refuses NaN in the payload anyway."""
+    return None if v is None or not np.isfinite(v) else (round(float(v),d) if d else int(round(float(v))))
+
 series={}
 for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.bucket])]:
     S={}
@@ -198,11 +221,11 @@ for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.buc
     ds=rawS if tag=='כולל מאגדים' else rawS[~rawS.bucket]
     z=conc(ds,['month','sc'])
     for name,gsub in z.groupby('sc'):
+        if name not in SUBOK: continue
         gsub=gsub.set_index('month').reindex(months)
-        if gsub.rev.notna().sum()<len(months): continue
-        S[f'sub|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
-            'cr3':[round(float(x),1) for x in gsub.cr3],'nlast':int(gsub.n.iloc[-1]),
-            'rev':[round(float(x),2) for x in gsub.rev]}
+        S[f'sub|{name}']={'hhi':[_n(x) for x in gsub.hhi],
+            'cr3':[_n(x,1) for x in gsub.cr3],'nlast':_n(gsub.n.iloc[-1]),
+            'rev':[_n(x,2) for x in gsub.rev]}
     series[tag]=S
     print(f'{tag}: {len(S)} סדרות')
 
@@ -224,11 +247,11 @@ for tag,dd in [('כולל מאגדים',rawq),('ללא מאגדים',rawq[~rawq.
     ds=rawSq if tag=='כולל מאגדים' else rawSq[~rawSq.bucket]
     z=conc(ds,['month','sc'])
     for name,gsub in z.groupby('sc'):
+        if name not in SUBOK: continue
         gsub=gsub.set_index('month').reindex(QOK)
-        if gsub.rev.notna().sum()<len(QOK): continue
-        S[f'sub|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
-            'cr3':[round(float(x),1) for x in gsub.cr3],'nlast':int(gsub.n.iloc[-1]),
-            'rev':[round(float(x),2) for x in gsub.rev]}
+        S[f'sub|{name}']={'hhi':[_n(x) for x in gsub.hhi],
+            'cr3':[_n(x,1) for x in gsub.cr3],'nlast':_n(gsub.n.iloc[-1]),
+            'rev':[_n(x,2) for x in gsub.rev]}
     seriesq[tag]=S
     print(f'{tag} (רבעוני): {len(S)} סדרות')
 
@@ -359,9 +382,8 @@ def idx_block(sub):
         'imp':100*x.impnum.sum()/x.impden.sum()
               if x.impden.sum()>0 and x.impden.sum()/x.rev.sum()>=MINUNIT else np.nan,
         'res':100*x.impden.sum()/x.rev.sum()}),include_groups=False).reindex(months)
-    return {'q':[round(float(v),1) for v in g.q],'p':[round(float(v),1) for v in g.p],
-            'imp':[None if not np.isfinite(v) else round(float(v),1) for v in g.imp],
-            'res':[int(round(v)) for v in g.res]}
+    return {'q':[_n(v,1) for v in g.q],'p':[_n(v,1) for v in g.p],
+            'imp':[_n(v,1) for v in g.imp],'res':[_n(v) for v in g.res]}
 idx={'__market__':idx_block(cm)}
 for dep,sub in cm.groupby('dep'): idx['dep|'+dep]=idx_block(sub)
 for cat,sub in cm.groupby('cat'):
@@ -372,13 +394,22 @@ sm=rawS.groupby(['sc','month']).apply(lambda x: pd.Series({
     'impnum':(x.rev*x.p_imp).sum(),'impden':x.rev[x.p_imp.notna()].sum()}),
     include_groups=False).reset_index()
 sm['price']=sm.rev/sm.qty
-s0=sm[sm.month==BASE].set_index('sc')
+# each unit against its own base month: January 2022 where it existed then, and its
+# own first month where it did not. The page states which, so a late starter's index
+# is never read as if it began at the same point as everyone else's.
+sm['bm']=sm.sc.map(lambda k:LATEBASE.get(k,BASE))
+s0=sm[sm.month==sm.bm].set_index('sc')
 sm['qrel']=sm.qty/sm.sc.map(s0.qty); sm['prel']=sm.price/sm.sc.map(s0.price)
-sm['w22']=sm.sc.map(rawS[rawS.month.str[:4]=='2022'].groupby('sc').rev.sum())
+# the weight is 2022 revenue, which a mid-2022 launch still has; a later one is
+# weighted by its first calendar year instead, since the weight only has to be positive
+w22=rawS[rawS.month.str[:4]=='2022'].groupby('sc').rev.sum()
+wall=rawS.groupby('sc').rev.sum()
+sm['w22']=sm.sc.map(w22).fillna(sm.sc.map(wall))
 sm=sm[np.isfinite(sm.qrel)&np.isfinite(sm.prel)&sm.w22.notna()]
 for sub_,g_ in sm.groupby('sc'):
-    if g_.month.nunique()==len(months): idx['sub|'+sub_]=idx_block(g_)
-print(f'מדדי כמות/מחיר/יבוא: {len(idx)} סדרות (בסיס {BASE})')
+    if sub_ in SUBOK: idx['sub|'+sub_]=idx_block(g_)
+print(f'מדדי כמות/מחיר/יבוא: {len(idx)} סדרות (בסיס {BASE}, '
+      f'{len(LATE)} מהן על בסיס החודש הראשון שלהן)')
 
 # --- quarterly index: quantities summed inside the quarter, price re-derived ---
 cq=rawq.groupby(['cat','month']).apply(lambda x: pd.Series({
@@ -398,9 +429,8 @@ def idx_blockq(sub):
         'imp':100*x.impnum.sum()/x.impden.sum()
               if x.impden.sum()>0 and x.impden.sum()/x.rev.sum()>=MINUNIT else np.nan,
         'res':100*x.impden.sum()/x.rev.sum()}),include_groups=False).reindex(QOK)
-    return {'q':[round(float(v),1) for v in g.q],'p':[round(float(v),1) for v in g.p],
-            'imp':[None if not np.isfinite(v) else round(float(v),1) for v in g.imp],
-            'res':[int(round(v)) for v in g.res]}
+    return {'q':[_n(v,1) for v in g.q],'p':[_n(v,1) for v in g.p],
+            'imp':[_n(v,1) for v in g.imp],'res':[_n(v) for v in g.res]}
 idxq={'__market__':idx_blockq(cq)}
 for dep,sub in cq.groupby('dep'): idxq['dep|'+dep]=idx_blockq(sub)
 for cat,sub in cq.groupby('cat'):
@@ -411,12 +441,15 @@ sq=rawSq.groupby(['sc','month']).apply(lambda x: pd.Series({
     include_groups=False).reset_index()
 sq['price']=sq.rev/sq.qty
 sq['qpm']=sq.qty/sq.month.map(QLEN)
-sq0=sq[sq.month==QOK[0]].set_index('sc')
+# same rule as the monthly index: the unit's own first quarter when it has no 2022-Q1
+LATEQ={k:min(sq.month[sq.sc==k]) for k in LATE if (sq.sc==k).any()}
+sq['bq']=sq.sc.map(lambda k:LATEQ.get(k,QOK[0]))
+sq0=sq[sq.month==sq.bq].set_index('sc')
 sq['qrel']=sq.qpm/sq.sc.map(sq0.qpm); sq['prel']=sq.price/sq.sc.map(sq0.price)
-sq['w22']=sq.sc.map(rawS[rawS.month.str[:4]=='2022'].groupby('sc').rev.sum())
+sq['w22']=sq.sc.map(w22).fillna(sq.sc.map(wall))
 sq=sq[np.isfinite(sq.qrel)&np.isfinite(sq.prel)&sq.w22.notna()]
 for sub_,g_ in sq.groupby('sc'):
-    if g_.month.nunique()==len(QOK): idxq['sub|'+sub_]=idx_blockq(g_)
+    if sub_ in SUBOK: idxq['sub|'+sub_]=idx_blockq(g_)
 print(f'מדדים רבעוניים: {len(idxq)} סדרות (בסיס {QOK[0]})')
 
 # A unit with no bucket suppliers has the same series under both toggles. Store it once:
@@ -472,6 +505,7 @@ print(f'מותגים מובילים: {len(brands):,} צמדי יחידה-ספק 
 # what each unit's quantity is counted in, for the axis labels
 basis={k:v.get('basis','') for k,v in tops.items()}
 json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
+    latebase=LATEBASE, lateq={k:LATEQ[k] for k in LATEQ},
     basis=basis,brands=brands,buckets=BUCKET,
     nbrand_rules=len(G_IMP)+len(G_DOM),
     idx=idx,base=BASE,seriesq=seriesq,idxq=idxq,quarters=QOK,baseq=QOK[0],
