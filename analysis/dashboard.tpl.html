@@ -873,7 +873,7 @@ function drawIdx(){
  unitNote(name);
  // A sub-category born after January 2022 has no base, so it has no price/quantity index.
  // Everything that needs no base -- concentration, suppliers, import share -- still draws.
- const lb=(lv==='sub')&&(D.latebase||{})[sel];
+ const lb=(lv==='sub'||lv==='cat')&&(D.latebase||{})[sel];
  const qb=document.getElementById('qbase'); if(qb) qb.textContent= FQ==='m'?'ינואר 2022':'רבעון 1 2022';
  {const el=document.getElementById('qlate');
   if(el) el.innerHTML= lb?` <b style="color:var(--acc2)">ליחידה הזו אין מדד</b> — היא נולדה ב־${escT(mlab(lb))}, אחרי בסיס המדידה, ולכן אין לה ערך להשוות אליו. שאר הגרפים בעמוד עובדים עבורה כרגיל.`:'';}

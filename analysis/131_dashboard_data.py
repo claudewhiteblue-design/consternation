@@ -185,13 +185,16 @@ print(f'רבעונים: {len(QOK)} ({QOK[0]}–{QOK[-1]})'+(f' | חלקי: {QPAR
 # chart assumes. Their index is based on their own first month, not on January 2022,
 # and LATEBASE tells the page which ones so the caption can say so.
 RECENT=24
-_smonths=rawS.groupby('sc').month.apply(set)
-_full={k for k,v in _smonths.items() if len(v)==len(months)}
-LATE={k for k,v in _smonths.items() if k not in _full and set(months[-RECENT:])<=v}
-LATEBASE={k:min(_smonths[k]) for k in LATE}
-SUBOK=_full|LATE
-print(f'תתי-קטגוריה: {len(_full)} עם כל {len(months)} החודשים + {len(LATE)} רצופות '
-      f'ב-{RECENT} האחרונים = {len(SUBOK)} מוצגות (מתוך {rawS.sc.nunique()})')
+def _admit(src,key,lab):
+    ms=src.groupby(key).month.apply(set)
+    full={k for k,v in ms.items() if len(v)==len(months)}
+    late={k for k,v in ms.items() if k not in full and set(months[-RECENT:])<=v}
+    print(f'{lab}: {len(full)} עם כל {len(months)} החודשים + {len(late)} רצופות '
+          f'ב-{RECENT} האחרונים = {len(full|late)} מוצגות (מתוך {src[key].nunique()})')
+    return full|late, late, {k:min(ms[k]) for k in late}
+SUBOK,LATE,_lbs=_admit(rawS,'sc','תת-קטגוריה')
+CATOK,CLATE,_lbc=_admit(raw,'cat','קטגוריה')
+LATEBASE={**_lbs,**_lbc}
 
 def _n(v,d=None):
     """None rather than NaN: a month the unit did not exist in is a gap, not a zero,
@@ -213,11 +216,12 @@ for tag,dd in [('כולל מאגדים',raw),('ללא מאגדים',raw[~raw.buc
         S[f'__{lvl}avg__']={'hhi':[round(float(x)) for x in av.hhi],'cr3':[round(float(x),1) for x in av.cr3],
                             'nlast':int(round(av.n.iloc[-1])),'rev':[round(float(x),1) for x in av.rev]}
         for name,gsub in z.groupby(key):
+            if key=='cat' and name not in CATOK: continue
             gsub=gsub.set_index('month').reindex(months)
-            if gsub.rev.notna().sum()<len(months): continue
-            S[f'{lvl}|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
-                'cr3':[round(float(x),1) for x in gsub.cr3],'nlast':int(gsub.n.iloc[-1]),
-                'rev':[round(float(x),1) for x in gsub.rev]}
+            if key!='cat' and gsub.rev.notna().sum()<len(months): continue
+            S[f'{lvl}|{name}']={'hhi':[_n(x) for x in gsub.hhi],
+                'cr3':[_n(x,1) for x in gsub.cr3],'nlast':_n(gsub.n.iloc[-1]),
+                'rev':[_n(x,1) for x in gsub.rev]}
     ds=rawS if tag=='כולל מאגדים' else rawS[~rawS.bucket]
     z=conc(ds,['month','sc'])
     for name,gsub in z.groupby('sc'):
@@ -239,11 +243,12 @@ for tag,dd in [('כולל מאגדים',rawq),('ללא מאגדים',rawq[~rawq.
     for lvl,key in [('dep','dep'),('cat','cat')]:
         z=conc(dd,['month',key])
         for name,gsub in z.groupby(key):
+            if key=='cat' and name not in CATOK: continue
             gsub=gsub.set_index('month').reindex(QOK)
-            if gsub.rev.notna().sum()<len(QOK): continue
-            S[f'{lvl}|{name}']={'hhi':[round(float(x)) for x in gsub.hhi],
-                'cr3':[round(float(x),1) for x in gsub.cr3],'nlast':int(gsub.n.iloc[-1]),
-                'rev':[round(float(x),1) for x in gsub.rev]}
+            if key!='cat' and gsub.rev.notna().sum()<len(QOK): continue
+            S[f'{lvl}|{name}']={'hhi':[_n(x) for x in gsub.hhi],
+                'cr3':[_n(x,1) for x in gsub.cr3],'nlast':_n(gsub.n.iloc[-1]),
+                'rev':[_n(x,1) for x in gsub.rev]}
     ds=rawSq if tag=='כולל מאגדים' else rawSq[~rawSq.bucket]
     z=conc(ds,['month','sc'])
     for name,gsub in z.groupby('sc'):
@@ -371,6 +376,12 @@ b0=cm[cm.month==BASE].set_index('cat')
 cm['qrel']=cm.qty/cm.cat.map(b0.qty)
 cm['prel']=cm.price/cm.cat.map(b0.price)
 cm['w22']=cm.cat.map(raw[raw.month.str[:4]=='2022'].groupby('cat').rev.sum())
+cm['w22']=cm.w22.fillna(cm.cat.map(raw.groupby('cat').rev.sum()))
+# A category born mid-period stays out of `cm` itself: the department and market indices
+# are revenue-weighted averages of these relatives, and one NaN would take a whole
+# aggregate with it. Its own entry is built from `cmL` instead, where the price and
+# quantity come out empty (no base to divide by) and the import share still works.
+cmL=cm[cm.cat.isin(CLATE)&cm.w22.notna()].copy()
 cm=cm[np.isfinite(cm.qrel)&np.isfinite(cm.prel)&cm.w22.notna()]
 c2d=raw.groupby('cat').dep.agg(lambda s:s.mode().iat[0])
 cm['dep']=cm.cat.map(c2d)
@@ -387,7 +398,8 @@ def idx_block(sub):
 idx={'__market__':idx_block(cm)}
 for dep,sub in cm.groupby('dep'): idx['dep|'+dep]=idx_block(sub)
 for cat,sub in cm.groupby('cat'):
-    if sub.month.nunique()==len(months): idx['cat|'+cat]=idx_block(sub)
+    if cat in CATOK: idx['cat|'+cat]=idx_block(sub)
+for cat,sub in cmL.groupby('cat'): idx['cat|'+cat]=idx_block(sub)
 # the same unit relatives one level down, so a sub-category gets its own index
 sm=rawS.groupby(['sc','month']).apply(lambda x: pd.Series({
     'rev':x.rev.sum(),'qty':x.qty.sum(),
@@ -422,6 +434,8 @@ cq['qpm']=cq.qty/cq.month.map(QLEN)          # quantity per month, comparable ac
 q0=cq[cq.month==QOK[0]].set_index('cat')
 cq['qrel']=cq.qpm/cq.cat.map(q0.qpm); cq['prel']=cq.price/cq.cat.map(q0.price)
 cq['w22']=cq.cat.map(raw[raw.month.str[:4]=='2022'].groupby('cat').rev.sum())
+cq['w22']=cq.w22.fillna(cq.cat.map(raw.groupby('cat').rev.sum()))
+cqL=cq[cq.cat.isin(CLATE)&cq.w22.notna()].copy()
 cq=cq[np.isfinite(cq.qrel)&np.isfinite(cq.prel)&cq.w22.notna()]
 cq['dep']=cq.cat.map(c2d)
 def idx_blockq(sub):
@@ -435,7 +449,9 @@ def idx_blockq(sub):
 idxq={'__market__':idx_blockq(cq)}
 for dep,sub in cq.groupby('dep'): idxq['dep|'+dep]=idx_blockq(sub)
 for cat,sub in cq.groupby('cat'):
-    if sub.month.nunique()==len(QOK): idxq['cat|'+cat]=idx_blockq(sub)
+    if cat in CATOK: idxq['cat|'+cat]=idx_blockq(sub)
+for cat,sub in cqL.groupby('cat'):
+    sub=sub.copy(); sub['dep']=sub.cat.map(c2d); idxq['cat|'+cat]=idx_blockq(sub)
 sq=rawSq.groupby(['sc','month']).apply(lambda x: pd.Series({
     'rev':x.rev.sum(),'qty':x.qty.sum(),
     'impnum':(x.rev*x.p_imp).sum(),'impden':x.rev[x.p_imp.notna()].sum()}),
