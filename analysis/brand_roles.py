@@ -149,10 +149,24 @@ DOM_BRANDS.update(_P3_DOM); IMP_BRANDS.update(_P3_IMP)
 # forced local here.)
 FRESH_POULTRY_DEPS={'עוף/הודו טרי ארוז','קצביה עוף טרי','קצביה הודו/בעלי כנף טרי'}
 
+# A foreign brand whose Israeli presence is licensed local production, in a department
+# where the import reading would otherwise be wrong. Keyed on (brand, department) rather
+# than the brand alone because the same string can be a genuine import elsewhere.
+#   מולר  - Tara has produced Müller dairy in Israel under a licence-and-know-how
+#           agreement since 2007, and Tara is owned by CBC, which the data lists as the
+#           manufacturer. This is the same case the docstring already calls DOM for
+#           Coca-Cola. It also could not be otherwise: fresh yoghurt at 19 מ' ₪ a month
+#           is not shipped from Bavaria. Leaving it IMP put the importer share of
+#           flavoured yoghurt at 36.6%, against 0.2% once corrected. The beer sold as
+#           "מולר" by בני פוזי is a real German import and stays IMP, which is why this
+#           rule is keyed on the department.
+DOM_PAIRS={('מולר','מוצרי חלב ותחליפיו')}
+
 def brand_role(brand, dep):
     """IMP / DOM / BUCKET / '?' for one row."""
     if brand in BUCKET_BRANDS: return 'BUCKET'
     if dep in FRESH_POULTRY_DEPS: return 'DOM'
+    if (brand,dep) in DOM_PAIRS: return 'DOM'
     if brand in IMP_BRANDS: return 'IMP'
     if brand in DOM_BRANDS: return 'DOM'
     return '?'
