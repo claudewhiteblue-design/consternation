@@ -316,6 +316,22 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <p class="foot" id="dsh2"></p>
 </div>
 
+
+<div class="card">
+ <h2>בקרה על <b>השינוי</b> בנתח הייבואנים</h2>
+ <p class="cs" style="max-width:82ch">אותה אמידה כמו בעמוד הריכוזיות, עם רגרסור חוצה־חתך שני: <b>השינוי בנתח הייבואנים</b> בין קובץ המותגים של ינואר 2022 לזה של יולי 2026. שני הרגרסורים מוכפלים בכל תקופה. הקו הכהה הוא מקדם <b>הרמה</b> אחרי הבקרה, הבהיר הוא מקדם <b>השינוי</b>, והמקווקו הוא מקדם הרמה ללא בקרה — להשוואה.</p>
+ <p class="cs" style="max-width:82ch"><b>למה זה כאן:</b> המדד של 2022 ושל 2026 מתואמים 0.96 ברמת קטגוריה ו־0.92 ברמת תת־קטגוריה, ובכל זאת החלפה ביניהם חותכת את מקדם תת־הקטגוריה בכ־40% ומוציאה אותו מהמובהקות. הפירוק הזה מסביר למה: <b>לרמה ולשינוי יש סימנים הפוכים</b>, ולכן המדד של 2026 — שהוא רמה ועוד שינוי במספר אחד — מקזז חלק מהאות של עצמו. זו גם הסיבה שהרגרסור בכל שאר העמוד נמדד בקובץ 2022.</p>
+ <p class="cs" style="max-width:82ch"><b style="color:var(--acc2)">ואותה אזהרה כמו בריכוזיות:</b> השינוי מתרחש באותו חלון שבו נמדדים המחירים ולכן אינו קבוע מראש — קטגוריה שהתייקרה עלולה למשוך יבואנים, ולא להפך. המקדם שלו הוא <b>מתאם</b>, לא אומדן סיבתי. רק לנתח הייבואנים יש שתי נקודות מדידה; חשיפת המט״ח נאמדת פעם אחת ולכן אינה מופיעה כאן.</p>
+ <div class="ctl">
+  <div class="seg" id="c_lv"></div><div class="seg" id="c_sm"></div><div class="seg" id="c_fq"></div>
+ </div>
+ <div class="leg"><span><i style="background:var(--t3)"></i>מקדם הרמה (בבקרה על השינוי)</span>
+  <span><i style="background:var(--acc2)"></i>מקדם השינוי בנתח הייבואנים</span>
+  <span><i style="background:var(--ink3)"></i>מקדם הרמה ללא בקרה</span></div>
+ <div class="scroll"><div class="chwrap"><svg id="cch" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="ctip"></div></div></div>
+ <p class="foot" id="cfoot2"></p>
+</div>
 <div class="card"><h2>מה עולה מזה</h2><div id="inote"></div></div>
 </div><!-- /s1 -->
 </div><!-- /p1 -->
@@ -346,8 +362,8 @@ async function loadPayload(){
  return Object.fromEntries(keys.map((k,i)=>[k,vals[i]]));
 }
 (async()=>{
-let D,A,XI,CC,B5,I,SC;
-try{ ({D,A,XI,CC,B5,I,SC}=await loadPayload()); }
+let D,A,XI,CC,B5,I,SC,IC;
+try{ ({D,A,XI,CC,B5,I,SC,IC}=await loadPayload()); }
 catch(e){ document.getElementById('hdr').textContent='הנתונים לא נטענו: '+e.message; throw e; }
 let M=D.months; const T=D.table;
 let FQ='m';
@@ -1451,11 +1467,10 @@ Object.assign(st,{vlv:'cat',vsm:'no_meat',vms:'cr3',vwt:'w',vfq:'m'});
 seg('v_lv',AL,'vlv',()=>vDraw()); seg('v_sm',AS,'vsm',()=>vDraw());
 seg('v_ms',AM,'vms',()=>vDraw()); seg('v_fq',AF,'vfq',()=>vDraw());
 const VG={};
-function vDraw(){
- ['v_lv','v_sm','v_ms','v_fq'].forEach(segSync);
- const r=CC[`${st.vlv}|${st.vfq}|${st.vsm}|${st.vms}|${st.vwt}`]; if(!r) return;
- {const w=CC.__win__, el=document.getElementById('vwin');   // stated by the run, never hard-coded
-  if(w&&el) el.textContent=`${w.first}–${w.last} 2026 (${w.n} חודשים)`;}
+// The level-and-change event study, drawn once and used by two charts: concentration
+// on the analyses tab and the importer share on the imports tab. Same series names, so
+// the two cannot drift apart as either is tuned.
+function lvlChg(r,svId,ovId,footId,G,chgLab){
  const m=r.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
  const xs=i=>P.l+iw*i/(m.length-1);
  const B=[{k:'lvl',c:'--t3',ci:1},{k:'chg',c:'--acc2',ci:1},{k:'lvl_only',c:'--ink3',ci:0}];
@@ -1463,7 +1478,7 @@ function vDraw(){
    .concat(r.lvl_only.est);
  let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
- Object.assign(VG,{y,xs,W,P,iw,ih,r,m});
+ Object.assign(G,{y,xs,W,P,iw,ih,r,m});
  let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
  B.filter(b=>b.ci).forEach(b=>{const e=r[b.k].est,s2=r[b.k].se;
   const up=e.map((v,i)=>v+1.96*s2[i]), dn=e.map((v,i)=>v-1.96*s2[i]);
@@ -1475,25 +1490,25 @@ function vDraw(){
  g+=`<rect x="${P.l}" y="${P.t}" width="${xs(nb)-P.l}" height="${ih}" fill="var(--ink3)" opacity=".05"/>`;
  g+=`<text x="${(P.l+xs(nb))/2}" y="${P.t+13}" text-anchor="middle" fill="var(--ink3)" font-size="10.5">בסיס 2022</text>`;
  m.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1') g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
- document.getElementById('vch').innerHTML=g+'<g id="vov"></g>';
+ document.getElementById(svId).innerHTML=g+`<g id="${ovId}"></g>`;
  const pf2=p=>p<0.001?'<0.001':p.toFixed(3);
  const A0=r.lvl_only.avg, A=r.lvl.avg, C=r.chg.avg;
- document.getElementById('vfoot').innerHTML=
+ document.getElementById(footId).innerHTML=
   `${r.n} יחידות · מתאם רמה–שינוי ${r.corr>0?'+':''}${r.corr} · ממוצעי כל התקופה שאחרי 2022:<br>`+
   `<span style="color:var(--ink2)">רמה ללא בקרה ${(A0[0]>0?'+':'')+A0[0].toFixed(2)}% (p=${pf2(A0[2])}) · `+
   `<b style="color:var(--ink)">רמה בבקרה על השינוי ${(A[0]>0?'+':'')+A[0].toFixed(2)}% (p=${pf2(A[2])})</b> · `+
-  `<b style="color:var(--ink)">מקדם השינוי ${(C[0]>0?'+':'')+C[0].toFixed(2)}% (p=${pf2(C[2])})</b> לכל ס״ת של שינוי בריכוזיות</span>`;
+  `<b style="color:var(--ink)">מקדם השינוי ${(C[0]>0?'+':'')+C[0].toFixed(2)}% (p=${pf2(C[2])})</b> לכל ס״ת של ${chgLab}</span>`;
 }
-document.getElementById('vch').addEventListener('mousemove',e=>{
- const G=VG; if(!G.xs) return;
- const el=document.getElementById('vch'), tp=document.getElementById('vtip');
+function lvlChgHover(e,G,svId,ovId,tipId){
+ if(!G.xs) return;
+ const el=document.getElementById(svId), tp=document.getElementById(tipId);
  const rc=el.getBoundingClientRect(), xv=(e.clientX-rc.left)*(G.W/rc.width);
  let i=Math.round((xv-G.P.l)/G.iw*(G.m.length-1)); i=Math.max(0,Math.min(G.m.length-1,i));
  const x=G.xs(i);
  let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
  ov+=`<circle cx="${x}" cy="${G.y(G.r.lvl.est[i])}" r="4.2" fill="var(--t3)" stroke="var(--surf)" stroke-width="1.6"/>`;
  ov+=`<circle cx="${x}" cy="${G.y(G.r.chg.est[i])}" r="4.2" fill="var(--acc2)" stroke="var(--surf)" stroke-width="1.6"/>`;
- document.getElementById('vov').innerHTML=ov;
+ document.getElementById(ovId).innerHTML=ov;
  const pf3=p=>p<0.001?'<0.001':p.toFixed(3);
  tp.innerHTML=`<b>${mlabq(G.m[i])}</b>`+
   `<div class="r"><span>רמה (בבקרה)</span><span>${(G.r.lvl.est[i]>0?'+':'')+G.r.lvl.est[i].toFixed(2)}% (p=${pf3(G.r.lvl.p[i])})</span></div>`+
@@ -1503,11 +1518,36 @@ document.getElementById('vch').addEventListener('mousemove',e=>{
  const px=x/G.W*rc.width, tw=tp.offsetWidth;
  tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+18:px-tw-18))+'px';
  tp.style.top='4px';
-});
+}
+function vDraw(){
+ ['v_lv','v_sm','v_ms','v_fq'].forEach(segSync);
+ const r=CC[`${st.vlv}|${st.vfq}|${st.vsm}|${st.vms}|${st.vwt}`]; if(!r) return;
+ {const w=CC.__win__, el=document.getElementById('vwin');   // stated by the run, never hard-coded
+  if(w&&el) el.textContent=`${w.first}–${w.last} 2026 (${w.n} חודשים)`;}
+ lvlChg(r,'vch','vov','vfoot',VG,'שינוי בריכוזיות');
+}
+document.getElementById('vch').addEventListener('mousemove',e=>lvlChgHover(e,VG,'vch','vov','vtip'));
 document.getElementById('vch').addEventListener('mouseleave',()=>{
  document.getElementById('vtip').classList.remove('on');
  const o=document.getElementById('vov'); if(o)o.innerHTML='';});
 vDraw();
+
+/* ---------- the imports level, controlling for the change in the importer share ----------
+   The same two-regressor event study the concentration tab runs, and drawn by the same
+   code: only the series and the labels differ, so the two charts cannot drift apart. */
+Object.assign(st,{clv:'cat',csm:'no_meat',cfq:'m'});
+seg('c_lv',AL,'clv',()=>cDraw()); seg('c_sm',AS,'csm',()=>cDraw()); seg('c_fq',AF,'cfq',()=>cDraw());
+const CG={};
+function cDraw(){
+ ['c_lv','c_sm','c_fq'].forEach(segSync);
+ const r=IC[`${st.clv}|${st.cfq}|${st.csm}|imp_share|w`]; if(!r) return;
+ lvlChg(r,'cch','cov','cfoot2',CG,'שינוי בנתח הייבואנים');
+}
+document.getElementById('cch').addEventListener('mousemove',e=>lvlChgHover(e,CG,'cch','cov','ctip'));
+document.getElementById('cch').addEventListener('mouseleave',()=>{
+ document.getElementById('ctip').classList.remove('on');
+ const o=document.getElementById('cov'); if(o)o.innerHTML='';});
+cDraw();
 
 /* ============ big-five presence ============ */
 const BT=[['10','10%'],['20','20%'],['30','30%'],['40','40%']];
