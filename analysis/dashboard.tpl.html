@@ -253,6 +253,23 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <p class="foot" id="xfoot"></p>
 </div>
 
+
+<div class="card">
+ <h2>בקרה על נתח <b>המותג הפרטי</b></h2>
+ <p class="cs" style="max-width:82ch">אותה אמידה, עם רגרסור חוצה־חתך שני: <b>נתח המותג הפרטי של היחידה ב־2022</b> — אחוז המכר שנמכר תחת המותג של הרשת (הספק «ספק מותג פרטי», 6.5% מהשוק). הקו הכהה הוא מקדם <b>הריכוזיות</b> אחרי הבקרה, הבהיר הוא מקדם <b>המותג הפרטי</b>, והמקווקו הוא מקדם הריכוזיות ללא בקרה.</p>
+ <p class="cs" style="max-width:82ch"><b style="color:var(--pos)">זו בקרה טובה, בניגוד לשתי האחרות בלוח.</b> השינוי בריכוזיות והשינוי בנתח הייבואנים מתרחשים באותו חלון שבו נמדדים המחירים, ולכן הם «בקרה רעה» — הם עלולים להיות תוצאה של המחיר ולא סיבה לו. נתח המותג הפרטי נמדד ב<b>שנת הבסיס</b>, לפני כל מסלול המחירים שנשאלת עליו השאלה, ולכן מקדם הריכוזיות שאחריו ניתן לקריאה כפשוטו.</p>
+ <p class="cs" style="max-width:82ch"><b>למה זה חשוב דווקא כאן:</b> מותג פרטי הוא אחד המאגדים ש־CR3 סופר כמתחרה בודד — יחידה שבה המותג של הרשת מחזיק 50% מקבלת ריכוזיות גבוהה מאגרגט שאינו פירמה. <b>CR3 ללא מאגדים</b> כבר מנרמל אותו החוצה, והרצת שלושת המדדים כאן מראה כמה ממקדם הרמה היה זה. כלכלית, המותג הפרטי הוא המקום שבו כוח הרשתות מתבטא ולא כוח הספקים, והמתאם המשוקלל שלו עם CR3 הוא <b>−0.41</b> ברמת הקטגוריה — הוא יושב דווקא בקטגוריות הפחות מרוכזות.</p>
+ <div class="ctl">
+  <div class="seg" id="q_lv"></div><div class="seg" id="q_sm"></div>
+  <div class="seg" id="q_ms"></div><div class="seg" id="q_fq"></div>
+ </div>
+ <div class="leg"><span><i style="background:var(--t3)"></i>מקדם הריכוזיות (בבקרה על המותג הפרטי)</span>
+  <span><i style="background:var(--acc2)"></i>מקדם נתח המותג הפרטי</span>
+  <span><i style="background:var(--ink3)"></i>מקדם הריכוזיות ללא בקרה</span></div>
+ <div class="scroll"><div class="chwrap"><svg id="qch2" viewBox="0 0 940 330" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
+  <div class="tip" id="qtip2"></div></div></div>
+ <p class="foot" id="qfoot3"></p>
+</div>
 <div class="card"><h2>איך לקרוא את זה</h2><div id="anote"></div></div>
 </div><!-- /s0 -->
 
@@ -362,8 +379,8 @@ async function loadPayload(){
  return Object.fromEntries(keys.map((k,i)=>[k,vals[i]]));
 }
 (async()=>{
-let D,A,XI,CC,B5,I,SC,IC;
-try{ ({D,A,XI,CC,B5,I,SC,IC}=await loadPayload()); }
+let D,A,XI,CC,B5,I,SC,IC,PL;
+try{ ({D,A,XI,CC,B5,I,SC,IC,PL}=await loadPayload()); }
 catch(e){ document.getElementById('hdr').textContent='הנתונים לא נטענו: '+e.message; throw e; }
 let M=D.months; const T=D.table;
 let FQ='m';
@@ -1533,7 +1550,9 @@ const VG={};
 // The level-and-change event study, drawn once and used by two charts: concentration
 // on the analyses tab and the importer share on the imports tab. Same series names, so
 // the two cannot drift apart as either is tuned.
-function lvlChg(r,svId,ovId,footId,G,chgLab){
+// `ctl` names the second regressor in the running text: the two change charts call it
+// "השינוי", the private-label chart calls it what it is.
+function lvlChg(r,svId,ovId,footId,G,chgLab,ctl='השינוי'){
  const m=r.months, W=940,P={t:18,r:22,b:34,l:56},iw=W-P.l-P.r,ih=330-P.t-P.b;
  const xs=i=>P.l+iw*i/(m.length-1);
  const B=[{k:'lvl',c:'--t3',ci:1},{k:'chg',c:'--acc2',ci:1},{k:'lvl_only',c:'--ink3',ci:0}];
@@ -1541,7 +1560,7 @@ function lvlChg(r,svId,ovId,footId,G,chgLab){
    .concat(r.lvl_only.est);
  let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
- Object.assign(G,{y,xs,W,P,iw,ih,r,m});
+ Object.assign(G,{y,xs,W,P,iw,ih,r,m,ctl});
  let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
  B.filter(b=>b.ci).forEach(b=>{const e=r[b.k].est,s2=r[b.k].se;
   const up=e.map((v,i)=>v+1.96*s2[i]), dn=e.map((v,i)=>v-1.96*s2[i]);
@@ -1557,10 +1576,10 @@ function lvlChg(r,svId,ovId,footId,G,chgLab){
  const pf2=p=>p<0.001?'<0.001':p.toFixed(3);
  const A0=r.lvl_only.avg, A=r.lvl.avg, C=r.chg.avg;
  document.getElementById(footId).innerHTML=
-  `${r.n} יחידות · מתאם רמה–שינוי ${r.corr>0?'+':''}${r.corr} · ממוצעי כל התקופה שאחרי 2022:<br>`+
+  `${r.n} יחידות · מתאם רמה–${escT(ctl)} ${r.corr>0?'+':''}${r.corr} · ממוצעי כל התקופה שאחרי 2022:<br>`+
   `<span style="color:var(--ink2)">רמה ללא בקרה ${(A0[0]>0?'+':'')+A0[0].toFixed(2)}% (p=${pf2(A0[2])}) · `+
-  `<b style="color:var(--ink)">רמה בבקרה על השינוי ${(A[0]>0?'+':'')+A[0].toFixed(2)}% (p=${pf2(A[2])})</b> · `+
-  `<b style="color:var(--ink)">מקדם השינוי ${(C[0]>0?'+':'')+C[0].toFixed(2)}% (p=${pf2(C[2])})</b> לכל ס״ת של ${chgLab}</span>`;
+  `<b style="color:var(--ink)">רמה בבקרה על ${escT(ctl)} ${(A[0]>0?'+':'')+A[0].toFixed(2)}% (p=${pf2(A[2])})</b> · `+
+  `<b style="color:var(--ink)">מקדם ${escT(ctl)} ${(C[0]>0?'+':'')+C[0].toFixed(2)}% (p=${pf2(C[2])})</b> לכל ס״ת של ${escT(chgLab)}</span>`;
 }
 function lvlChgHover(e,G,svId,ovId,tipId){
  if(!G.xs) return;
@@ -1575,7 +1594,7 @@ function lvlChgHover(e,G,svId,ovId,tipId){
  const pf3=p=>p<0.001?'<0.001':p.toFixed(3);
  tp.innerHTML=`<b>${mlabq(G.m[i])}</b>`+
   `<div class="r"><span>רמה (בבקרה)</span><span>${(G.r.lvl.est[i]>0?'+':'')+G.r.lvl.est[i].toFixed(2)}% (p=${pf3(G.r.lvl.p[i])})</span></div>`+
-  `<div class="r"><span>שינוי</span><span>${(G.r.chg.est[i]>0?'+':'')+G.r.chg.est[i].toFixed(2)}% (p=${pf3(G.r.chg.p[i])})</span></div>`+
+  `<div class="r"><span>${escT(G.ctl||'שינוי')}</span><span>${(G.r.chg.est[i]>0?'+':'')+G.r.chg.est[i].toFixed(2)}% (p=${pf3(G.r.chg.p[i])})</span></div>`+
   `<div class="r" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--grid)"><span>רמה ללא בקרה</span><span>${(G.r.lvl_only.est[i]>0?'+':'')+G.r.lvl_only.est[i].toFixed(2)}%</span></div>`;
  tp.classList.add('on');
  const px=x/G.W*rc.width, tw=tp.offsetWidth;
@@ -1594,6 +1613,24 @@ document.getElementById('vch').addEventListener('mouseleave',()=>{
  document.getElementById('vtip').classList.remove('on');
  const o=document.getElementById('vov'); if(o)o.innerHTML='';});
 vDraw();
+
+/* ---------- concentration, controlling for the private-label share ----------
+   Pre-determined control, so unlike 138 and 141 the level coefficient after it reads
+   straight. Drawn by the same lvlChg the two change charts use. */
+Object.assign(st,{qlv:'cat',qsm:'no_meat',qms:'cr3',qfq:'m'});
+seg('q_lv',AL,'qlv',()=>qDraw()); seg('q_sm',AS,'qsm',()=>qDraw());
+seg('q_ms',AM,'qms',()=>qDraw()); seg('q_fq',AF,'qfq',()=>qDraw());
+const QG2={};
+function qDraw(){
+ ['q_lv','q_sm','q_ms','q_fq'].forEach(segSync);
+ const r=PL[`${st.qlv}|${st.qfq}|${st.qsm}|${st.qms}|w`]; if(!r) return;
+ lvlChg(r,'qch2','qov2','qfoot3',QG2,'נתח מותג פרטי','המותג הפרטי');
+}
+document.getElementById('qch2').addEventListener('mousemove',e=>lvlChgHover(e,QG2,'qch2','qov2','qtip2'));
+document.getElementById('qch2').addEventListener('mouseleave',()=>{
+ document.getElementById('qtip2').classList.remove('on');
+ const o=document.getElementById('qov2'); if(o)o.innerHTML='';});
+qDraw();
 
 /* ---------- the imports level, controlling for the change in the importer share ----------
    The same two-regressor event study the concentration tab runs, and drawn by the same

@@ -14,7 +14,8 @@ import json, gzip, base64, os
 HERE=os.path.dirname(os.path.abspath(__file__))
 PARTS=[('D','dash_data.json'),('A','analyses_data.json'),('I','import_data.json'),
        ('XI','interaction_data.json'),('CC','conc_change_data.json'),('B5','big5_data.json'),
-       ('SC','scatter_data.json'),('IC','imp_change_data.json')]
+       ('SC','scatter_data.json'),('IC','imp_change_data.json'),
+       ('PL','private_label_data.json')]
 
 def pack(path):
     obj=json.load(open(os.path.join(HERE,path)))
