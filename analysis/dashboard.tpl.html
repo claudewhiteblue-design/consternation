@@ -855,13 +855,12 @@ function drawIdx(){
  const S=IDX()[idxKey()], name= lv==='שוק'?'כלל השוק':sel;
  document.getElementById('qttl').textContent='· '+name;
  unitNote(name);
- // A sub-category born after January 2022 is indexed to its own first period, so the
- // caption has to say which -- otherwise its "100" reads as if it started with everyone else.
- const lb=(lv==='תת-קטגוריה')&&(FQ==='m'?(D.latebase||{}):(D.lateq||{}))[sel];
- const qb=document.getElementById('qbase');
- if(qb) qb.textContent= lb?(FQ==='m'?mlab(lb):mlab(lb)):(FQ==='m'?'ינואר 2022':'רבעון 1 2022');
+ // A sub-category born after January 2022 has no base, so it has no price/quantity index.
+ // Everything that needs no base -- concentration, suppliers, import share -- still draws.
+ const lb=(lv==='תת-קטגוריה')&&(D.latebase||{})[sel];
+ const qb=document.getElementById('qbase'); if(qb) qb.textContent= FQ==='m'?'ינואר 2022':'רבעון 1 2022';
  {const el=document.getElementById('qlate');
-  if(el) el.innerHTML= lb?` <b style="color:var(--acc2)">היחידה הזו נולדה אחרי תחילת התקופה</b> — היא מופיעה לראשונה ב־${escT(mlab(lb))}, ולכן המדד שלה מבוסס על החודש הראשון שלה ולא על ינואר 2022, והגרפים שלה מתחילים משם. אין להשוות את גובה הקו שלה לזה של יחידות ותיקות.`:'';}
+  if(el) el.innerHTML= lb?` <b style="color:var(--acc2)">ליחידה הזו אין מדד</b> — היא נולדה ב־${escT(mlab(lb))}, אחרי בסיס המדידה, ולכן אין לה ערך להשוות אליו. שאר הגרפים בעמוד עובדים עבורה כרגיל.`:'';}
  document.getElementById('ittl2').textContent='· '+name;
  drawPrice(name);
  if(!S){['qch','ich2'].forEach(i=>document.getElementById(i).innerHTML='');
@@ -871,8 +870,14 @@ function drawIdx(){
  const xs=i=>P.l+iw*i/(M.length-1);
  const yearTicks=(y0,ih)=>M.map((m,i)=>m.slice(5)==='01'
    ||m.slice(5)==='Q1'?`<text x="${xs(i)}" y="${y0+ih+17}" text-anchor="middle" fill="var(--ink3)" font-size="11">${m.slice(0,4)}</text>`:'').join('');
- // --- panel 1: price + quantity index
- {const ih=300-P.t-P.b, y0=P.t;
+ // --- panel 1: price + quantity index. A unit born after the base period has no value
+ // to index against, so the panel says so and the rest of the page carries on.
+ if(!S.p.some(v=>v!=null)){
+  document.getElementById('qch').innerHTML='';
+  document.getElementById('qfoot').innerHTML=lb
+   ? `<b style="color:var(--acc2)">אין מדד מחיר וכמות ליחידה זו.</b> היא נמכרת לראשונה ב־${escT(mlab(lb))}, אחרי ${FQ==='m'?'ינואר 2022':'רבעון 1 2022'} שהוא בסיס המדד, ואין לה ערך פתיחה להשוות אליו. הצבה על החודש הראשון שלה עצמה הייתה נותנת מספרים נכונים וחסרי מובן — סגמנט שצמח פי אלף מייצר מדד כמות של 138,000. גרף הריכוזיות, טבלת הספקים, מחירי הספקים ונתח הייבואנים אינם זקוקים לבסיס ועובדים כרגיל.`
+   : 'אין מדד מחיר וכמות ליחידה זו.';
+ } else {const ih=300-P.t-P.b, y0=P.t;
   const q=ma(S.q), p=ma(S.p);
   const vals=q.slice(START).concat(p.slice(START));
   let lo=Math.min(...vals,100), hi=Math.max(...vals,100);
@@ -918,7 +923,8 @@ function drawIdx(){
   g+=`<circle cx="${xs(M.length-1)}" cy="${y(ok.at(-1))}" r="3.6" fill="var(--acc2)"/>`;
   g+=yearTicks(y0,ih);
   document.getElementById('ich2').innerHTML=g+'<g id="iov2"></g>';
-  const a=ok[START], b=ok.at(-1);
+  const i0=ok.findIndex(v=>v!==null);     // a late starter has nothing at START
+  const a=ok[i0], b=ok.at(-1);
   document.getElementById('ifoot2').innerHTML=
    `<b style="color:var(--ink)">${name}</b> · ${a.toFixed(1)}% ← ${b.toFixed(1)}% (${sgn(b-a,1)} נקודות) · `+
    `הסיווג מכריע ${S.res.at(-1).toFixed(0)}% מהמחזור; היתר (בעיקר מותג פרטי) מחוץ לחישוב.`+partNote()+

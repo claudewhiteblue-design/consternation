@@ -394,22 +394,23 @@ sm=rawS.groupby(['sc','month']).apply(lambda x: pd.Series({
     'impnum':(x.rev*x.p_imp).sum(),'impden':x.rev[x.p_imp.notna()].sum()}),
     include_groups=False).reset_index()
 sm['price']=sm.rev/sm.qty
-# each unit against its own base month: January 2022 where it existed then, and its
-# own first month where it did not. The page states which, so a late starter's index
-# is never read as if it began at the same point as everyone else's.
-sm['bm']=sm.sc.map(lambda k:LATEBASE.get(k,BASE))
-s0=sm[sm.month==sm.bm].set_index('sc')
+s0=sm[sm.month==BASE].set_index('sc')
 sm['qrel']=sm.qty/sm.sc.map(s0.qty); sm['prel']=sm.price/sm.sc.map(s0.price)
-# the weight is 2022 revenue, which a mid-2022 launch still has; a later one is
-# weighted by its first calendar year instead, since the weight only has to be positive
 w22=rawS[rawS.month.str[:4]=='2022'].groupby('sc').rev.sum()
 wall=rawS.groupby('sc').rev.sum()
 sm['w22']=sm.sc.map(w22).fillna(sm.sc.map(wall))
-sm=sm[np.isfinite(sm.qrel)&np.isfinite(sm.prel)&sm.w22.notna()]
+# A unit born mid-period has no January-2022 value, so its price and quantity index is
+# left empty rather than rebased. Basing it on its own first month was the obvious idea
+# and it is wrong twice over: that month carries almost no volume, so its price is not
+# representative, and indexing a segment that grew a thousandfold against it produces a
+# quantity of 138,000 -- a true number that tells the reader nothing. The import share
+# and the concentration series need no base, so those still show; the page says why the
+# index does not.
+sm=sm[sm.w22.notna()&(sm.sc.isin(LATE)|(np.isfinite(sm.qrel)&np.isfinite(sm.prel)))]
 for sub_,g_ in sm.groupby('sc'):
     if sub_ in SUBOK: idx['sub|'+sub_]=idx_block(g_)
-print(f'מדדי כמות/מחיר/יבוא: {len(idx)} סדרות (בסיס {BASE}, '
-      f'{len(LATE)} מהן על בסיס החודש הראשון שלהן)')
+print(f'מדדי כמות/מחיר/יבוא: {len(idx)} סדרות (בסיס {BASE}; '
+      f'ל-{len(LATE)} אין בסיס ולכן אין להן מדד מחיר/כמות)')
 
 # --- quarterly index: quantities summed inside the quarter, price re-derived ---
 cq=rawq.groupby(['cat','month']).apply(lambda x: pd.Series({
@@ -441,13 +442,10 @@ sq=rawSq.groupby(['sc','month']).apply(lambda x: pd.Series({
     include_groups=False).reset_index()
 sq['price']=sq.rev/sq.qty
 sq['qpm']=sq.qty/sq.month.map(QLEN)
-# same rule as the monthly index: the unit's own first quarter when it has no 2022-Q1
-LATEQ={k:min(sq.month[sq.sc==k]) for k in LATE if (sq.sc==k).any()}
-sq['bq']=sq.sc.map(lambda k:LATEQ.get(k,QOK[0]))
-sq0=sq[sq.month==sq.bq].set_index('sc')
+sq0=sq[sq.month==QOK[0]].set_index('sc')
 sq['qrel']=sq.qpm/sq.sc.map(sq0.qpm); sq['prel']=sq.price/sq.sc.map(sq0.price)
 sq['w22']=sq.sc.map(w22).fillna(sq.sc.map(wall))
-sq=sq[np.isfinite(sq.qrel)&np.isfinite(sq.prel)&sq.w22.notna()]
+sq=sq[sq.w22.notna()&(sq.sc.isin(LATE)|(np.isfinite(sq.qrel)&np.isfinite(sq.prel)))]
 for sub_,g_ in sq.groupby('sc'):
     if sub_ in SUBOK: idxq['sub|'+sub_]=idx_blockq(g_)
 print(f'מדדים רבעוניים: {len(idxq)} סדרות (בסיס {QOK[0]})')
@@ -505,7 +503,7 @@ print(f'מותגים מובילים: {len(brands):,} צמדי יחידה-ספק 
 # what each unit's quantity is counted in, for the axis labels
 basis={k:v.get('basis','') for k,v in tops.items()}
 json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
-    latebase=LATEBASE, lateq={k:LATEQ[k] for k in LATEQ},
+    latebase=LATEBASE,
     basis=basis,brands=brands,buckets=BUCKET,
     nbrand_rules=len(G_IMP)+len(G_DOM),
     idx=idx,base=BASE,seriesq=seriesq,idxq=idxq,quarters=QOK,baseq=QOK[0],
