@@ -24,7 +24,7 @@ warnings.filterwarnings('ignore')
 src=open('/home/user/consternation/analysis/132_analyses_data.py').read().split("RES={'runs'")[0]
 G={}; exec(src,G)
 load,prep,BUCKET=G['load'],G['prep'],G['BUCKET']
-EXCAT,EXDEP,EXDEP_ALL=G['EXCAT'],G['EXDEP'],G['EXDEP_ALL']
+EXCAT,EXDEP,EXDEP_ALL,NONFOOD=G['EXCAT'],G['EXDEP'],G['EXDEP_ALL'],G['NONFOOD']
 OUT='/home/user/consternation/analysis/scatter_data.json'
 KEY={'cat':'ctg','sub':'sc'}
 
@@ -87,21 +87,21 @@ for level in ['cat','sub']:
     r22=x[x.month.str[:4]=='2022'].groupby('u').rev.sum()
     meta=x.groupby('u').agg(cat=('cat','first'),dep=('dep','first'),
                             cr3=('cr3','first'),cr3x=('cr3x','first'),hhi=('hhi','first'))
-    keep=prep(x,False).u.unique()                      # EXCAT / EXDEP_ALL always out
+    keep=prep(x,False).u.unique()          # EXCAT / EXDEP_ALL / meat always out
     meta=meta.loc[[u for u in meta.index if u in set(keep)]]
     v3,fx=imports(level)
     def g(t,u,n):
         return round(float(t[u]),n) if u in t.index and np.isfinite(t[u]) else None
     rows=[[u,meta.dep[u],round(float(meta.cr3[u]),1),round(float(meta.cr3x[u]),1),
            round(float(meta.hhi[u]),0),round(float(ch[u]),2),round(float(r22[u]),2),
-           int(meta.dep[u] in EXDEP),g(v3,u,1),g(fx,u,1)] for u in meta.index]
+           int(meta.dep[u] in NONFOOD),g(v3,u,1),g(fx,u,1)] for u in meta.index]
     RES[level]=rows
     print(f'{level}: {len(rows)} נקודות | '
           f'נתח ייבואנים ל-{sum(1 for r in rows if r[8] is not None)} | '
           f'חשיפת מט״ח ל-{sum(1 for r in rows if r[9] is not None)}')
 
 # ---------- department: revenue-weighted mean of its categories' log change ----------
-sd=sup[~sup.ctg.isin(EXCAT)&~sup.dep.isin(EXDEP_ALL)]
+sd=sup[~sup.ctg.isin(EXCAT)&~sup.dep.isin(EXDEP_ALL)&~sup.dep.isin(EXDEP)]
 cd=conc_of(sd,'dep')
 cats=prep(d,False).groupby('u').agg(dep=('dep','first'))
 dl=np.log1p(dy/100)                                    # back to logs before averaging
@@ -114,7 +114,7 @@ for dep,grp in cats.groupby('dep'):
     y=100*(np.exp(float(np.average(dl.reindex(us).values,weights=w)))-1)
     rows.append([dep,dep,round(float(cd.cr3[dep]),1),round(float(cd.cr3x[dep]),1),
                  round(float(cd.hhi[dep]),0),round(y,2),round(float(w.sum()),2),
-                 int(dep in EXDEP),None,None])
+                 int(dep in NONFOOD),None,None])
 RES['dep']=rows
 print(f'dep: {len(rows)} נקודות')
 RES['__win__']={'first':last[0],'last':last[-1]}

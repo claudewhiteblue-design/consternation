@@ -79,9 +79,20 @@ def load(level):
     d['logp']=np.log(d.rev*1000/d.qty)
     return d
 
-def prep(d,drop_meat):
-    x=d[~d.cat.isin(EXCAT)&~d.dep.isin(EXDEP_ALL)]   # always dropped
-    if drop_meat: x=x[~x.dep.isin(EXDEP)]
+# Non-food departments. The sample toggle is "whole market" vs "food & drink only";
+# these are what "food & drink only" drops. Alcohol stays in -- it is a drink, priced
+# per litre like any other. "אביזרים לארוח" is disposable tableware and is already out
+# through EXCAT; it is listed here so the classification reads complete.
+NONFOOD=['אביזרים ומוצרי תינוקות','תכשירי כביסה','מוצרי נייר','היגיינה וטיפוח הגוף',
+         'ניקוי הבית','אביזרים לארוח','היגיינת הפה','טיפוח השיער','סבוני רחצה',
+         'שטיפת כלים','מוצרי גילוח','מוצרי שיזוף והגנה מהשמש','טיפוח פנים']
+
+def prep(d,food_only):
+    """Meat & poultry (EXDEP) are now out of every regression, not a toggle: their unit
+       value tracks the cut mix inside the category rather than a price, so the series
+       is not comparable over time. food_only additionally drops NONFOOD."""
+    x=d[~d.cat.isin(EXCAT)&~d.dep.isin(EXDEP_ALL)&~d.dep.isin(EXDEP)]
+    if food_only: x=x[~x.dep.isin(NONFOOD)]
     return x.copy()
 
 def to_quarter(x):
@@ -173,8 +184,8 @@ for level in ['cat','sub']:
     print(f'{level}: {d.u.nunique()} יחידות, {d.month.nunique()} חודשים')
     for freq in ['m','q']:
         dd=d if freq=='m' else to_quarter(d)
-        for drop in [True,False]:
-            x=prep(dd,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
+        for foodonly in [False,True]:
+            x=prep(dd,foodonly); sk=f'{level}|{freq}|'+('food' if foodonly else 'no_meat')
             for measure in ['cr3','cr3x','hhi']:
                 for kk in [2,3]:
                     RES['terc'][f'{sk}|{measure}|{kk}']=terciles(x,measure,kk)

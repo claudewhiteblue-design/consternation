@@ -58,8 +58,8 @@ for level in ['cat','sub']:
           f'אפס ב-{100*(u.pl==0).mean():.0f}% | מתאם עם CR3 {u.pl.corr(u.cr3):+.3f}')
     for freq in ['m','q']:
         dq=d if freq=='m' else to_quarter(d)
-        for drop in [True,False]:
-            x=prep(dq,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
+        for foodonly in [False,True]:
+            x=prep(dq,foodonly); sk=f'{level}|{freq}|'+('food' if foodonly else 'no_meat')
             for meas in ['cr3','cr3x','hhi']:
                 x=x.copy(); x[f'd_{meas}']=x.pl          # panel2's second regressor slot
                 k=f'{sk}|{meas}|w'

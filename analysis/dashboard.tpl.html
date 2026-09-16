@@ -1120,7 +1120,7 @@ navEl.children[0].classList.add('on');
 
 /* ================= analyses page ================= */
 const AL=[['cat','קטגוריה'],['sub','תת-קטגוריה']];
-const AS=[['no_meat','ללא בשר ועוף'],['all','כולל בשר ועוף']];
+const AS=[['no_meat','כל השוק'],['food','מזון ומשקה בלבד']];
 const AM=[['cr3','CR3'],['cr3x','CR3 ללא מאגדים'],['hhi','HHI']];
 // declared here rather than with the imports tab: the scatter above uses it too
 const IM=[['imp_share','נתח ייבואנים','נתח ייבואנים'],['fx_v3','חשיפת מט״ח (מוערך)','חשיפת מט״ח']];
@@ -1279,10 +1279,10 @@ function gDraw(C){
  // A revenue floor drops the micro units whose "price" is mostly pack mix -- the same
  // units that produced the +100% tail. Departments have no floor; the smallest is 15 מ' ₪.
  // A unit with no value for this measure is not a zero, it is unknown, and is left out.
- const ok=r=>(sm==='all'||!r[7])&&r[xi]!=null;
+ const ok=r=>(sm!=='food'||!r[7])&&r[xi]!=null;
  const rows=raw.filter(r=>ok(r)&&r[6]>=GF[lv]);
  const cut=raw.filter(r=>ok(r)&&r[6]<GF[lv]).length;
- const nom=raw.filter(r=>(sm==='all'||!r[7])&&r[xi]==null&&r[6]>=GF[lv]).length;
+ const nom=raw.filter(r=>(sm!=='food'||!r[7])&&r[xi]==null&&r[6]>=GF[lv]).length;
  if(!rows.length) return;
  const W=940,H=430,P={t:20,r:26,b:44,l:58},iw=W-P.l-P.r,ih=H-P.t-P.b;
  const xv=rows.map(r=>r[xi]), yv=rows.map(r=>r[5]), wv=rows.map(r=>sized?r[6]:1);

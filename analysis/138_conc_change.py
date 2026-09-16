@@ -115,8 +115,8 @@ for level in ['cat','sub']:
           f'ס״ת {ch.d_cr3.std():.1f} | עלה ב-{100*(ch.d_cr3>0).mean():.0f}% מהיחידות')
     for freq in ['m','q']:
         dq=d if freq=='m' else to_quarter(d)
-        for drop in [True,False]:
-            x=prep(dq,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
+        for foodonly in [False,True]:
+            x=prep(dq,foodonly); sk=f'{level}|{freq}|'+('food' if foodonly else 'no_meat')
             for meas in ['cr3','cr3x','hhi']:
                 for wt in [True]:
                     k=f'{sk}|{meas}|{"w" if wt else "u"}'

@@ -55,8 +55,8 @@ for level in ['cat','sub']:
           f'עלה ב-{100*(m.d_imp>0).mean():.0f}% מהיחידות')
     for freq in ['m','q']:
         dq=d if freq=='m' else to_quarter(d)
-        for drop in [True,False]:
-            x=prep(dq,drop); sk=f'{level}|{freq}|'+('no_meat' if drop else 'all')
+        for foodonly in [False,True]:
+            x=prep(dq,foodonly); sk=f'{level}|{freq}|'+('food' if foodonly else 'no_meat')
             for wt in [True]:
                 k=f'{sk}|imp_share|{"w" if wt else "u"}'
                 o=panel2(x,'imp',wt,True)
