@@ -1,62 +1,64 @@
 # -*- coding: utf-8 -*-
-"""Weeks 36 and 37 of 2026 against the monthly panel, and what September looks like.
+"""Weekly exports around Rosh Hashana, 2025 and 2026, and what September 2026 holds.
 
-The weekly export names its periods on a second sheet: "שבוע 36 - 30/8/26" and
-"שבוע 37 - 6/9/26". Week 36 runs 30 August to 5 September, week 37 the 6th to the
-12th. Rosh Hashana 5787 begins at sundown on Friday 11 September, so week 37 is the
-pre-holiday week and week 36 the one before it.
+  weeks3637_2026.parquet   weeks 36 (30/8-5/9) and 37 (6/9-12/9) of 2026
+  weeks2025_3538.parquet   weeks 35-38 of 2025 (24/8-20/9)
 
-Having both is what makes the exercise possible. Against August alone week 37 looks
-+17.1%, but week 36 is already +10.7% on the same comparison while its department mix
-is August's almost exactly (rank correlation 0.991 across 54 departments). So most of
-that gap is not the holiday at all -- it is the back-to-school week, the Israeli
-school year starting on 1 September. The holiday's own contribution is week 37
-against week 36: +5.7% overall, and it lands where you would expect -- wine +44%,
-fresh herbs +43%, nuts and dried fruit +34%, hosting supplies +21%, against sunscreen
--16% and cereal bars -12%.
+Rosh Hashana eve fell on Monday 22 September 2025 and on Friday 11 September 2026,
+eleven days earlier, which is what makes the two years comparable at all: the same
+calendar week carries the holiday in one year and not in the other.
 
-Grossing week 37 up by 30/7 gives 5,676 מ' ₪ for September, +13.3% on August, which
-takes the single busiest week of the Israeli retail year and assumes the other three
-look like it. The first twelve days are known rather than assumed -- 2,218 מ' ₪ --
-and the rest of the month carries Yom Kippur and the start of Sukkot, two or three
-days on which the shops are effectively shut. Holding days 13-30 at August's daily
-rate gives 5,127, and the 2022-2025 September/August ratios give 5,165 independently.
-Those two agreeing is the reason to believe them and not the gross-up.
+THE HOLIDAY'S OWN EFFECT, two ways that do not share an assumption:
+  year-on-year   week 36 is +6.4% (no holiday in either year -- clean growth) and
+                 week 37 is +10.7% (holiday only in 2026). The gap is +4.3%.
+  within-year    week 37 over week 36 is +1.7% in 2025 and +5.8% in 2026, a
+                 difference-in-differences of +4.1%.
+So the Rosh Hashana week adds about four percent, not the seventeen it appears to add
+against August -- most of that gap is the back-to-school week, which is already
++10.7% over August while its department mix is August's (rank correlation 0.991).
 
-Nothing here is appended to the panel. September enters when the monthly file does.
+WHY SEPTEMBER CANNOT BE GROSSED UP FROM IT, checked against 2025 where both the weeks
+and the month are known. Weeks 36-38 of 2025 cover 1-20 September, 3,552 מ' ₪; the
+month came to 5,043; so the last ten days -- holding the eve, the holiday itself and
+the lull after it -- ran at 149.1 a day against August's 151.3. The peak and the
+closures cancel. Applying that to 2026, where 1-12 September is known at 2,218 מ' ₪,
+puts the month at 5,086-5,127, against the 5,676 a 30/7 gross-up of week 37 gives.
+
+The one caveat that cuts the other way: 2026 is the year all three Tishrei holidays
+fall inside September -- Rosh Hashana on the 11th-13th, Yom Kippur the 20th-21st,
+Sukkot from the 25th -- where 2025 had only Rosh Hashana and 2024 none at all. Days
+13-30 therefore hold two more peak-and-closure cycles, so 5,100-5,200 is the honest
+range and the historical September/August ratios are a weaker guide than usual.
+
+Nothing is appended to the panel. September enters when the monthly file does.
 
     python3 analysis/150_weeks_sep26.py
 """
 import duckdb, pandas as pd, numpy as np
 c=duckdb.connect(); c.execute('SET enable_progress_bar=false')
-P='/home/user/consternation/retail_sales_2022_2026.parquet'
+H='/home/user/consternation'; P=f'{H}/retail_sales_2022_2026.parquet'
 R='מכר כספי (מיליוני ₪)'; Rq=f'"{R}"'
-w=pd.read_parquet('/home/user/consternation/weeks3637_2026.parquet')
-W={n:g[R].sum() for n,g in w.groupby('מספר שבוע')}
-
+w25=pd.read_parquet(f'{H}/weeks2025_3538.parquet'); w26=pd.read_parquet(f'{H}/weeks3637_2026.parquet')
+A={n:g[R].sum() for n,g in w25.groupby('מספר שבוע')}
+B={n:g[R].sum() for n,g in w26.groupby('מספר שבוע')}
 m=c.execute(f'''SELECT "חודש" mm, sum({Rq}) rev FROM '{P}' GROUP BY 1''').df()
-m['y']=m.mm.str[:4].astype(int); m['n']=m.mm.str[5:7].astype(int)
-AUG=m[(m.y==2026)&(m.n==8)].rev.iloc[0]; AUGD=AUG/31
-ratio=np.mean([m[(m.y==y)&(m.n==9)].rev.iloc[0]/m[(m.y==y)&(m.n==8)].rev.iloc[0] for y in range(2022,2026)])
-print(f'אוגוסט 2026 {AUG:,.0f} מ׳ ₪ = {AUGD:.1f} ליום')
-for n in (36,37):
-    print(f'שבוע {n}: {W[n]:,.0f} מ׳ ₪ = {W[n]/7:.1f} ליום ({100*((W[n]/7)/AUGD-1):+.1f}% מול אוגוסט)')
+g=lambda y,n: m[m.mm==f'{y}/{n:02d}'].rev.iloc[0]
 
-aug=c.execute(f'''SELECT "מחלקה" dep, sum({Rq}) rev FROM '{P}'
-    WHERE "חודש"='2026/08' GROUP BY 1''').df().set_index('dep').rev
-j=pd.DataFrame({'w36':w[w['מספר שבוע']==36].groupby('מחלקה')[R].sum(),
-                'w37':w[w['מספר שבוע']==37].groupby('מחלקה')[R].sum(),'aug':aug}).dropna()
-print(f'\nמתאם דירוגי בין נתחי המחלקות בשבוע 36 לאלה של אוגוסט: '
-      f'{j.w36.rank().corr(j.aug.rank(),method="spearman"):.3f} — שבוע 36 הוא בסיס מבני נקי')
-j['h']=100*(j.w37/j.w36-1)
-k=j.sort_values('h',ascending=False)
-print(f'\nאפקט החג נטו (שבוע 37 מול 36), כלל השוק {100*(j.w37.sum()/j.w36.sum()-1):+.1f}%:')
-for i,r in pd.concat([k.head(6),k.tail(3)]).iterrows(): print(f'  {i[:30]:30} {r.h:+6.0f}%')
+print('ערב ר״ה: 22/9/25 (שני) מול 11/9/26 (שישי)\n')
+print(f'{"שבוע":5} {"2025":>9} {"2026":>9} {"שנתי":>8}')
+for n in (35,36,37,38):
+    x,y=A.get(n),B.get(n)
+    print(f'{n:5} {x:9,.0f} '+(f'{y:9,.0f} {100*(y/x-1):+7.1f}%' if y else f'{"—":>9} {"—":>8}'))
+print(f'\nאפקט החג: שנתי {100*(B[37]/A[37]-1)-100*(B[36]/A[36]-1):+.1f}% | '
+      f'הפרש-בהפרשים {100*(B[37]/B[36]-1)-100*(A[37]/A[36]-1):+.1f}%')
 
-obs=W[36]*5/7+W[37]            # 1-12 September: the part of week 36 that falls in it, plus week 37
-print(f'\n1–12 בספטמבר: {obs:,.0f} מ׳ ₪ = {obs/12:.1f} ליום ({100*(obs/12/AUGD-1):+.1f}% מול אוגוסט)')
-print(f'{"תרחיש ל-13–30":40} {"ספטמבר":>9} {"מול אוג׳":>8}')
-for lab,d in [('בקצב אוגוסט',AUGD),('בקצב שבוע 36',W[36]/7),('בקצב שבוע 37',W[37]/7)]:
-    t=obs+d*18; print(f'  {lab:38} {t:8,.0f} {100*(t/AUG-1):+7.1f}%')
-print(f'  {"יחס ספט׳/אוג׳ היסטורי":38} {AUG*ratio:8,.0f} {100*(ratio-1):+7.1f}%')
-print(f'  {"ניפוח שבוע 37 בלבד x30/7":38} {W[37]*30/7:8,.0f} {100*(W[37]*30/7/AUG-1):+7.1f}%')
+S25,A25,A26=g(2025,9),g(2025,8),g(2026,8)
+sep25=A[36]*6/7+A[37]+A[38]; tail=(S25-sep25)/10
+print(f'\nאימות 2025: 1–20/9 {sep25:,.0f} מהשבועות, החודש {S25:,.0f} ⇒ 21–30 רצו {tail:.1f} ליום '
+      f'מול {A25/31:.1f} באוגוסט ({100*(tail/(A25/31)-1):+.1f}%)')
+sep26=B[36]*5/7+B[37]
+print(f'2026: 1–12/9 ידוע {sep26:,.0f} = {sep26/12:.1f} ליום')
+for lab,d in [('13–30 בקצב אוגוסט',A26/31),('13–30 ביחס של 2025',A26/31*tail/(A25/31)),
+              ('ניפוח שבוע 37 x30/7',None)]:
+    t=B[37]*30/7 if d is None else sep26+d*18
+    print(f'  {lab:24} ספטמבר {t:8,.0f} ({100*(t/A26-1):+5.1f}% מול אוגוסט)')
