@@ -72,6 +72,10 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 .pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12.5px;font-weight:600}
 .sup h3{font-size:14.5px;margin:22px 0 4px}
 .sup tbody tr{cursor:pointer}
+#tb tbody tr:not(.det){cursor:pointer}
+#tb tbody tr:not(.det):hover{background:var(--grid)}
+#tb tbody tr.on{background:var(--grid);box-shadow:inset 3px 0 0 var(--acc)}
+#tb tbody tr.det>td{padding:0 0 12px;border-bottom:1px solid var(--line)}
 .sup tbody tr:hover{background:var(--grid)}
 .sup tbody tr.on{background:var(--grid);box-shadow:inset 3px 0 0 var(--acc)}
 .sup tbody tr.det{cursor:default}
@@ -159,7 +163,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
  <p class="foot" id="ifoot2"></p>
 </div>
 <div class="card" id="t10">
- <h2>עשר קבוצות המזון הגדולות</h2>
+ <h2>עשרים קבוצות הספקים הגדולות</h2>
  <p class="cs" id="tcs"></p>
  <div class="scroll"><table id="tb"></table></div>
  <p class="foot" id="tfoot"></p>
@@ -432,8 +436,10 @@ document.getElementById('kpi').innerHTML=[
  ['צמיחת מכר',sgn(100*(T.tot26/T.tot22-1),1)+'%',`${fmt(T.tot22)} ← ${fmt(T.tot26)} מ׳ ₪`]
 ].map(([a,b,c])=>`<div><span>${a}</span><b>${b}</b><em style="color:var(--ink3)">${c}</em></div>`).join('');
 
-document.getElementById('tcs').textContent=
- `דירוג לפי מכר כספי ב־2026. "פעילה" = נמכר בקטגוריה באותו חלון. עמודות ה־30%/50% סופרות קטגוריות שבהן הקבוצה מחזיקה נתח כזה, והמספר האפור לצידן הוא הערך המקביל ב־2022.`;
+document.getElementById('tcs').innerHTML=
+ `דירוג לפי מכר כספי ב־2026 על <b>כלל השוק</b>, ולכן נכנסות אליו גם קבוצות שאינן מזון — סנו וחוגלה קימברלי.  "פעילה" = נמכר בקטגוריה באותו חלון. עמודות ה־30%/50% סופרות קטגוריות שבהן הקבוצה מחזיקה נתח כזה, והמספר האפור לצידן הוא הערך המקביל ב־2022. `+
+ `עשרים הקבוצות מחזיקות יחד ${T.top20_share.toFixed(1)}% מהשוק (2022: ${T.top20_share22.toFixed(1)}%), ועשר הראשונות ${T.top10_share.toFixed(1)}%. `+
+ `<b>לחיצה על שורה פותחת את נתח השוק של הקבוצה לאורך זמן.</b>`;
 const mx=Math.max(...T.rows.map(r=>r.share)), MKT=100*(T.tot26/T.tot22-1);
 document.getElementById('tb').innerHTML=
  '<thead><tr><th></th><th class="nm">קבוצה</th><th>נתח שוק<br>2026</th><th>Δ מול<br>2022</th>'+
@@ -446,7 +452,81 @@ document.getElementById('tb').innerHTML=
   `<td>${fmt(r.rev)}</td>`+
   `<td>${r.ncat}<span style="color:var(--ink3)"> · ${r.ncat22}</span></td><td>${r.ndep}</td>`+
   `<td>${r.n30}<span style="color:var(--ink3)"> · ${r.n3022}</span></td>`+
-  `<td>${r.n50}<span style="color:var(--ink3)"> · ${r.n5022}</span></td></tr>`).join('')+'</tbody>';
+  `<td>${r.n50}<span style="color:var(--ink3)"> · ${r.n5022}</span></td></tr>`+
+  // the detail row sits directly under its group and spans the table; empty until opened
+  `<tr class="det" data-for="${escA(r.g)}" hidden><td colspan="10"><div class="mkwrap"></div></td></tr>`).join('')+'</tbody>';
+document.querySelectorAll('#tb tbody tr:not(.det)').forEach((tr,i)=>{
+ tr.onclick=()=>{ MKSEL = (MKSEL===T.rows[i].g ? null : T.rows[i].g); drawMktPanel(); };});
+document.getElementById('tb').addEventListener('click',e=>{
+ if(e.target.closest('[data-close]')){MKSEL=null;drawMktPanel();}});
+/* ---------- one group's share of the whole market, over time ---------- */
+/* The payload carries the group's own market revenue per month plus the market total,
+   so the share is computed here at either frequency -- quarters are summed from the
+   months rather than averaged, the same rule the per-unit supplier panel uses. */
+let MKSEL=null, MKG={};
+function drawMktPanel(){
+ document.querySelectorAll('#tb tbody tr:not(.det)').forEach((tr,i)=>
+   tr.classList.toggle('on', T.rows[i].g===MKSEL));
+ document.querySelectorAll('#tb tbody tr.det').forEach(tr=>{
+   tr.hidden = tr.dataset.for!==MKSEL;
+   if(tr.hidden) tr.querySelector('.mkwrap').innerHTML='';});
+ if(!MKSEL) return;
+ const box=document.querySelector(`#tb tbody tr.det[data-for="${cssEsc(MKSEL)}"] .mkwrap`);
+ if(!box) return;
+ const r=T.rows.find(x=>x.g===MKSEL);
+ const shut=v=>`<div class="spanel"><span class="x" data-close="1">×</span>`+
+               `<h4>${escT(MKSEL)}</h4><p class="cs">${v}</p></div>`;
+ if(!r||!r.rv) return void(box.innerHTML=shut('אין סדרת מכר לקבוצה זו.'));
+ const q3=a=>{const o=[];                       // sum each quarter's three months
+   for(let i=0;i<D.quarters.length;i++){let sum=null;
+    for(let j=0;j<3;j++){const v=a[i*3+j]; if(v!==null&&v!==undefined) sum=(sum||0)+v;}
+    o.push(sum);} return o;};
+ const rv=FQ==='q'?q3(r.rv):r.rv, tv=FQ==='q'?q3(T.mkt):T.mkt, per=M;
+ const sh=rv.map((v,i)=>(v===null||!tv[i])?null:100*v/tv[i]);
+ const fin=sh.filter(v=>v!==null);
+ if(!fin.length) return void(box.innerHTML=shut('אין סדרה לקבוצה זו בתדירות הנבחרת.'));
+ const W=940,P={t:16,r:22,b:30,l:46},ih=190-P.t-P.b,iw=W-P.l-P.r;
+ const xs=i=>P.l+iw*i/(per.length-1);
+ let lo=Math.min(...fin), hi=Math.max(...fin);
+ const pd=Math.max((hi-lo)*0.15,0.05); lo=Math.max(0,lo-pd); hi=hi+pd;
+ const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
+ let g=estBand(P,W,xs,P.t,ih);
+ nice(lo,hi,4).forEach(v=>{
+  g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`+
+     `<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${v.toFixed(2)}%</text>`;});
+ const fi=sh.findIndex(v=>v!==null), li=sh.length-1-[...sh].reverse().findIndex(v=>v!==null);
+ g+=`<path d="${sh.map((v,i)=>v===null?'':`${i===fi?'M':'L'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(--acc)" stroke-width="2.2"/>`;
+ g+=`<circle cx="${xs(li)}" cy="${y(sh[li])}" r="3.6" fill="var(--acc)"/>`;
+ per.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1')
+   g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
+ const a=sh[fi], b=sh[li];
+ box.innerHTML=`<div class="spanel"><span class="x" data-close="1">×</span>`+
+  `<h4>${escT(MKSEL)} — נתח מכלל השוק לאורך זמן</h4>`+
+  `<p class="cs" style="margin:2px 0 6px">נתח מהמכר הכספי של כל השוק, ${FQ==='m'?'חודשי':'רבעוני'} וללא החלקה. `+
+  `${mlab(per[fi])}: ${a.toFixed(2)}% ← ${mlab(per[li])}: ${b.toFixed(2)}% (${sgn(b-a,2)} נקודות). `+
+  `שיא ${Math.max(...fin).toFixed(2)}% · שפל ${Math.min(...fin).toFixed(2)}%. `+
+  `<b>הציר אינו מתחיל באפס</b> — הוא נפרש סביב התנועה עצמה, שהיא לרוב שבריר נקודת אחוז.`+partNote()+`</p>`+
+  `<div class="scroll"><div class="chwrap"><svg viewBox="0 0 940 190" id="mkch" style="width:100%;min-width:660px;height:auto;direction:ltr">${g}<g id="mkov"></g></svg>`+
+  `<div class="tip" id="mktip"></div></div></div></div>`;
+ MKG={sh,y,xs,W,P,ih,iw,per};
+ const el2=document.getElementById('mkch'), tp=document.getElementById('mktip');
+ el2.addEventListener('mousemove',e=>{
+  const G=MKG, rc=el2.getBoundingClientRect(), xv=(e.clientX-rc.left)*(G.W/rc.width);
+  let i=Math.round((xv-G.P.l)/G.iw*(G.per.length-1)); i=Math.max(0,Math.min(G.per.length-1,i));
+  if(G.sh[i]==null){tp.classList.remove('on');document.getElementById('mkov').innerHTML='';return}
+  const x=G.xs(i);
+  document.getElementById('mkov').innerHTML=
+   `<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`+
+   `<circle cx="${x}" cy="${G.y(G.sh[i])}" r="4.2" fill="var(--acc)" stroke="var(--surf)" stroke-width="1.6"/>`;
+  tp.innerHTML=`<b>${mlabq(G.per[i])}</b><div class="r"><span>נתח שוק</span><span>${G.sh[i].toFixed(2)}%</span></div>`;
+  tp.classList.add('on');
+  const px=x/G.W*rc.width, tw=tp.offsetWidth;
+  tp.style.left=Math.max(4,Math.min(rc.width-tw-4,px<rc.width/2?px+18:px-tw-18))+'px';
+  tp.style.top='4px';});
+ el2.addEventListener('mouseleave',()=>{tp.classList.remove('on');
+  const o=document.getElementById('mkov'); if(o)o.innerHTML='';});
+}
+
 document.getElementById('tfoot').innerHTML=
  `<b style="color:var(--ink)">"מהמכר שלה מיובא"</b> = אחוז ממחזור הקבוצה שמקורו במוצרים המיוצרים בחו״ל, לפי סיווג ידני של ${D.nbrand_rules||''} מותגים בקובץ יולי 2026. `+
  `הסיווג מכריע ${T.rows.map(r=>r.impres).filter(v=>v!==null).reduce((a,b)=>Math.min(a,b),100).toFixed(0)}–100% ממחזור כל קבוצה; מותג פרטי אינו ניתן להכרעה ואינו נספר. `+
@@ -536,6 +616,7 @@ function draw(){
  // the top-10 table is market-wide; inside a department or category the per-unit
  // supplier table under the concentration chart already covers it
  document.getElementById('t10').hidden = (lv!=='שוק');
+ if(typeof drawMktPanel==='function') drawMktPanel();   // the panel follows the frequency toggle
  START=(FQ==='m'?MAW-1:0);
  [...lvEl.children].forEach((b,i)=>b.classList.toggle('on',LV[i][0]===lv));
  [...bkEl.children].forEach(b=>b.classList.toggle('on',b.textContent===bk));

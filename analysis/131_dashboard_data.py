@@ -113,7 +113,16 @@ def snap(year):
     return agg.set_index('g'), tot, d.cat.nunique()
 a26,t26,nc26=snap('2026'); a22,t22,_=snap('2022')
 real=[g for g in a26.index if g not in BUCKET]
-top=a26.loc[real].sort_values('rev',ascending=False).head(10)
+ordered=a26.loc[real].sort_values('rev',ascending=False)
+top=ordered.head(20)          # the table lists twenty
+top10=ordered.head(10)        # the KPI tile is still "the top ten", and must stay that
+# each listed group's market revenue per month, so a row can open into a share path
+_mrev=raw.groupby('month').rev.sum().reindex(months)
+_grev=raw.groupby(['g','month']).rev.sum()
+def _path(g):
+    v=_grev.loc[g].reindex(months) if g in _grev.index.get_level_values(0) else None
+    if v is None: return None
+    return [None if not np.isfinite(x) else round(float(x),2) for x in v.values]
 rows=[]
 for g,r in top.iterrows():
     p=a22.loc[g] if g in a22.index else None
@@ -125,12 +134,16 @@ for g,r in top.iterrows():
         imp=round(100*float(p_g.get(g)),1) if g in p_g.index else None,
         impres=round(100*float(res_g.get(g,0)),0) if g in p_g.index and np.isfinite(res_g.get(g,0)) else None,
         ncat22=int(p.ncat) if p is not None else None,
-        n3022=int(p.n30) if p is not None else None, n5022=int(p.n50) if p is not None else None))
+        n3022=int(p.n30) if p is not None else None, n5022=int(p.n50) if p is not None else None,
+        rv=_path(g)))
 buck=a26.loc[[g for g in a26.index if g in BUCKET]]
 buck22=a22.loc[[g for g in a22.index if g in BUCKET]]
 tbl=dict(rows=rows,tot26=round(t26),tot22=round(t22),ncat=int(nc26),last=LAST,win=len(WIN),
-    top10_share=round(float(top.share.sum()),2),
-    top10_share22=round(float(sum(a22.loc[g].share for g in top.index if g in a22.index)),2),
+    mkt=[round(float(x),2) for x in _mrev.values],
+    top10_share=round(float(top10.share.sum()),2),
+    top10_share22=round(float(sum(a22.loc[g].share for g in top10.index if g in a22.index)),2),
+    top20_share=round(float(top.share.sum()),2),
+    top20_share22=round(float(sum(a22.loc[g].share for g in top.index if g in a22.index)),2),
     bucket_share=round(float(buck.share.sum()),2),bucket_share22=round(float(buck22.share.sum()),2),
     nsup=int(raw[raw.month.str[:4]=='2026'].g.nunique()))
 print(f'2026 YTD {t26:,.0f} מ׳ ₪ | טופ-10 {tbl["top10_share"]}% (2022: {tbl["top10_share22"]}%)')
