@@ -100,6 +100,7 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 
 <div class="page" id="p0">
 <p class="sub" id="hdr">טוען נתונים…</p>
+<p class="cs" id="estnote" style="max-width:82ch;margin:-14px 0 18px" hidden></p>
 
 <div class="kpi" id="kpi"></div>
 
@@ -560,6 +561,7 @@ function draw(){
   const pad=(hi-lo)*0.14||1; lo=Math.max(0,lo-pad); hi=hi+pad;
   if(k==='cr3') hi=Math.min(100,hi);
   const y=v=>y0+ph*(1-(v-lo)/(hi-lo));
+  g+=estBand(P,W,xs,y0,ph);
   if(k==='hhi'){
    BANDS.forEach(bd=>{
     const a=Math.max(lo,bd.lo), b2=Math.min(hi,bd.hi);
@@ -805,7 +807,7 @@ function drawPrice(name){
  const pd=(hi-lo)*0.1||Math.max(hi*0.05,0.1); lo=Math.max(0,lo-pd); hi+=pd;
  const fmtv = REL ? (v=>v.toFixed(0)) : fmtp;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
- let g='';
+ let g=estBand(P,W,xs,P.t,ih);
  nice(lo,hi,5).forEach(v=>{
   g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`+
      `<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${fmtv(v)}</text>`;});
@@ -864,6 +866,26 @@ const fmtp=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed
 /* ---------- hover ---------- */
 const chEl=document.getElementById('ch'), tip=document.getElementById('tip');
 const HE=['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
+// Months the overview carries as an estimate rather than a count. Every chart that
+// plots them shades the stretch and dashes the line over it, and the tooltip says so,
+// so an estimate is never mistaken for something that was counted.
+const ESTM=new Set(D.est||[]);
+const mlab2=m=>`${HE[+m.slice(5)-1]} ${m.slice(0,4)}`;
+{const el=document.getElementById('estnote');
+ if(el&&ESTM.size){el.hidden=false;
+  el.innerHTML=`<b style="color:var(--acc2)">${[...ESTM].map(mlab2).join(', ')} הוא אומדן, לא ספירה.</b> `+
+   `נמדדו בפועל 1–12 בספטמבר, שהם שבוע 36 ושבוע 37; 13–30 הוערכו יחידה־יחידה לפי היחס שבין אותם שני חלונות `+
+   `ב-2025, ממופים לפי המרחק מערב ראש השנה — 22/9 אשתקד מול 11/9 השנה. הרצועה הכתומה בגרפים מסמנת את החודש הזה. `+
+   `<b>עמוד הבדיקות אינו כולל אותו</b>, וגם הטבלאות בעמוד הזה מושוות על חודשים שנמדדו בלבד.`;}}
+const isEst=m=>m.includes('Q')?(D.est||[]).some(e=>e.slice(0,4)===m.slice(0,4)&&Math.floor((+e.slice(5,7)-1)/3)+1===+m.slice(6)):ESTM.has(m);
+const estFrom=()=>{const i=M.findIndex(isEst); return i<0?null:i;};
+// the band and its label, drawn behind every series on a chart that uses the shared x
+function estBand(P,W,xs,y0,ih,n){
+ const i=estFrom(); if(i===null) return '';
+ const x0=xs(Math.max(0,i-0.5));
+ return `<rect x="${x0.toFixed(1)}" y="${y0}" width="${(W-P.r-x0).toFixed(1)}" height="${ih}" fill="var(--acc2)" opacity=".07"/>`+
+        `<text x="${((x0+W-P.r)/2).toFixed(1)}" y="${y0+12}" text-anchor="middle" fill="var(--acc2)" font-size="10.5">אומדן</text>`;
+}
 const mlab=m=>m.includes('Q')?`רבעון ${m.slice(6)} ${m.slice(0,4)}`:`${HE[+m.slice(5)-1]} ${m.slice(0,4)}`;
 // The trailing quarter can still be filling up. Shares and prices are ratios and need
 // no caveat, but the reader does: every quarterly footer says so, and the tooltip
@@ -996,7 +1018,7 @@ function drawIdx(){
   const pd=(hi-lo)*0.12||2; lo-=pd; hi+=pd;
   const y=v=>y0+ih*(1-(v-lo)/(hi-lo));
   Object.assign(QG,{y,xs,W,P,iw,ih,q,p,raw:S,m:M});
-  let g='';
+  let g=estBand(P,W,xs,y0,ih);
   nice(lo,hi,5).forEach(v=>{const b=Math.abs(v-100)<1e-9;
    g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="${b?'var(--ink3)':'var(--grid)'}" stroke-width="${b?1.3:1}"/>`;
    g+=`<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${v.toFixed(0)}</text>`;});
@@ -1033,7 +1055,7 @@ function drawIdx(){
   const pd=(hi-lo)*0.15||2; lo=Math.max(0,lo-pd); hi=Math.min(100,hi+pd);
   const y=v=>y0+ih*(1-(v-lo)/(hi-lo));
   Object.assign(IG2,{y,xs,W,P,iw,ih,im:ok,raw:S,m:M});
-  let g='';
+  let g=estBand(P,W,xs,y0,ih);
   nice(lo,hi,4).forEach(v=>{
    g+=`<line x1="${P.l}" x2="${W-P.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/>`;
    g+=`<text x="${P.l-9}" y="${y(v)+4}" text-anchor="end" fill="var(--ink3)" font-size="11">${v.toFixed(0)}%</text>`;});

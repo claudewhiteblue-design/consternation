@@ -4,7 +4,11 @@
    (B) monthly HHI / CR3 at market, department and category level, with and without buckets"""
 import duckdb, pandas as pd, numpy as np, json, math
 c=duckdb.connect(); c.execute("SET enable_progress_bar=false")
-P="'/home/user/consternation/retail_sales_2022_2026.parquet'"
+# The overview reads the panel with the estimated September appended (151); the
+# regressions keep reading the measured one. EST names the months that are estimates
+# so the page can draw them as such -- never silently mixed in with what was counted.
+P="'/home/user/consternation/retail_sales_2022_2026_est.parquet'"
+EST=['2026/09']
 R='"מכר כספי (מיליוני ₪)"'
 BUCKET=['ספק כללי','ספק מותג פרטי','ספק קצביה כללי','ספק כללי בשר טרי','יצרן פרטי','יצרן לא ידוע']
 GROUPS={'תנובה':['תנובה'],'שטראוס':['שטראוס'],'נטו':['נטו סחר','נטו פירות וירקות']}
@@ -89,7 +93,9 @@ pA=pA.fillna(pB); pB=pB.fillna(pA)
 mnum={m:i for i,m in enumerate(months)}
 lam=raw.month.map(mnum)/ (len(months)-1)
 raw['p_imp']=(1-lam)*pA+lam*pB
-WIN=[m[5:] for m in months if m.startswith('2026')]          # like-for-like window
+# the like-for-like window stays on measured months, so every table on the page is
+# counted rather than estimated
+WIN=[m[5:] for m in months if m.startswith('2026') and m not in EST]
 print(f'{len(months)} חודשים, 2026 עד {LAST} ({len(WIN)} חודשים)')
 
 # ---------- (A) supplier table ----------
@@ -144,7 +150,7 @@ def conc(d,keys):
 # Sub-category resolution comes from a separate extract that keeps the sub-category
 # column. It is built and filtered exactly like `raw`, and kept in its own frame so
 # every existing department / category number stays byte-identical.
-SUBP="'/tmp/subcat_std.parquet'"
+SUBP="'/tmp/subcat_std_est.parquet'"
 rawS=c.execute(f'''SELECT "חודש" AS month,"מחלקה" AS dep,"קטגוריה" AS cat,
    "תת קטגוריה" AS sc,"ספק" AS sup,
    sum({R}) AS rev, sum({SQ}) AS qty, any_value({BS}) AS basis
@@ -518,7 +524,7 @@ print(f'מותגים מובילים: {len(brands):,} צמדי יחידה-ספק 
 
 # what each unit's quantity is counted in, for the axis labels
 basis={k:v.get('basis','') for k,v in tops.items()}
-json.dump(dict(months=months,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
+json.dump(dict(months=months,est=EST,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
     latebase=LATEBASE,
     basis=basis,brands=brands,buckets=BUCKET,
     nbrand_rules=len(G_IMP)+len(G_DOM),
