@@ -60,7 +60,10 @@ def conc_of(s,key):
 
 def change(d):
     """% change from the unit's 2022 average to its last twelve months."""
-    months=sorted(d.month.unique()); last=months[-12:]; base=[m for m in months if m[:4]=='2022']
+    # the twelve months compared against 2022 are counted ones: an estimate is fine as a
+    # point on a path and wrong as one end of a comparison
+    months=sorted(m for m in d.month.unique() if m not in G['EST'])
+    last=months[-12:]; base=[m for m in months if m[:4]=='2022']
     W=d.pivot(index='u',columns='month',values='logp')
     dl=W[last].mean(axis=1)-W[base].mean(axis=1)
     return 100*(np.exp(dl)-1), months, last

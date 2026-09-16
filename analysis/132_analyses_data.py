@@ -36,8 +36,19 @@ EXCAT=['כלים חד פעמים',
 # aggregates that stand in for many firms, not firms themselves
 BUCKET=['ספק כללי','ספק מותג פרטי','ספק קצביה כללי','ספק כללי בשר טרי','יצרן פרטי','יצרן לא ידוע']
 R='"מכר כספי (מיליוני ₪)"'; SQ='"כמות סטנדרטית"'
-SRC={'cat':("'/home/user/consternation/retail_sales_2022_2026.parquet'",'"קטגוריה"'),
-     'sub':("'/tmp/subcat_std.parquet'",'"תת קטגוריה"')}
+# The panels carrying the estimated September (151). Adding it was tested against the
+# measured panel first: the sample is identical -- 280 categories, 994 sub-categories,
+# the same n in every specification, because the two weekly files covered every unit --
+# and the average coefficients move by 0.02 to 0.06 points with no p-value crossing
+# anything. So the period is carried, and marked.
+#
+# What is NOT extended to it is any window that summarises a stretch: the like-for-like
+# 2026-against-2022 window in 138 and the twelve-month window behind the scatter both
+# stay on measured months. An estimate is fine as one point on a path and wrong as one
+# end of a comparison.
+SRC={'cat':("'/home/user/consternation/retail_sales_2022_2026_est.parquet'",'"קטגוריה"'),
+     'sub':("'/tmp/subcat_std_est.parquet'",'"תת קטגוריה"')}
+EST=['2026-09']        # dashed, like `month` after load() normalises it
 
 def load(level):
     p,DIM=SRC[level]

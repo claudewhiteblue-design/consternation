@@ -93,6 +93,9 @@ def panel2(x,measure,weighted,with_change):
 # The like-for-like window is however much of 2026 the panel actually holds, compared
 # against the same calendar months of 2022 -- so it widens by itself as months arrive.
 import duckdb as _d
+# Deliberately the MEASURED panel: this window compares 2026 against the same calendar
+# months of 2022, and an estimated September on one side of that is not a comparison.
+# The event study above it does carry the estimated period; a summary window does not.
 WIN=sorted(int(m[5:7]) for m in _d.connect().execute(
     '''SELECT DISTINCT "חודש" FROM '/home/user/consternation/retail_sales_2022_2026.parquet'
        WHERE "שנה"=2026''').df()['חודש'])

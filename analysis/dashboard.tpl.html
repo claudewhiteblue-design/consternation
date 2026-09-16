@@ -879,10 +879,9 @@ const mlab2=m=>`${HE[+m.slice(5,7)-1]} ${m.slice(0,4)}`;
    `<b>עמוד הבדיקות אינו כולל אותו</b>, וגם הטבלאות בעמוד הזה מושוות על חודשים שנמדדו בלבד.`;}}
 const isEst=m=>m.includes('Q')?(D.est||[]).some(e=>e.slice(0,4)===m.slice(0,4)&&Math.floor((+e.slice(5,7)-1)/3)+1===+m.slice(6)):ESTM.has(m);
 // a quarter is an estimate if any of its months is, which is why the two are compared numerically
-const estFrom=()=>{const i=M.findIndex(isEst); return i<0?null:i;};
 // the band and its label, drawn behind every series on a chart that uses the shared x
-function estBand(P,W,xs,y0,ih,n){
- const i=estFrom(); if(i===null) return '';
+function estBand(P,W,xs,y0,ih,ms){
+ const a=ms||M, i=a.findIndex(isEst); if(i<0) return '';
  const x0=xs(Math.max(0,i-0.5));
  return `<rect x="${x0.toFixed(1)}" y="${y0}" width="${(W-P.r-x0).toFixed(1)}" height="${ih}" fill="var(--acc2)" opacity=".07"/>`+
         `<text x="${((x0+W-P.r)/2).toFixed(1)}" y="${y0+12}" text-anchor="middle" fill="var(--acc2)" font-size="10.5">אומדן</text>`;
@@ -1172,7 +1171,7 @@ function aDraw(){
  let lo=Math.min(...dn,0), hi=Math.max(...up,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
  AG.y=y;AG.xs=xs;AG.W=W;AG.P=P;AG.iw=iw;AG.ih=ih;AG.r=r;AG.m=m;
- let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5))+estBand(P,W,xs,P.t,ih,m);
  g+=`<path d="${up.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}`+
     `${dn.map((v,i)=>`L${xs(dn.length-1-i).toFixed(1)},${y(dn[dn.length-1-i]).toFixed(1)}`).join('')}Z" fill="var(--acc)" opacity=".16"/>`;
  g+=`<path d="${r.est.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(--acc)" stroke-width="2.1"/>`;
@@ -1483,7 +1482,7 @@ function pathChart(svgId,ovId,t,G,gapLab){
  // the crosshair spans both panels, so G.ih covers the full drawn height
  Object.assign(G,{y,xs,W,P,iw,ih:(gT+ihG)-P.t,t,m,gy,gap});
  const COL=['--t1','--t2','--t3'];
- let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(0)+'%',nice(lo,hi,5));
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(0)+'%',nice(lo,hi,5))+estBand(P,W,xs,P.t,ih,m);
  t.groups.forEach((gr,i)=>{
   const ci=t.k===2?i*2:i;
   g+=`<path d="${gr.path.map((v,j)=>`${j?'L':'M'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[ci]})" stroke-width="2.2"/>`;
@@ -1660,7 +1659,7 @@ function lvlChg(r,svId,ovId,footId,G,chgLab,ctl='השינוי'){
  let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
  Object.assign(G,{y,xs,W,P,iw,ih,r,m,ctl});
- let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5))+estBand(P,W,xs,P.t,ih,m);
  B.filter(b=>b.ci).forEach(b=>{const e=r[b.k].est,s2=r[b.k].se;
   const up=e.map((v,i)=>v+1.96*s2[i]), dn=e.map((v,i)=>v-1.96*s2[i]);
   g+=`<path d="${up.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}`+
