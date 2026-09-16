@@ -8,7 +8,7 @@ c=duckdb.connect(); c.execute("SET enable_progress_bar=false")
 # regressions keep reading the measured one. EST names the months that are estimates
 # so the page can draw them as such -- never silently mixed in with what was counted.
 P="'/home/user/consternation/retail_sales_2022_2026_est.parquet'"
-EST=['2026/09']
+EST=['2026-09']        # same dashed form as `months`, which WIN and the page compare against
 R='"מכר כספי (מיליוני ₪)"'
 BUCKET=['ספק כללי','ספק מותג פרטי','ספק קצביה כללי','ספק כללי בשר טרי','יצרן פרטי','יצרן לא ידוע']
 GROUPS={'תנובה':['תנובה'],'שטראוס':['שטראוס'],'נטו':['נטו סחר','נטו פירות וירקות']}
