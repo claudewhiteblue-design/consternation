@@ -891,7 +891,7 @@ const mlab=m=>m.includes('Q')?`רבעון ${m.slice(6)} ${m.slice(0,4)}`:`${HE[+
 // no caveat, but the reader does: every quarterly footer says so, and the tooltip
 // marks the period itself.
 const qpartN = q => (D.qpart||{})[q];
-const mlabq  = m => mlab(m) + (qpartN(m) ? ` (${qpartN(m)} מתוך 3 חודשים)` : '');
+const mlabq  = m => mlab(m) + (qpartN(m) ? ` (${qpartN(m)} מתוך 3 חודשים)` : '') + (isEst(m)?' — אומדן':'');
 const partNote = () => { if(FQ!=='q') return '';
   const q=Object.keys(D.qpart||{})[0]; if(!q) return '';
   return ` <b style="color:var(--acc2)">${mlab(q)} עדיין חלקי — ${D.qpart[q]} חודשים מתוך 3;</b>`+
@@ -1039,7 +1039,7 @@ function drawIdx(){
   const q12=mean(S.q.slice(-NP)), p12=mean(S.p.slice(-NP));
   const q12b=mean(S.q.slice(0,NP)), p12b=mean(S.p.slice(0,NP));
   document.getElementById('qfoot').innerHTML=
-   `<b style="color:var(--ink)">${name}</b> · ${mlab(M.at(-1))}: מחיר ${p1.toFixed(1)} · כמות ${q1.toFixed(1)} · מכר נומינלי ${(p1*q1/100).toFixed(1)}<br>`+
+   `<b style="color:var(--ink)">${name}</b> · ${mlabq(M.at(-1))}: מחיר ${p1.toFixed(1)} · כמות ${q1.toFixed(1)} · מכר נומינלי ${(p1*q1/100).toFixed(1)}<br>`+
    `<span style="color:var(--ink2)">${FQ==='m'?'12 החודשים':'4 הרבעונים'} האחרונים מול ${FQ==='m'?'12 הראשונים':'4 הראשונים'}: מחיר ${p12b.toFixed(1)} ← ${p12.toFixed(1)} (${sgn(100*(p12/p12b-1),1)}%) · `+
    `כמות ${q12b.toFixed(1)} ← ${q12.toFixed(1)} (${sgn(100*(q12/q12b-1),1)}%)</span>`+partNote();
  }
@@ -1184,7 +1184,7 @@ function aDraw(){
  const last=r.est.at(-1), lp=r.p.at(-1);
  document.getElementById('afoot').innerHTML=
   `${r.n} יחידות · ${r.ncl} אשכולות · ${cml(st.ms)} ממוצע ${r.mean_v} (ס״ת ${r.sd_v}) · `+
-  `<b style="color:var(--ink)">${mlab(m.at(-1))}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${lp<0.001?'<0.001':lp.toFixed(3)}) · `+
+  `<b style="color:var(--ink)">${mlabq(m.at(-1))}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${lp<0.001?'<0.001':lp.toFixed(3)}) · `+
   `ממוצע כל התקופה שאחרי 2022: ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% (p=${r.avg[2]<0.001?'<0.001':r.avg[2].toFixed(3)}) · `+
   `מבחן F משותף: p=${r.joint_p<1e-4?r.joint_p.toExponential(1):r.joint_p.toFixed(4)}`;
  aNote();
@@ -1444,7 +1444,7 @@ function evChart(svgId,ovId,r,col,G){
  let lo=Math.min(...dn,0), hi=Math.max(...up,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
  Object.assign(G,{y,xs,W,P,iw,ih,r,m});
- let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5))+estBand(P,W,xs,P.t,ih,m);
  g+=`<path d="${up.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}`+
     `${dn.map((v,i)=>`L${xs(dn.length-1-i).toFixed(1)},${y(dn[dn.length-1-i]).toFixed(1)}`).join('')}Z" fill="var(${col})" opacity=".16"/>`;
  g+=`<path d="${r.est.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${col})" stroke-width="2.1"/>`;
@@ -1460,7 +1460,7 @@ function iDraw(){
  const last=r.est.at(-1);
  document.getElementById('ifoot').innerHTML=
   `${r.n} ${st.ilv==='cat'?'קטגוריות':'תת-קטגוריות'} · מדד ${IM.find(x=>x[0]===st.ims)[1]} ממוצע ${r.mean_v} (ס״ת ${r.sd_v}) · `+
-  `<b style="color:var(--ink)">${mlab(r.months.at(-1))}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${r.p.at(-1)<0.001?'<0.001':r.p.at(-1).toFixed(3)}) · `+
+  `<b style="color:var(--ink)">${mlabq(r.months.at(-1))}: ${(last>0?'+':'')+last.toFixed(2)}%</b> לכל ס״ת (p=${r.p.at(-1)<0.001?'<0.001':r.p.at(-1).toFixed(3)}) · `+
   `ממוצע התקופה שאחרי 2022: ${(r.avg[0]>0?'+':'')+r.avg[0].toFixed(2)}% (p=${r.avg[2].toFixed(3)}) · F: p=${r.joint_p<1e-4?r.joint_p.toExponential(1):r.joint_p.toFixed(4)}`;
  iNote();
 }
@@ -1584,7 +1584,7 @@ function xDraw(){
  let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
  Object.assign(XG,{y,xs,W,P,iw,ih,r,m});
- let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5))+estBand(P,W,xs,P.t,ih,m);
  const COL={lo:'--t1',mid:'--ink',hi:'--t3'};
  bands.filter(b=>b.k!=='mid').forEach(b=>{
   const up=b.e.map((v,i)=>v+1.96*b.s[i]), dn=b.e.map((v,i)=>v-1.96*b.s[i]);
@@ -1764,7 +1764,7 @@ function bDraw(){
  let lo=Math.min(...all,0), hi=Math.max(...all,0); const pd=(hi-lo)*0.08; lo-=pd; hi+=pd;
  const y=v=>P.t+ih*(1-(v-lo)/(hi-lo));
  Object.assign(BG,{y,xs,W,P,iw,ih,r,m});
- let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5));
+ let g=axis(P,W,y,v=>(v>0?'+':'')+v.toFixed(1)+'%',nice(lo,hi,5))+estBand(P,W,xs,P.t,ih,m);
  B.filter(b=>b.ci).forEach(b=>{const e=r[b.k].est,s2=r[b.k].se;
   const up=e.map((v,i)=>v+1.96*s2[i]), dn=e.map((v,i)=>v-1.96*s2[i]);
   g+=`<path d="${up.map((v,i)=>`${i?'L':'M'}${xs(i).toFixed(1)},${y(v).toFixed(1)}`).join('')}`+
