@@ -321,7 +321,7 @@ SUPPRESSED=[0]
 
 def sharepaths(key,name_of,src,periods=None):
     """Monthly revenue for each listed supplier, plus the unit value (revenue over
-       standard quantity) of the five largest. The page divides the revenue by the unit
+       standard quantity) of all ten. The page divides the revenue by the unit
        total already carried in `series` to get the share, at either frequency -- so the
        quarterly views are summed from the months, not approximated from them."""
     periods=months if periods is None else periods
@@ -342,9 +342,11 @@ def sharepaths(key,name_of,src,periods=None):
         for r in d['rows']:
             if (nm,r['g']) not in WR.index: continue
             r['rv']=[None if not np.isfinite(x) else _sig(x) for x in WR.loc[(nm,r['g'])].values]
-            # only the five largest: the price chart shows five lines, and carrying it
-            # for all ten would not fit in the page
-            if d['rows'].index(r)<5 and (nm,r['g']) in WP.index:
+            # all ten in the table: the price chart draws the five largest by default and
+            # ten on the toggle. The price level `ref` it is tested against stays the
+            # median of the top five -- that is the unit's own level, and a sixth-ranked
+            # supplier should be judged against it rather than help define it.
+            if (nm,r['g']) in WP.index:
                 pv=WP.loc[(nm,r['g'])].values
                 # A month where a supplier sits far off the unit's price level AND holds
                 # almost none of it is not a different price for the same thing -- it is a

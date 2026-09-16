@@ -141,10 +141,10 @@ td.nm{text-align:right;font-weight:600;white-space:normal;min-width:150px}
 </div>
 
 <div class="card" id="pcard">
- <h2>מחיר חמשת הספקים הגדולים <span id="pttl" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
+ <h2>מחיר <span id="pntl">חמשת</span> הספקים הגדולים <span id="pttl" style="font-weight:400;color:var(--ink3);font-size:14px"></span></h2>
  <p class="cs" id="punit" style="max-width:82ch;font-weight:600;color:var(--ink2);margin-bottom:2px"></p>
- <p class="cs" style="max-width:82ch">מחיר בפועל, לא מדד: המכר הכספי של הספק חלקי הכמות הסטנדרטית שלו, באותה יחידת מדידה שבה נמדדת היחידה הנבחרת. חמשת הגדולים לפי מכר 2026 — חמש השורות הראשונות בטבלה למטה. הקו גולמי וללא החלקה, כך שמבצעים וחגים נראים בו. <b>חודש שבו ספק נמצא גם רחוק מרמת המחיר של היחידה (מעל פי 2 או מתחת לחצי) וגם מחזיק פחות מ־3% ממנה אינו מצויר</b> — צירוף כזה אומר שהוא מוכר שם מוצר אחר ולא מחיר אחר לאותו מוצר, וקו כזה השתלט על הציר ומחק את התנועה של הספקים הגדולים.</p>
- <div class="ctl"><div class="seg" id="p_md"></div></div>
+ <p class="cs" style="max-width:82ch">מחיר בפועל, לא מדד: המכר הכספי של הספק חלקי הכמות הסטנדרטית שלו, באותה יחידת מדידה שבה נמדדת היחידה הנבחרת. הגדולים לפי מכר 2026 — השורות הראשונות בטבלה למטה. <b>אפשר לעבור לעשרת הגדולים</b>; מקומות 6–10 מצוירים בקו מקווקו באותן חמש הצבעות, כך שהזיהוי אף פעם אינו לפי צבע בלבד — המקרא, התוויות בקצה הקו והשיוט נותנים את השם. הקו גולמי וללא החלקה, כך שמבצעים וחגים נראים בו. <b>חודש שבו ספק נמצא גם רחוק מרמת המחיר של היחידה (מעל פי 2 או מתחת לחצי) וגם מחזיק פחות מ־3% ממנה אינו מצויר</b> — צירוף כזה אומר שהוא מוכר שם מוצר אחר ולא מחיר אחר לאותו מוצר, וקו כזה השתלט על הציר ומחק את התנועה של הספקים הגדולים.</p>
+ <div class="ctl"><div class="seg" id="p_n"></div><div class="seg" id="p_md"></div></div>
  <div class="leg" id="pleg"></div>
  <div class="scroll"><div class="chwrap"><svg id="pch" viewBox="0 0 940 320" style="width:100%;min-width:660px;height:auto;direction:ltr"></svg>
   <div class="tip" id="ptip"></div></div></div>
@@ -713,6 +713,7 @@ function drawSupPanel(){
 }
 const SERALL=()=>FQ==='m'?D.series:D.seriesq;
 const PMD=[['abs','₪ בפועל'],['rel','מדד — שינוי מהתקופה הראשונה']];
+const PN=[['5','5 הגדולים'],['10','10 הגדולים']];
 
 /* ---------- what the quantity and the price are actually counted in ---------- */
 /* `basis` is the measurement basis the panel reports for the unit: ליטר, ק"ג or
@@ -737,13 +738,29 @@ function unitNote(name){
   '(מכר כספי חלקי כמות סטנדרטית). שני הקווים כאן הם מדדים ביחס לבסיס; המחיר בשקלים עצמו מופיע בגרף הבא.';
 }
 
-/* ---------- price of the five largest suppliers ---------- */
+/* ---------- price of the largest suppliers (five, or ten on the toggle) ---------- */
+/* Direct end labels. They are what lets ranks 6-10 reuse the five hues dashed rather
+   than inventing a sixth through tenth hue: identity is never colour alone. Labels are
+   pushed apart vertically, and a short leader connects one to its line when it moved. */
+function endLabels(ser,y,xs,P,ih,col){
+ const it=ser.map(sr=>{const li=sr.v.length-1-[...sr.v].reverse().findIndex(v=>v!=null);
+   return (li<0||sr.v[li]==null)?null:{t:sr.g,x:xs(li),y0:y(sr.v[li]),c:col(sr.ci)};}).filter(Boolean);
+ if(!it.length) return '';
+ it.sort((a,b)=>a.y0-b.y0);
+ const H=13; let prev=-1e9;
+ it.forEach(o=>{o.y=Math.max(o.y0,prev+H); prev=o.y;});
+ const over=it.at(-1).y-(P.t+ih);                       // pushed past the floor: pull the stack up
+ if(over>0){let p=1e9; for(let i=it.length-1;i>=0;i--){const o=it[i]; o.y=Math.min(o.y-over,p-H); p=o.y;}}
+ return it.map(o=>(Math.abs(o.y-o.y0)>2
+    ? `<line x1="${o.x+2}" x2="${o.x+6}" y1="${o.y0.toFixed(1)}" y2="${o.y.toFixed(1)}" stroke="var(${o.c})" stroke-width="1" opacity=".45"/>`:'')
+   +`<text x="${(o.x+8).toFixed(1)}" y="${(o.y+3.5).toFixed(1)}" fill="var(${o.c})" font-size="10.5" paint-order="stroke" stroke="var(--surf)" stroke-width="3" stroke-linejoin="round">${escT(o.t)}</text>`).join('');
+}
 const PG={};
 function drawPrice(name){
  const card=document.getElementById('pcard'); if(!card) return;
  const t=D.tops[`${lv}|${sel}`], b=basisOf();
  document.getElementById('pttl').textContent='· '+name;
- segSync('p_md');
+ segSync('p_md'); segSync('p_n');
  const uk=`${lv}|${sel}`; if(PHIDEFOR!==uk){PHIDE=new Set(); PHIDEFOR=uk;}
  const bad=m=>{card.querySelector('#pch').innerHTML='';document.getElementById('pleg').innerHTML='';
    document.getElementById('punit').innerHTML='';document.getElementById('pfoot').innerHTML=m;};
@@ -757,9 +774,15 @@ function drawPrice(name){
  document.getElementById('punit').innerHTML = REL
    ? `<b>מדד</b>: כל ספק מול <b>המחיר שלו עצמו ב${mlab(BASEQ)}</b> = 100 — ערך יחידה של הרבעון כולו, לא של חודש בודד. כך חמישה מחירים בגבהים שונים הופכים לחמישה מסלולים ברי-השוואה.`
    : `<b>המחיר</b> הוא ₪ ל${punit(b)}.`;
- const rows=t.rows.filter(r=>r.pp).slice(0,5);
+ const NTOP=+st.pn||5;   // st is still in its TDZ on the first draw, which bails above
+ document.getElementById('pntl').textContent=NTOP===10?'עשרת':'חמשת';
+ const rows=t.rows.filter(r=>r.pp).slice(0,NTOP);
  if(!rows.length) return bad('אין כמות סטנדרטית לספקים ביחידה זו, ולכן אין מחיר.');
+ // Ten distinct hues do not survive a colourblind check -- adding a sixth through
+ // tenth hue fails the validator against the existing five. So ranks 6-10 reuse the
+ // same five hues dashed, and every line carries its supplier's name at its own end.
  const COL=['--s1','--s2','--s3','--s4','--s5'];
+ const col=i=>COL[i%5], dsh=i=>i>=5;
  // A supplier can be absent from the shelf for a month, and the shared ma() would add
  // that null as a zero and report a third of the real price. Average what is actually
  // there, and leave a gap where the supplier itself has one.
@@ -793,7 +816,7 @@ function drawPrice(name){
  const all=shown.flatMap(x=>x.v).filter(v=>v!=null&&v>0);
  const legend=()=>{document.getElementById('pleg').innerHTML=series.map(sr=>
    `<span data-g="${escA(sr.g)}" style="cursor:pointer;opacity:${sr.hidden?0.35:1}" title="לחיצה מסתירה או מחזירה את הקו">`+
-   `<i style="background:var(${COL[sr.ci]})"></i>${sr.hidden?`<s>${escT(sr.g)}</s>`:escT(sr.g)}`+
+   `<i style="${dsh(sr.ci)?`background:repeating-linear-gradient(90deg,var(${col(sr.ci)}) 0 4px,transparent 4px 7px)`:`background:var(${col(sr.ci)})`}"></i>${sr.hidden?`<s>${escT(sr.g)}</s>`:escT(sr.g)}`+
    (sr.sh==null?'':` <span class="sh">(${sr.sh.toFixed(1)}%)</span>`)+`</span>`).join('');};
  if(!all.length){legend();
   document.getElementById('pch').innerHTML='';
@@ -801,7 +824,10 @@ function drawPrice(name){
    ? 'אין מחיר לספקים ביחידה זו בתדירות הנבחרת.'
    : 'כל הספקים מוסתרים — לחיצה על שם במקרא מחזירה אותם.';
   PG.xs=null; return;}
- const W=940,P={t:16,r:22,b:32,l:60},ih=320-P.t-P.b,iw=W-P.l-P.r;
+ // room on the right for the direct end labels
+ const LBF='10.5px "Segoe UI",Arial,Helvetica,sans-serif';
+ const LBW=Math.min(190,Math.ceil(Math.max(0,...shown.map(sr=>textW(sr.g,LBF))))+14);
+ const W=940,P={t:16,r:Math.max(22,LBW),b:32,l:60},ih=320-P.t-P.b,iw=W-P.l-P.r;
  const xs=i=>P.l+iw*i/(per.length-1);
  let lo=Math.min(...all), hi=Math.max(...all);
  const pd=(hi-lo)*0.1||Math.max(hi*0.05,0.1); lo=Math.max(0,lo-pd); hi+=pd;
@@ -815,8 +841,9 @@ function drawPrice(name){
  shown.forEach(sr=>{
   const fi=sr.v.findIndex(v=>v!=null), li=sr.v.length-1-[...sr.v].reverse().findIndex(v=>v!=null);
   if(fi<0) return;
-  g+=`<path d="${sr.v.map((v,j)=>v==null?'':`${j===fi?'M':'L'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${COL[sr.ci]})" stroke-width="2"/>`;
-  g+=`<circle cx="${xs(li)}" cy="${y(sr.v[li])}" r="3.4" fill="var(${COL[sr.ci]})"/>`;});
+  g+=`<path d="${sr.v.map((v,j)=>v==null?'':`${j===fi?'M':'L'}${xs(j).toFixed(1)},${y(v).toFixed(1)}`).join('')}" fill="none" stroke="var(${col(sr.ci)})" stroke-width="2"${dsh(sr.ci)?' stroke-dasharray="6 3"':''}/>`;
+  g+=`<circle cx="${xs(li)}" cy="${y(sr.v[li])}" r="3.4" fill="var(${col(sr.ci)})"/>`;});
+ g+=endLabels(shown,y,xs,P,ih,col);
  per.forEach((mm,i)=>{if(mm.slice(5)==='01'||mm.slice(5)==='Q1')
   g+=`<text x="${xs(i)}" y="${P.t+ih+18}" text-anchor="middle" fill="var(--ink3)" font-size="11">${mm.slice(0,4)}</text>`;});
  document.getElementById('pch').innerHTML=g+'<g id="pov"></g>';
@@ -829,9 +856,10 @@ function drawPrice(name){
   +(REL?` — מדד, ${mlab(BASEQ)}=100.`+(dropped?` ${dropped} ספקים בלי מחיר ברבעון הבסיס הושמטו.`:'')
        :` — ₪ ל${punit(b)}.`)
   +(FQ==='m'?' הקו הוא ממוצע נע של שלושה חודשים.':'')
+  +(NTOP>5?' מקומות 6–10 מצוירים בקו מקווקו.':'')
   +(series.length>shown.length?(n=>` <b>${n===1?'ספק אחד מוסתר':`${n} ספקים מוסתרים`}</b> — לחיצה על שם במקרא מחזירה אותו.`)(series.length-shown.length):'')
   +partNote();
- Object.assign(PG,{series:shown,y,xs,W,P,iw,ih,per,COL,b,fmtv});
+ Object.assign(PG,{series:shown,y,xs,W,P,iw,ih,per,COL,col,b,fmtv});
 }
 // clicking a name in the legend hides or restores that supplier's line
 // hidden lines are scoped to the unit on screen: a name hidden in one category should
@@ -852,8 +880,8 @@ const fmtp=v=>v>=100?v.toFixed(0):v>=10?v.toFixed(1):v>=1?v.toFixed(2):v.toFixed
   const x=G.xs(i);
   let ov=`<line x1="${x}" x2="${x}" y1="${G.P.t}" y2="${G.P.t+G.ih}" stroke="var(--ink3)" stroke-width="1" stroke-dasharray="3 3"/>`;
   let body=`<b>${mlabq(G.per[i])}</b>`, any=false;
-  G.series.forEach((sr,k)=>{const v=sr.v[i]; if(v===null||v===undefined) return; any=true;
-   ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4" fill="var(${G.COL[k]})" stroke="var(--surf)" stroke-width="1.6"/>`;
+  G.series.forEach(sr=>{const v=sr.v[i]; if(v===null||v===undefined) return; any=true;
+   ov+=`<circle cx="${x}" cy="${G.y(v)}" r="4" fill="var(${G.col(sr.ci)})" stroke="var(--surf)" stroke-width="1.6"/>`;
    body+=`<div class="r"><span>${escT(sr.g)}</span><span>${G.fmtv(v)}</span></div>`;});
   if(!any){tp.classList.remove('on');document.getElementById('pov').innerHTML='';return}
   document.getElementById('pov').innerHTML=ov;
@@ -1144,7 +1172,8 @@ function segSync(id){const el=document.getElementById(id);
 
 // The overview's price toggle reuses this page's control helper, which is defined after
 // the overview has already drawn once -- so paint it now that the buttons exist.
-st.pmd='abs'; seg('p_md',PMD,'pmd',()=>drawIdx()); drawIdx();
+st.pmd='abs'; st.pn='5';
+seg('p_md',PMD,'pmd',()=>drawIdx()); seg('p_n',PN,'pn',()=>drawIdx()); drawIdx();
 seg('a_lv',AL,'lv',()=>aDraw()); seg('a_sm',AS,'sm',()=>aDraw());
 seg('a_ms',AM,'ms',()=>aDraw()); seg('a_fq',AF,'fq',()=>aDraw());
 seg('t_lv',AL,'tlv',()=>tDraw()); seg('t_sm',AS,'tsm',()=>tDraw()); seg('t_ms',AM,'tms',()=>tDraw());
