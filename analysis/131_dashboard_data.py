@@ -99,54 +99,66 @@ WIN=[m[5:] for m in months if m.startswith('2026') and m not in EST]
 print(f'{len(months)} חודשים, 2026 עד {LAST} ({len(WIN)} חודשים)')
 
 # ---------- (A) supplier table ----------
-def snap(year):
-    d=raw[(raw.month.str[:4]==year)&(raw.month.str[5:].isin(WIN))]
-    tot=d.rev.sum()
-    catrev=d.groupby(['cat','g']).rev.sum().reset_index()
-    cattot=catrev.groupby('cat').rev.sum().rename('ctot')
-    catrev=catrev.join(cattot,on='cat'); catrev['sh']=catrev.rev/catrev.ctot
-    agg=catrev.groupby('g').agg(rev=('rev','sum'),ncat=('cat','nunique'),
-        n30=('sh',lambda s:int((s>=.30).sum())),n50=('sh',lambda s:int((s>=.50).sum()))).reset_index()
-    agg['share']=100*agg.rev/tot
-    agg['ndep']=d.groupby('g').dep.nunique().reindex(agg.g).values
-    agg['nent']=d.groupby('g').sup.nunique().reindex(agg.g).values
-    return agg.set_index('g'), tot, d.cat.nunique()
-a26,t26,nc26=snap('2026'); a22,t22,_=snap('2022')
-real=[g for g in a26.index if g not in BUCKET]
-ordered=a26.loc[real].sort_values('rev',ascending=False)
-top=ordered.head(20)          # the table lists twenty
-top10=ordered.head(10)        # the KPI tile is still "the top ten", and must stay that
-# each listed group's market revenue per month, so a row can open into a share path
-_mrev=raw.groupby('month').rev.sum().reindex(months)
-_grev=raw.groupby(['g','month']).rev.sum()
-def _path(g):
-    v=_grev.loc[g].reindex(months) if g in _grev.index.get_level_values(0) else None
-    if v is None: return None
-    return [None if not np.isfinite(x) else round(float(x),2) for x in v.values]
-rows=[]
-for g,r in top.iterrows():
-    p=a22.loc[g] if g in a22.index else None
-    rows.append(dict(g=g,rev=round(r.rev),share=round(r.share,2),ncat=int(r.ncat),ndep=int(r.ndep),
-        n30=int(r.n30),n50=int(r.n50),nent=int(r.nent),
-        share22=round(float(p.share),2) if p is not None else None,
-        dshare=round(float(r.share-p.share),2) if p is not None else None,
-        growth=round(100*(r.rev/p.rev-1),1) if p is not None and p.rev>0 else None,
-        imp=round(100*float(p_g.get(g)),1) if g in p_g.index else None,
-        impres=round(100*float(res_g.get(g,0)),0) if g in p_g.index and np.isfinite(res_g.get(g,0)) else None,
-        ncat22=int(p.ncat) if p is not None else None,
-        n3022=int(p.n30) if p is not None else None, n5022=int(p.n50) if p is not None else None,
-        rv=_path(g)))
-buck=a26.loc[[g for g in a26.index if g in BUCKET]]
-buck22=a22.loc[[g for g in a22.index if g in BUCKET]]
-tbl=dict(rows=rows,tot26=round(t26),tot22=round(t22),ncat=int(nc26),last=LAST,win=len(WIN),
-    mkt=[round(float(x),2) for x in _mrev.values],
-    top10_share=round(float(top10.share.sum()),2),
-    top10_share22=round(float(sum(a22.loc[g].share for g in top10.index if g in a22.index)),2),
-    top20_share=round(float(top.share.sum()),2),
-    top20_share22=round(float(sum(a22.loc[g].share for g in top.index if g in a22.index)),2),
-    bucket_share=round(float(buck.share.sum()),2),bucket_share22=round(float(buck22.share.sum()),2),
-    nsup=int(raw[raw.month.str[:4]=='2026'].g.nunique()))
-print(f'2026 YTD {t26:,.0f} מ׳ ₪ | טופ-10 {tbl["top10_share"]}% (2022: {tbl["top10_share22"]}%)')
+# Built twice over the same code: once on the whole market, once on food & drink only.
+# NONFOOD is shared with the analyses engine so the two pages cannot drift apart.
+from departments import NONFOOD
+
+def build_table(src):
+    def snap(year):
+        d=src[(src.month.str[:4]==year)&(src.month.str[5:].isin(WIN))]
+        tot=d.rev.sum()
+        catrev=d.groupby(['cat','g']).rev.sum().reset_index()
+        cattot=catrev.groupby('cat').rev.sum().rename('ctot')
+        catrev=catrev.join(cattot,on='cat'); catrev['sh']=catrev.rev/catrev.ctot
+        agg=catrev.groupby('g').agg(rev=('rev','sum'),ncat=('cat','nunique'),
+            n30=('sh',lambda s:int((s>=.30).sum())),n50=('sh',lambda s:int((s>=.50).sum()))).reset_index()
+        agg['share']=100*agg.rev/tot
+        agg['ndep']=d.groupby('g').dep.nunique().reindex(agg.g).values
+        agg['nent']=d.groupby('g').sup.nunique().reindex(agg.g).values
+        return agg.set_index('g'), tot, d.cat.nunique()
+    a26,t26,nc26=snap('2026'); a22,t22,_=snap('2022')
+    real=[g for g in a26.index if g not in BUCKET]
+    ordered=a26.loc[real].sort_values('rev',ascending=False)
+    top=ordered.head(20)          # the table lists twenty
+    top10=ordered.head(10)        # the KPI tile is still "the top ten", and must stay that
+    # each listed group's revenue per month within this universe, so a row can open into
+    # a share path drawn against the same total the table's percentages are computed on
+    mrev=src.groupby('month').rev.sum().reindex(months)
+    grev=src.groupby(['g','month']).rev.sum()
+    gs=set(grev.index.get_level_values(0))
+    def path(g):
+        if g not in gs: return None
+        v=grev.loc[g].reindex(months)
+        return [None if not np.isfinite(x) else round(float(x),2) for x in v.values]
+    rows=[]
+    for g,r in top.iterrows():
+        p=a22.loc[g] if g in a22.index else None
+        rows.append(dict(g=g,rev=round(r.rev),share=round(r.share,2),ncat=int(r.ncat),ndep=int(r.ndep),
+            n30=int(r.n30),n50=int(r.n50),nent=int(r.nent),
+            share22=round(float(p.share),2) if p is not None else None,
+            dshare=round(float(r.share-p.share),2) if p is not None else None,
+            growth=round(100*(r.rev/p.rev-1),1) if p is not None and p.rev>0 else None,
+            imp=round(100*float(p_g.get(g)),1) if g in p_g.index else None,
+            impres=round(100*float(res_g.get(g,0)),0) if g in p_g.index and np.isfinite(res_g.get(g,0)) else None,
+            ncat22=int(p.ncat) if p is not None else None,
+            n3022=int(p.n30) if p is not None else None, n5022=int(p.n50) if p is not None else None,
+            rv=path(g)))
+    buck=a26.loc[[g for g in a26.index if g in BUCKET]]
+    buck22=a22.loc[[g for g in a22.index if g in BUCKET]]
+    return dict(rows=rows,tot26=round(t26),tot22=round(t22),ncat=int(nc26),last=LAST,win=len(WIN),
+        mkt=[round(float(x),2) for x in mrev.values],
+        top10_share=round(float(top10.share.sum()),2),
+        top10_share22=round(float(sum(a22.loc[g].share for g in top10.index if g in a22.index)),2),
+        top20_share=round(float(top.share.sum()),2),
+        top20_share22=round(float(sum(a22.loc[g].share for g in top.index if g in a22.index)),2),
+        bucket_share=round(float(buck.share.sum()),2),bucket_share22=round(float(buck22.share.sum()),2),
+        nsup=int(src[src.month.str[:4]=='2026'].g.nunique()))
+
+TBL={'all':build_table(raw),'food':build_table(raw[~raw.dep.isin(NONFOOD)])}
+tbl=TBL['all']
+for k,v in TBL.items():
+    print(f'{k:5}: 2026 YTD {v["tot26"]:,} מ׳ ₪ | טופ-10 {v["top10_share"]}% | טופ-20 {v["top20_share"]}% | '
+          +' · '.join(r['g'] for r in v['rows'][:5]))
 
 # ---------- (B) monthly concentration ----------
 def conc(d,keys):
@@ -539,7 +551,7 @@ print(f'מותגים מובילים: {len(brands):,} צמדי יחידה-ספק 
 
 # what each unit's quantity is counted in, for the axis labels
 basis={k:v.get('basis','') for k,v in tops.items()}
-json.dump(dict(months=months,est=EST,table=tbl,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
+json.dump(dict(months=months,est=EST,table=TBL,series=series,deps=deps,cats=cats,subs=subs,tops=tops,
     latebase=LATEBASE,
     basis=basis,brands=brands,buckets=BUCKET,
     nbrand_rules=len(G_IMP)+len(G_DOM),

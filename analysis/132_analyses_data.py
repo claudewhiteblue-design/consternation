@@ -79,13 +79,10 @@ def load(level):
     d['logp']=np.log(d.rev*1000/d.qty)
     return d
 
-# Non-food departments. The sample toggle is "whole market" vs "food & drink only";
-# these are what "food & drink only" drops. Alcohol stays in -- it is a drink, priced
-# per litre like any other. "אביזרים לארוח" is disposable tableware and is already out
-# through EXCAT; it is listed here so the classification reads complete.
-NONFOOD=['אביזרים ומוצרי תינוקות','תכשירי כביסה','מוצרי נייר','היגיינה וטיפוח הגוף',
-         'ניקוי הבית','אביזרים לארוח','היגיינת הפה','טיפוח השיער','סבוני רחצה',
-         'שטיפת כלים','מוצרי גילוח','מוצרי שיזוף והגנה מהשמש','טיפוח פנים']
+# The non-food departments live in departments.py, shared with the overview (131) so
+# the two pages cannot drift apart on what counts as food.
+import sys; sys.path.insert(0,'/home/user/consternation/analysis')
+from departments import NONFOOD
 
 def prep(d,food_only):
     """Meat & poultry (EXDEP) are now out of every regression, not a toggle: their unit
